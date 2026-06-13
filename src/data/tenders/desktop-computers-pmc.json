@@ -1,0 +1,423 @@
+{
+  "id": "desktop-computers-pmc",
+  "snapshot": {
+    "title": "Supply of Desktop Computers for Municipal Office",
+    "tenderId": "PMC/IT/2026/042",
+    "organization": "Pune Municipal Corporation",
+    "location": "Pune, Maharashtra",
+    "category": "IT Hardware Supply",
+    "estimatedValue": "₹1.2 Crore",
+    "emdAmount": "₹2,40,000",
+    "submissionDeadline": "25 June 2026",
+    "contractDuration": "12 months"
+  },
+  "decision": {
+    "shouldApply": "Maybe",
+    "recommendation": "Apply only if GST, PAN, turnover proof, similar government supply experience, OEM authorization, warranty support, and EMD funds are ready before the deadline.",
+    "overallFitScore": 72,
+    "riskLevel": "Medium",
+    "deadlineUrgency": "High",
+    "missingCriticalRequirements": 3
+  },
+  "scores": [
+    {
+      "label": "Overall Fit",
+      "value": 72,
+      "display": "72%"
+    },
+    {
+      "label": "Document Readiness",
+      "value": 67,
+      "display": "6/9"
+    },
+    {
+      "label": "Eligibility Match",
+      "value": 65,
+      "display": "65%"
+    },
+    {
+      "label": "Financial Readiness",
+      "value": 80,
+      "display": "80%"
+    },
+    {
+      "label": "Technical Match",
+      "value": 70,
+      "display": "70%"
+    },
+    {
+      "label": "Risk Safety",
+      "value": 58,
+      "display": "58%"
+    }
+  ],
+  "beforeApply": [
+    {
+      "label": "GST and PAN copies are available",
+      "status": "warning"
+    },
+    {
+      "label": "₹2,40,000 EMD can be arranged",
+      "status": "ready"
+    },
+    {
+      "label": "Two similar government supply certificates are available",
+      "status": "missing"
+    },
+    {
+      "label": "OEM authorization can be obtained",
+      "status": "missing"
+    },
+    {
+      "label": "Three-year onsite warranty can be supported",
+      "status": "ready"
+    },
+    {
+      "label": "Delivery can be completed within 30 days",
+      "status": "warning"
+    }
+  ],
+  "documents": [
+    {
+      "name": "GST Certificate and PAN Copy",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 8,
+        "clause": "2.1",
+        "title": "Statutory Registration Documents",
+        "text": "Valid GST registration certificate and PAN copy must be submitted with the technical bid."
+      }
+    },
+    {
+      "name": "Company Registration Certificate",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 9,
+        "clause": "2.4",
+        "title": "Legal Constitution Proof",
+        "text": "The bidder shall submit certificate of incorporation, partnership deed, or shop establishment registration as applicable."
+      }
+    },
+    {
+      "name": "Past Work Experience Certificates",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 14,
+        "clause": "3.3",
+        "title": "Similar IT Hardware Experience",
+        "text": "The bidder must have completed at least two similar IT hardware supply projects in government or public sector organizations."
+      }
+    },
+    {
+      "name": "Turnover Proof / CA Certificate",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 14,
+        "clause": "3.2",
+        "title": "Average Annual Turnover",
+        "text": "The bidder must have average annual turnover not less than ₹50 lakh during the last three financial years."
+      }
+    },
+    {
+      "name": "EMD Payment Proof",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 18,
+        "clause": "5.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹2,40,000 shall be submitted along with the bid."
+      }
+    },
+    {
+      "name": "OEM Authorization Letter",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 22,
+        "clause": "6.3",
+        "title": "OEM Authorization",
+        "text": "OEM authorization letter for the quoted desktop model shall be enclosed with the technical bid."
+      }
+    },
+    {
+      "name": "Technical Compliance Sheet",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 23,
+        "clause": "6.5",
+        "title": "Technical Compliance Format",
+        "text": "The bidder shall submit a signed compliance sheet confirming each technical specification line item."
+      }
+    },
+    {
+      "name": "Warranty Undertaking",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 24,
+        "clause": "7.2",
+        "title": "Warranty Undertaking",
+        "text": "Three years onsite warranty undertaking shall be provided for all supplied desktop computers."
+      }
+    }
+  ],
+  "eligibility": [
+    {
+      "title": "Minimum turnover",
+      "text": "The bidder must have average annual turnover not less than ₹50 lakh during the last three financial years.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 14,
+        "clause": "3.2",
+        "title": "Average Annual Turnover",
+        "text": "The bidder must have average annual turnover not less than ₹50 lakh during the last three financial years."
+      }
+    },
+    {
+      "title": "Similar government supply experience",
+      "text": "At least two similar IT hardware supply projects must have been completed for government or public sector organizations.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 14,
+        "clause": "3.3",
+        "title": "Similar IT Hardware Experience",
+        "text": "The bidder must have completed at least two similar IT hardware supply projects in government or public sector organizations."
+      }
+    },
+    {
+      "title": "GST and PAN registration",
+      "text": "Valid GST registration certificate and PAN copy must be submitted with the technical bid.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 8,
+        "clause": "2.1",
+        "title": "Statutory Registration Documents",
+        "text": "Valid GST registration certificate and PAN copy must be submitted with the technical bid."
+      }
+    },
+    {
+      "title": "No blacklisting declaration",
+      "text": "The bidder should not have been blacklisted by any government department or public sector undertaking.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 16,
+        "clause": "4.1",
+        "title": "Blacklist Declaration",
+        "text": "The bidder should not have been blacklisted by any government department or public sector undertaking."
+      }
+    }
+  ],
+  "financials": [
+    {
+      "label": "Tender Value",
+      "value": "₹1.2 Crore",
+      "note": "Estimated supply and installation value",
+      "source": {
+        "page": 4,
+        "clause": "1.3",
+        "title": "Estimated Contract Value",
+        "text": "The estimated value of the tender is ₹1.2 crore including supply, installation, testing and warranty obligations."
+      }
+    },
+    {
+      "label": "EMD",
+      "value": "₹2,40,000",
+      "note": "To be submitted with bid",
+      "chartAmount": 240000,
+      "source": {
+        "page": 18,
+        "clause": "5.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹2,40,000 shall be submitted along with the bid."
+      }
+    },
+    {
+      "label": "Security Deposit",
+      "value": "5%",
+      "note": "After award",
+      "chartAmount": 600000,
+      "source": {
+        "page": 19,
+        "clause": "5.4",
+        "title": "Security Deposit",
+        "text": "The successful bidder shall submit security deposit equal to 5% of the accepted tender value within seven days of award."
+      }
+    },
+    {
+      "label": "Performance Guarantee",
+      "value": "3%",
+      "note": "Before agreement execution",
+      "chartAmount": 360000,
+      "source": {
+        "page": 19,
+        "clause": "5.5",
+        "title": "Performance Guarantee",
+        "text": "Performance guarantee of 3% of contract value shall be submitted before execution of agreement."
+      }
+    },
+    {
+      "label": "Penalty Exposure",
+      "value": "₹10,000/day",
+      "note": "For delayed delivery",
+      "source": {
+        "page": 30,
+        "clause": "10.4",
+        "title": "Delay Penalty",
+        "text": "Delay beyond the stipulated delivery period shall attract penalty of ₹10,000 per day subject to maximum limit prescribed."
+      }
+    }
+  ],
+  "technical": [
+    {
+      "requirement": "Supply of 500 desktop computers",
+      "source": {
+        "page": 20,
+        "clause": "6.1",
+        "title": "Quantity Requirement",
+        "text": "The bidder shall supply 500 desktop computers as per the technical schedule."
+      }
+    },
+    {
+      "requirement": "Minimum Intel i5 or Ryzen 5 equivalent processor",
+      "source": {
+        "page": 20,
+        "clause": "6.1.1",
+        "title": "Processor Specification",
+        "text": "Desktop computers shall have minimum Intel i5 or AMD Ryzen 5 equivalent processor."
+      }
+    },
+    {
+      "requirement": "16GB RAM and 512GB SSD",
+      "source": {
+        "page": 21,
+        "clause": "6.1.2",
+        "title": "Memory and Storage",
+        "text": "Each desktop shall be supplied with 16GB RAM and 512GB SSD storage or higher."
+      }
+    },
+    {
+      "requirement": "OEM authorization required",
+      "source": {
+        "page": 22,
+        "clause": "6.3",
+        "title": "OEM Authorization",
+        "text": "OEM authorization letter for the quoted desktop model shall be enclosed with the technical bid."
+      }
+    },
+    {
+      "requirement": "Three-year onsite warranty",
+      "source": {
+        "page": 24,
+        "clause": "7.2",
+        "title": "Warranty Undertaking",
+        "text": "Three years onsite warranty undertaking shall be provided for all supplied desktop computers."
+      }
+    },
+    {
+      "requirement": "Delivery, installation and testing within 30 days",
+      "source": {
+        "page": 5,
+        "clause": "1.8",
+        "title": "Delivery Period",
+        "text": "Supply, installation and testing shall be completed within 30 days from the date of purchase order."
+      }
+    }
+  ],
+  "dates": [
+    {
+      "label": "Published Date",
+      "date": "10 June 2026",
+      "status": "done"
+    },
+    {
+      "label": "Pre-bid Meeting",
+      "date": "15 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Last Submission Date",
+      "date": "25 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Technical Bid Opening",
+      "date": "26 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Financial Bid Opening",
+      "date": "To be announced",
+      "status": "unknown"
+    }
+  ],
+  "risks": [
+    {
+      "title": "Short delivery timeline",
+      "level": "High",
+      "explanation": "Supply, installation and testing must be completed within 30 days.",
+      "source": {
+        "page": 5,
+        "clause": "1.8",
+        "title": "Delivery Period",
+        "text": "Supply, installation and testing shall be completed within 30 days from the date of purchase order."
+      }
+    },
+    {
+      "title": "High EMD requirement",
+      "level": "Medium",
+      "explanation": "₹2,40,000 must be arranged before bid submission.",
+      "source": {
+        "page": 18,
+        "clause": "5.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹2,40,000 shall be submitted along with the bid."
+      }
+    },
+    {
+      "title": "OEM authorization dependency",
+      "level": "Medium",
+      "explanation": "Bid may be rejected if OEM authorization is not submitted.",
+      "source": {
+        "page": 22,
+        "clause": "6.3",
+        "title": "OEM Authorization",
+        "text": "OEM authorization letter for the quoted desktop model shall be enclosed with the technical bid."
+      }
+    },
+    {
+      "title": "Penalty for delay",
+      "level": "Medium",
+      "explanation": "Delay can attract daily penalty until delivery is completed.",
+      "source": {
+        "page": 30,
+        "clause": "10.4",
+        "title": "Delay Penalty",
+        "text": "Delay beyond the stipulated delivery period shall attract penalty of ₹10,000 per day subject to maximum limit prescribed."
+      }
+    }
+  ],
+  "missingInformation": [
+    "Financial bid opening date is not clearly mentioned",
+    "OEM authorization format is not provided",
+    "Exact payment release timeline after inspection is unclear",
+    "Escalation process for warranty service is not defined"
+  ],
+  "departmentQuestions": [
+    "Is MSME exemption allowed for EMD?",
+    "Will equivalent processor models be accepted?",
+    "Is OEM authorization mandatory for every quoted model?",
+    "What is the payment release timeline after installation?",
+    "Will partial delivery be accepted if all items are installed within 30 days?"
+  ],
+  "proposalDraft": "Dear Sir/Madam,\n\nWe are pleased to submit our proposal for the supply of desktop computers for Pune Municipal Corporation against tender reference PMC/IT/2026/042. We confirm that we have reviewed the eligibility criteria, technical requirements, financial terms, delivery obligations, and compliance documents mentioned in the tender.\n\nWe undertake to submit all required certificates, declarations, financial documents, and technical compliance details as part of the bid. We also confirm our ability to execute the work within the prescribed timeline subject to final award and work order.\n\nRegards,\nAuthorized Signatory"
+}

@@ -1,0 +1,376 @@
+{
+  "id": "cctv-installation-school",
+  "snapshot": {
+    "title": "CCTV Installation for Public School",
+    "tenderId": "EDU/SEC/2026/209",
+    "organization": "Delhi Education Department",
+    "location": "New Delhi",
+    "category": "Security / CCTV Installation",
+    "estimatedValue": "₹55 Lakh",
+    "emdAmount": "₹1,10,000",
+    "submissionDeadline": "28 June 2026",
+    "contractDuration": "3 years warranty and support"
+  },
+  "decision": {
+    "shouldApply": "Maybe",
+    "recommendation": "Apply if camera specifications, storage solution, installation team, cabling plan, prior CCTV experience, EMD, warranty, and three-year support capability are ready.",
+    "overallFitScore": 69,
+    "riskLevel": "Medium",
+    "deadlineUrgency": "High",
+    "missingCriticalRequirements": 2
+  },
+  "scores": [
+    {
+      "label": "Overall Fit",
+      "value": 69,
+      "display": "69%"
+    },
+    {
+      "label": "Document Readiness",
+      "value": 72,
+      "display": "6/8"
+    },
+    {
+      "label": "Eligibility Match",
+      "value": 66,
+      "display": "66%"
+    },
+    {
+      "label": "Financial Readiness",
+      "value": 79,
+      "display": "79%"
+    },
+    {
+      "label": "Technical Match",
+      "value": 62,
+      "display": "62%"
+    },
+    {
+      "label": "Risk Safety",
+      "value": 55,
+      "display": "55%"
+    }
+  ],
+  "beforeApply": [
+    {
+      "label": "GST and PAN documents are ready",
+      "status": "ready"
+    },
+    {
+      "label": "CCTV installation experience certificate is available",
+      "status": "missing"
+    },
+    {
+      "label": "NVR/storage sizing has been validated",
+      "status": "warning"
+    },
+    {
+      "label": "Cabling and installation manpower is available",
+      "status": "ready"
+    },
+    {
+      "label": "Three-year onsite support can be provided",
+      "status": "warning"
+    },
+    {
+      "label": "EMD amount can be arranged before deadline",
+      "status": "ready"
+    }
+  ],
+  "documents": [
+    {
+      "name": "GST Certificate and PAN Copy",
+      "priority": "Required",
+      "status": "Ready",
+      "source": {
+        "page": 7,
+        "clause": "2.1",
+        "title": "Statutory Documents",
+        "text": "The bidder shall submit valid GST registration certificate and PAN copy with the technical bid."
+      }
+    },
+    {
+      "name": "CCTV Experience Certificate",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 8,
+        "clause": "2.5",
+        "title": "Experience Certificate",
+        "text": "The bidder shall submit completion certificate for at least one CCTV installation project in school, college or government premises."
+      }
+    },
+    {
+      "name": "EMD Payment Proof",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 13,
+        "clause": "4.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹1,10,000 shall be submitted online before the bid due date."
+      }
+    },
+    {
+      "name": "Technical Datasheets",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 9,
+        "clause": "3.4",
+        "title": "Camera Specification",
+        "text": "The bidder shall provide IP cameras with minimum 1080p resolution, night vision and required storage support."
+      }
+    },
+    {
+      "name": "Warranty and Maintenance Undertaking",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 15,
+        "clause": "5.2",
+        "title": "Warranty and Maintenance",
+        "text": "The successful bidder shall provide onsite warranty and maintenance support for 3 years."
+      }
+    }
+  ],
+  "eligibility": [
+    {
+      "title": "Prior CCTV project experience",
+      "text": "At least one CCTV installation project in school, college or government premises is required.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 8,
+        "clause": "2.5",
+        "title": "Experience Certificate",
+        "text": "The bidder shall submit completion certificate for at least one CCTV installation project in school, college or government premises."
+      }
+    },
+    {
+      "title": "Technical camera compliance",
+      "text": "IP cameras must support 1080p resolution, night vision and storage support.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 9,
+        "clause": "3.4",
+        "title": "Camera Specification",
+        "text": "The bidder shall provide IP cameras with minimum 1080p resolution, night vision and required storage support."
+      }
+    },
+    {
+      "title": "Three-year support capability",
+      "text": "Onsite warranty and maintenance support for three years is mandatory.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 15,
+        "clause": "5.2",
+        "title": "Warranty and Maintenance",
+        "text": "The successful bidder shall provide onsite warranty and maintenance support for 3 years."
+      }
+    }
+  ],
+  "financials": [
+    {
+      "label": "Tender Value",
+      "value": "₹55 Lakh",
+      "note": "Supply, installation and support",
+      "source": {
+        "page": 4,
+        "clause": "1.2",
+        "title": "Estimated Tender Value",
+        "text": "The estimated tender value is ₹55 lakh including supply, installation, cabling, storage and support."
+      }
+    },
+    {
+      "label": "EMD",
+      "value": "₹1,10,000",
+      "note": "Online payment before bid due date",
+      "chartAmount": 110000,
+      "source": {
+        "page": 13,
+        "clause": "4.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹1,10,000 shall be submitted online before the bid due date."
+      }
+    },
+    {
+      "label": "Warranty Support",
+      "value": "3 years",
+      "note": "Onsite maintenance",
+      "source": {
+        "page": 15,
+        "clause": "5.2",
+        "title": "Warranty and Maintenance",
+        "text": "The successful bidder shall provide onsite warranty and maintenance support for 3 years."
+      }
+    },
+    {
+      "label": "AMC / Support Clause",
+      "value": "Included",
+      "note": "Preventive maintenance visits",
+      "source": {
+        "page": 16,
+        "clause": "5.5",
+        "title": "AMC Support",
+        "text": "Quarterly preventive maintenance visits and complaint resolution support shall be included during the support period."
+      }
+    },
+    {
+      "label": "Payment Terms",
+      "value": "After commissioning",
+      "note": "Subject to acceptance",
+      "source": {
+        "page": 18,
+        "clause": "6.3",
+        "title": "Payment Terms",
+        "text": "Payment shall be released after installation, commissioning, training and acceptance certificate from school authority."
+      }
+    }
+  ],
+  "technical": [
+    {
+      "requirement": "IP cameras with minimum 1080p resolution and night vision",
+      "source": {
+        "page": 9,
+        "clause": "3.4",
+        "title": "Camera Specification",
+        "text": "The bidder shall provide IP cameras with minimum 1080p resolution, night vision and required storage support."
+      }
+    },
+    {
+      "requirement": "NVR with required storage support",
+      "source": {
+        "page": 10,
+        "clause": "3.6",
+        "title": "NVR and Storage",
+        "text": "NVR shall support all supplied cameras with minimum 30 days recording storage at specified resolution."
+      }
+    },
+    {
+      "requirement": "Installation, cabling and network configuration",
+      "source": {
+        "page": 11,
+        "clause": "3.9",
+        "title": "Installation and Cabling",
+        "text": "The bidder shall carry out installation, cabling, conduit laying, network configuration and testing at school premises."
+      }
+    },
+    {
+      "requirement": "User training for school staff",
+      "source": {
+        "page": 12,
+        "clause": "3.12",
+        "title": "Training",
+        "text": "The bidder shall provide basic training to designated school staff for camera viewing and recording retrieval."
+      }
+    },
+    {
+      "requirement": "Three-year onsite warranty and maintenance",
+      "source": {
+        "page": 15,
+        "clause": "5.2",
+        "title": "Warranty and Maintenance",
+        "text": "The successful bidder shall provide onsite warranty and maintenance support for 3 years."
+      }
+    },
+    {
+      "requirement": "Quarterly preventive maintenance visits",
+      "source": {
+        "page": 16,
+        "clause": "5.5",
+        "title": "AMC Support",
+        "text": "Quarterly preventive maintenance visits and complaint resolution support shall be included during the support period."
+      }
+    }
+  ],
+  "dates": [
+    {
+      "label": "Published Date",
+      "date": "11 June 2026",
+      "status": "done"
+    },
+    {
+      "label": "Pre-bid Meeting",
+      "date": "17 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Last Submission Date",
+      "date": "28 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Technical Bid Opening",
+      "date": "29 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Site Survey",
+      "date": "After award",
+      "status": "unknown"
+    }
+  ],
+  "risks": [
+    {
+      "title": "Storage sizing risk",
+      "level": "Medium",
+      "explanation": "NVR must support all cameras and 30 days recording storage.",
+      "source": {
+        "page": 10,
+        "clause": "3.6",
+        "title": "NVR and Storage",
+        "text": "NVR shall support all supplied cameras with minimum 30 days recording storage at specified resolution."
+      }
+    },
+    {
+      "title": "Experience certificate required",
+      "level": "High",
+      "explanation": "Prior CCTV installation certificate is mandatory for eligibility.",
+      "source": {
+        "page": 8,
+        "clause": "2.5",
+        "title": "Experience Certificate",
+        "text": "The bidder shall submit completion certificate for at least one CCTV installation project in school, college or government premises."
+      }
+    },
+    {
+      "title": "Three-year support burden",
+      "level": "Medium",
+      "explanation": "Onsite maintenance support must be provided for three years.",
+      "source": {
+        "page": 15,
+        "clause": "5.2",
+        "title": "Warranty and Maintenance",
+        "text": "The successful bidder shall provide onsite warranty and maintenance support for 3 years."
+      }
+    },
+    {
+      "title": "Payment after commissioning",
+      "level": "Medium",
+      "explanation": "Payment depends on installation, training and acceptance certificate.",
+      "source": {
+        "page": 18,
+        "clause": "6.3",
+        "title": "Payment Terms",
+        "text": "Payment shall be released after installation, commissioning, training and acceptance certificate from school authority."
+      }
+    }
+  ],
+  "missingInformation": [
+    "Exact number of camera points per school area is not listed",
+    "Cable route drawings are not provided",
+    "Response time for maintenance complaints needs clarification",
+    "Whether existing network switches can be used is unclear"
+  ],
+  "departmentQuestions": [
+    "Will a pre-award site survey be allowed?",
+    "What is the exact number of indoor and outdoor camera points?",
+    "Is centralized monitoring required at the education department?",
+    "What complaint response time is expected during the support period?",
+    "Will existing electrical and network infrastructure be available?"
+  ],
+  "proposalDraft": "Dear Sir/Madam,\n\nWe are pleased to submit our proposal for CCTV installation and support for public school premises against tender reference EDU/SEC/2026/209. We confirm that we have reviewed the eligibility criteria, technical requirements, financial terms, delivery obligations, and compliance documents mentioned in the tender.\n\nWe undertake to submit all required certificates, declarations, financial documents, and technical compliance details as part of the bid. We also confirm our ability to execute the work within the prescribed timeline subject to final award and work order.\n\nRegards,\nAuthorized Signatory"
+}

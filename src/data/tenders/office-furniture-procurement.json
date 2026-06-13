@@ -1,0 +1,356 @@
+{
+  "id": "office-furniture-procurement",
+  "snapshot": {
+    "title": "Office Furniture Procurement",
+    "tenderId": "DHE/ADMIN/2026/077",
+    "organization": "Directorate of Higher Education, Gujarat",
+    "location": "Ahmedabad, Gujarat",
+    "category": "Furniture Supply",
+    "estimatedValue": "₹42 Lakh",
+    "emdAmount": "₹84,000",
+    "submissionDeadline": "05 July 2026",
+    "contractDuration": "4 months"
+  },
+  "decision": {
+    "shouldApply": "Yes",
+    "recommendation": "This tender is suitable if catalogue, material specifications, sample approval process, GST/PAN, EMD, warranty undertaking, and installation capacity are ready.",
+    "overallFitScore": 82,
+    "riskLevel": "Low",
+    "deadlineUrgency": "Medium",
+    "missingCriticalRequirements": 1
+  },
+  "scores": [
+    {
+      "label": "Overall Fit",
+      "value": 82,
+      "display": "82%"
+    },
+    {
+      "label": "Document Readiness",
+      "value": 78,
+      "display": "7/9"
+    },
+    {
+      "label": "Eligibility Match",
+      "value": 86,
+      "display": "86%"
+    },
+    {
+      "label": "Financial Readiness",
+      "value": 88,
+      "display": "88%"
+    },
+    {
+      "label": "Technical Match",
+      "value": 80,
+      "display": "80%"
+    },
+    {
+      "label": "Risk Safety",
+      "value": 76,
+      "display": "76%"
+    }
+  ],
+  "beforeApply": [
+    {
+      "label": "GST and PAN documents are ready",
+      "status": "ready"
+    },
+    {
+      "label": "Product catalogue and material sheet are available",
+      "status": "ready"
+    },
+    {
+      "label": "Sample furniture can be presented for approval",
+      "status": "warning"
+    },
+    {
+      "label": "Delivery and installation team is available",
+      "status": "ready"
+    },
+    {
+      "label": "Warranty undertaking can be provided",
+      "status": "ready"
+    },
+    {
+      "label": "Inspection rejection risk is understood",
+      "status": "warning"
+    }
+  ],
+  "documents": [
+    {
+      "name": "GST Certificate and PAN Copy",
+      "priority": "Required",
+      "status": "Ready",
+      "source": {
+        "page": 6,
+        "clause": "2.1",
+        "title": "Bidder Documents",
+        "text": "The bidder shall submit GST registration certificate and PAN copy along with the technical bid."
+      }
+    },
+    {
+      "name": "Catalogue and Specification Sheet",
+      "priority": "Required",
+      "status": "Ready",
+      "source": {
+        "page": 7,
+        "clause": "2.3",
+        "title": "Catalogue and Specifications",
+        "text": "The bidder shall submit catalogue, technical specifications and material details for all furniture items."
+      }
+    },
+    {
+      "name": "Sample Approval Undertaking",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 10,
+        "clause": "3.5",
+        "title": "Sample Approval",
+        "text": "Supply shall commence only after approval of sample items by the nominated inspection committee."
+      }
+    },
+    {
+      "name": "EMD Payment Proof",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 9,
+        "clause": "3.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹84,000 shall be submitted through online mode before closing date."
+      }
+    },
+    {
+      "name": "Warranty Undertaking",
+      "priority": "Required",
+      "status": "Ready",
+      "source": {
+        "page": 14,
+        "clause": "5.3",
+        "title": "Warranty",
+        "text": "Furniture items shall carry minimum one year warranty against manufacturing defects and poor workmanship."
+      }
+    }
+  ],
+  "eligibility": [
+    {
+      "title": "Specification compliance",
+      "text": "Catalogue, technical specifications and material details must be submitted for all items.",
+      "impact": "High",
+      "userStatus": "Ready",
+      "source": {
+        "page": 7,
+        "clause": "2.3",
+        "title": "Catalogue and Specifications",
+        "text": "The bidder shall submit catalogue, technical specifications and material details for all furniture items."
+      }
+    },
+    {
+      "title": "Sample approval before supply",
+      "text": "Supply can begin only after sample approval by the inspection committee.",
+      "impact": "Medium",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 10,
+        "clause": "3.5",
+        "title": "Sample Approval",
+        "text": "Supply shall commence only after approval of sample items by the nominated inspection committee."
+      }
+    },
+    {
+      "title": "Inspection-based acceptance",
+      "text": "Supply will be accepted only after departmental inspection and approval.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 12,
+        "clause": "4.1",
+        "title": "Inspection and Acceptance",
+        "text": "Supply shall be accepted only after inspection and approval by the department."
+      }
+    }
+  ],
+  "financials": [
+    {
+      "label": "Tender Value",
+      "value": "₹42 Lakh",
+      "note": "Estimated furniture procurement value",
+      "source": {
+        "page": 4,
+        "clause": "1.2",
+        "title": "Estimated Value",
+        "text": "The estimated procurement value for office furniture is ₹42 lakh inclusive of delivery and installation."
+      }
+    },
+    {
+      "label": "EMD",
+      "value": "₹84,000",
+      "note": "Online payment",
+      "chartAmount": 84000,
+      "source": {
+        "page": 9,
+        "clause": "3.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹84,000 shall be submitted through online mode before closing date."
+      }
+    },
+    {
+      "label": "Payment Terms",
+      "value": "After inspection",
+      "note": "No advance payment",
+      "source": {
+        "page": 12,
+        "clause": "4.2",
+        "title": "Payment Terms",
+        "text": "Payment shall be released only after delivery, installation, inspection and acceptance of furniture items."
+      }
+    },
+    {
+      "label": "Warranty",
+      "value": "1 year",
+      "note": "Manufacturing defects",
+      "source": {
+        "page": 14,
+        "clause": "5.3",
+        "title": "Warranty",
+        "text": "Furniture items shall carry minimum one year warranty against manufacturing defects and poor workmanship."
+      }
+    },
+    {
+      "label": "Rejection Risk",
+      "value": "Quality based",
+      "note": "Rejected items must be replaced",
+      "source": {
+        "page": 13,
+        "clause": "4.5",
+        "title": "Quality Rejection",
+        "text": "Items not conforming to approved samples or specifications shall be rejected and replaced at bidder's cost."
+      }
+    }
+  ],
+  "technical": [
+    {
+      "requirement": "Office tables, chairs, storage units and visitor seating",
+      "source": {
+        "page": 5,
+        "clause": "1.1",
+        "title": "Scope of Supply",
+        "text": "The scope includes supply of office tables, ergonomic chairs, storage cabinets and visitor seating for government offices."
+      }
+    },
+    {
+      "requirement": "Catalogue and material details required",
+      "source": {
+        "page": 7,
+        "clause": "2.3",
+        "title": "Catalogue and Specifications",
+        "text": "The bidder shall submit catalogue, technical specifications and material details for all furniture items."
+      }
+    },
+    {
+      "requirement": "Sample approval before bulk supply",
+      "source": {
+        "page": 10,
+        "clause": "3.5",
+        "title": "Sample Approval",
+        "text": "Supply shall commence only after approval of sample items by the nominated inspection committee."
+      }
+    },
+    {
+      "requirement": "Delivery and installation at department locations",
+      "source": {
+        "page": 11,
+        "clause": "3.8",
+        "title": "Delivery and Installation",
+        "text": "The bidder shall deliver, assemble and install furniture at locations specified by the department."
+      }
+    },
+    {
+      "requirement": "Items subject to inspection and approval",
+      "source": {
+        "page": 12,
+        "clause": "4.1",
+        "title": "Inspection and Acceptance",
+        "text": "Supply shall be accepted only after inspection and approval by the department."
+      }
+    }
+  ],
+  "dates": [
+    {
+      "label": "Published Date",
+      "date": "14 June 2026",
+      "status": "done"
+    },
+    {
+      "label": "Sample Clarification Date",
+      "date": "22 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Last Submission Date",
+      "date": "05 July 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Technical Bid Opening",
+      "date": "06 July 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Sample Approval",
+      "date": "After work order",
+      "status": "unknown"
+    }
+  ],
+  "risks": [
+    {
+      "title": "Sample rejection risk",
+      "level": "Medium",
+      "explanation": "Bulk supply cannot start without sample approval.",
+      "source": {
+        "page": 10,
+        "clause": "3.5",
+        "title": "Sample Approval",
+        "text": "Supply shall commence only after approval of sample items by the nominated inspection committee."
+      }
+    },
+    {
+      "title": "Payment after inspection",
+      "level": "Medium",
+      "explanation": "Payment will be released only after delivery, installation and acceptance.",
+      "source": {
+        "page": 12,
+        "clause": "4.2",
+        "title": "Payment Terms",
+        "text": "Payment shall be released only after delivery, installation, inspection and acceptance of furniture items."
+      }
+    },
+    {
+      "title": "Quality rejection",
+      "level": "Medium",
+      "explanation": "Non-conforming items must be replaced at bidder cost.",
+      "source": {
+        "page": 13,
+        "clause": "4.5",
+        "title": "Quality Rejection",
+        "text": "Items not conforming to approved samples or specifications shall be rejected and replaced at bidder's cost."
+      }
+    }
+  ],
+  "missingInformation": [
+    "Exact sample approval timeline is not specified",
+    "Approved material brands are not listed",
+    "Inspection committee composition is not mentioned",
+    "Penalty for delayed replacement is unclear"
+  ],
+  "departmentQuestions": [
+    "Will equivalent material specifications be accepted?",
+    "How many sample units are required before approval?",
+    "What is the inspection timeline after delivery?",
+    "Will payment be released item-wise or only after complete delivery?",
+    "Are installation floors and room numbers available before dispatch?"
+  ],
+  "proposalDraft": "Dear Sir/Madam,\n\nWe are pleased to submit our proposal for office furniture procurement for the Directorate of Higher Education against tender reference DHE/ADMIN/2026/077. We confirm that we have reviewed the eligibility criteria, technical requirements, financial terms, delivery obligations, and compliance documents mentioned in the tender.\n\nWe undertake to submit all required certificates, declarations, financial documents, and technical compliance details as part of the bid. We also confirm our ability to execute the work within the prescribed timeline subject to final award and work order.\n\nRegards,\nAuthorized Signatory"
+}

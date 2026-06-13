@@ -1,0 +1,391 @@
+{
+  "id": "road-repair-ward-12",
+  "snapshot": {
+    "title": "Road Repair Work for Ward 12",
+    "tenderId": "NMC/ROADS/2026/118",
+    "organization": "Nagpur Municipal Corporation",
+    "location": "Nagpur, Maharashtra",
+    "category": "Civil Works",
+    "estimatedValue": "₹78 Lakh",
+    "emdAmount": "₹1,56,000",
+    "submissionDeadline": "30 June 2026",
+    "contractDuration": "45 days plus defect liability period"
+  },
+  "decision": {
+    "shouldApply": "Maybe",
+    "recommendation": "Apply only if civil contractor registration, road work completion certificates, equipment availability, labour safety compliance, and EMD funds are ready.",
+    "overallFitScore": 64,
+    "riskLevel": "High",
+    "deadlineUrgency": "Medium",
+    "missingCriticalRequirements": 4
+  },
+  "scores": [
+    {
+      "label": "Overall Fit",
+      "value": 64,
+      "display": "64%"
+    },
+    {
+      "label": "Document Readiness",
+      "value": 61,
+      "display": "5/8"
+    },
+    {
+      "label": "Eligibility Match",
+      "value": 58,
+      "display": "58%"
+    },
+    {
+      "label": "Financial Readiness",
+      "value": 74,
+      "display": "74%"
+    },
+    {
+      "label": "Technical Match",
+      "value": 68,
+      "display": "68%"
+    },
+    {
+      "label": "Risk Safety",
+      "value": 45,
+      "display": "45%"
+    }
+  ],
+  "beforeApply": [
+    {
+      "label": "Civil contractor registration is valid",
+      "status": "missing"
+    },
+    {
+      "label": "GST and PAN documents are ready",
+      "status": "warning"
+    },
+    {
+      "label": "Machinery and equipment list is available",
+      "status": "warning"
+    },
+    {
+      "label": "Labour safety compliance documents are available",
+      "status": "missing"
+    },
+    {
+      "label": "45-day completion timeline is feasible",
+      "status": "warning"
+    },
+    {
+      "label": "Defect liability obligation is understood",
+      "status": "ready"
+    }
+  ],
+  "documents": [
+    {
+      "name": "Civil Contractor Registration Certificate",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 11,
+        "clause": "3.1",
+        "title": "Contractor Registration",
+        "text": "The bidder must be registered as a civil contractor with competent authority."
+      }
+    },
+    {
+      "name": "GST Certificate and PAN Copy",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 8,
+        "clause": "2.2",
+        "title": "Statutory Documents",
+        "text": "GST registration certificate and PAN copy shall be enclosed with the technical bid."
+      }
+    },
+    {
+      "name": "EMD Payment Proof",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 14,
+        "clause": "5.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹1,56,000 shall be paid online before bid submission."
+      }
+    },
+    {
+      "name": "Similar Civil Work Completion Certificates",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 12,
+        "clause": "3.4",
+        "title": "Similar Work Experience",
+        "text": "The bidder shall have successfully completed similar road repair or resurfacing works during the last five years."
+      }
+    },
+    {
+      "name": "Machinery and Equipment Ownership / Lease Proof",
+      "priority": "Required",
+      "status": "Not Verified",
+      "source": {
+        "page": 13,
+        "clause": "4.2",
+        "title": "Machinery Requirement",
+        "text": "The bidder shall submit details of road roller, bitumen sprayer, cutting machine and other required machinery owned or leased."
+      }
+    },
+    {
+      "name": "Labour Safety Compliance Undertaking",
+      "priority": "Required",
+      "status": "Missing",
+      "source": {
+        "page": 15,
+        "clause": "5.8",
+        "title": "Labour Safety",
+        "text": "The contractor shall comply with applicable labour laws, safety norms and provide protective equipment to workers at site."
+      }
+    }
+  ],
+  "eligibility": [
+    {
+      "title": "Registered civil contractor",
+      "text": "The bidder must be registered as a civil contractor with competent authority.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 11,
+        "clause": "3.1",
+        "title": "Contractor Registration",
+        "text": "The bidder must be registered as a civil contractor with competent authority."
+      }
+    },
+    {
+      "title": "Similar road repair experience",
+      "text": "The bidder shall have successfully completed similar road repair or resurfacing works during the last five years.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 12,
+        "clause": "3.4",
+        "title": "Similar Work Experience",
+        "text": "The bidder shall have successfully completed similar road repair or resurfacing works during the last five years."
+      }
+    },
+    {
+      "title": "Machinery availability",
+      "text": "The bidder must submit ownership or lease proof for required road repair machinery.",
+      "impact": "Medium",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 13,
+        "clause": "4.2",
+        "title": "Machinery Requirement",
+        "text": "The bidder shall submit details of road roller, bitumen sprayer, cutting machine and other required machinery owned or leased."
+      }
+    },
+    {
+      "title": "Labour safety compliance",
+      "text": "The contractor must comply with labour laws and site safety norms.",
+      "impact": "High",
+      "userStatus": "Not Verified",
+      "source": {
+        "page": 15,
+        "clause": "5.8",
+        "title": "Labour Safety",
+        "text": "The contractor shall comply with applicable labour laws, safety norms and provide protective equipment to workers at site."
+      }
+    }
+  ],
+  "financials": [
+    {
+      "label": "Tender Value",
+      "value": "₹78 Lakh",
+      "note": "Estimated civil works value",
+      "source": {
+        "page": 4,
+        "clause": "1.2",
+        "title": "Estimated Work Value",
+        "text": "The estimated cost of road repair work is ₹78 lakh inclusive of material, labour, machinery and taxes."
+      }
+    },
+    {
+      "label": "EMD",
+      "value": "₹1,56,000",
+      "note": "Online payment before submission",
+      "chartAmount": 156000,
+      "source": {
+        "page": 14,
+        "clause": "5.1",
+        "title": "Earnest Money Deposit",
+        "text": "Earnest Money Deposit of ₹1,56,000 shall be paid online before bid submission."
+      }
+    },
+    {
+      "label": "Retention Money",
+      "value": "5%",
+      "note": "Deducted from running bills",
+      "chartAmount": 390000,
+      "source": {
+        "page": 16,
+        "clause": "5.12",
+        "title": "Retention Money",
+        "text": "Retention money at 5% shall be deducted from contractor bills and released after defect liability obligations."
+      }
+    },
+    {
+      "label": "Defect Liability Period",
+      "value": "12 months",
+      "note": "Post-completion responsibility",
+      "source": {
+        "page": 18,
+        "clause": "7.4",
+        "title": "Defect Liability",
+        "text": "The contractor shall maintain repaired road stretches during defect liability period of twelve months after completion."
+      }
+    },
+    {
+      "label": "Delay Penalty",
+      "value": "As per LD clause",
+      "note": "For late completion",
+      "source": {
+        "page": 17,
+        "clause": "6.2",
+        "title": "Liquidated Damages",
+        "text": "Delay in completion shall attract liquidated damages as per tender conditions."
+      }
+    }
+  ],
+  "technical": [
+    {
+      "requirement": "Patch repair and resurfacing of Ward 12 internal roads",
+      "source": {
+        "page": 5,
+        "clause": "1.1",
+        "title": "Scope of Work",
+        "text": "The work includes pothole repair, surface dressing and resurfacing of identified internal roads in Ward 12."
+      }
+    },
+    {
+      "requirement": "Completion within 45 days from work order",
+      "source": {
+        "page": 6,
+        "clause": "1.4",
+        "title": "Completion Period",
+        "text": "The contractor shall complete the road repair work within 45 days from the date of work order."
+      }
+    },
+    {
+      "requirement": "Road roller, bitumen sprayer and cutting machine required",
+      "source": {
+        "page": 13,
+        "clause": "4.2",
+        "title": "Machinery Requirement",
+        "text": "The bidder shall submit details of road roller, bitumen sprayer, cutting machine and other required machinery owned or leased."
+      }
+    },
+    {
+      "requirement": "Labour safety gear and traffic barricading required",
+      "source": {
+        "page": 15,
+        "clause": "5.8",
+        "title": "Labour Safety",
+        "text": "The contractor shall comply with applicable labour laws, safety norms and provide protective equipment to workers at site."
+      }
+    },
+    {
+      "requirement": "Twelve-month defect liability period",
+      "source": {
+        "page": 18,
+        "clause": "7.4",
+        "title": "Defect Liability",
+        "text": "The contractor shall maintain repaired road stretches during defect liability period of twelve months after completion."
+      }
+    }
+  ],
+  "dates": [
+    {
+      "label": "Published Date",
+      "date": "12 June 2026",
+      "status": "done"
+    },
+    {
+      "label": "Site Visit",
+      "date": "18 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Last Submission Date",
+      "date": "30 June 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Technical Bid Opening",
+      "date": "01 July 2026",
+      "status": "upcoming"
+    },
+    {
+      "label": "Work Order",
+      "date": "To be announced",
+      "status": "unknown"
+    }
+  ],
+  "risks": [
+    {
+      "title": "Strict contractor registration requirement",
+      "level": "High",
+      "explanation": "Bid is likely to be rejected without valid civil contractor registration.",
+      "source": {
+        "page": 11,
+        "clause": "3.1",
+        "title": "Contractor Registration",
+        "text": "The bidder must be registered as a civil contractor with competent authority."
+      }
+    },
+    {
+      "title": "Monsoon execution risk",
+      "level": "High",
+      "explanation": "Road repair quality and completion timeline may be affected during rain.",
+      "source": {
+        "page": 6,
+        "clause": "1.4",
+        "title": "Completion Period",
+        "text": "The contractor shall complete the road repair work within 45 days from the date of work order."
+      }
+    },
+    {
+      "title": "Machinery proof requirement",
+      "level": "Medium",
+      "explanation": "Machinery ownership or lease documents must be submitted.",
+      "source": {
+        "page": 13,
+        "clause": "4.2",
+        "title": "Machinery Requirement",
+        "text": "The bidder shall submit details of road roller, bitumen sprayer, cutting machine and other required machinery owned or leased."
+      }
+    },
+    {
+      "title": "Penalty for delay",
+      "level": "High",
+      "explanation": "Delayed completion can attract liquidated damages.",
+      "source": {
+        "page": 17,
+        "clause": "6.2",
+        "title": "Liquidated Damages",
+        "text": "Delay in completion shall attract liquidated damages as per tender conditions."
+      }
+    }
+  ],
+  "missingInformation": [
+    "Exact liquidated damages percentage is not clearly summarized",
+    "Material grade acceptance test process needs clarification",
+    "Traffic diversion responsibility is not fully specified",
+    "Running bill payment schedule is unclear"
+  ],
+  "departmentQuestions": [
+    "Will equivalent registration from another municipal authority be accepted?",
+    "Who will provide traffic police permissions during execution?",
+    "What tests are required for material acceptance?",
+    "Can work timeline be extended for heavy rain days?",
+    "When will retention money be released?"
+  ],
+  "proposalDraft": "Dear Sir/Madam,\n\nWe are pleased to submit our proposal for road repair work for Ward 12 against tender reference NMC/ROADS/2026/118. We confirm that we have reviewed the eligibility criteria, technical requirements, financial terms, delivery obligations, and compliance documents mentioned in the tender.\n\nWe undertake to submit all required certificates, declarations, financial documents, and technical compliance details as part of the bid. We also confirm our ability to execute the work within the prescribed timeline subject to final award and work order.\n\nRegards,\nAuthorized Signatory"
+}
