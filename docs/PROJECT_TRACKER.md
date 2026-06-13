@@ -5,12 +5,15 @@
 - Frontend MVP uses static JSON tender data through repository and service layers.
 - Added FastAPI backend folder structure.
 - Added health, tender list, latest tender, tender detail, and upload placeholder endpoints.
+- Verified FastAPI backend local run with Uvicorn.
+- Added Postman API testing documentation for the current backend endpoints.
 - Added Supabase/PostgreSQL MVP schema for `tenders` and `uploads`.
 - Added seed data with `analysis_json` fields matching the current frontend schema.
 
 ## In Progress
 
 - Backend routes currently return mock responses.
+- Postman API testing is ready for manual screenshot capture and college submission evidence.
 - Supabase client is prepared but not wired into repository methods.
 
 ## Next
@@ -37,3 +40,4 @@
 ## Commit Log
 
 - 2026-06-13: Add FastAPI backend and database foundation.
+- 2026-06-13: Add Postman API testing guide.
