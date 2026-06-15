@@ -68,8 +68,8 @@ export default function HistoryClient() {
 
       {hasLoaded && !isLoading && !error && history.length === 0 ? (
         <EmptyState
-          title="No tenders analyzed yet"
-          description="No tenders analyzed yet. Upload a tender to begin."
+          title="Your tender history is empty"
+          description="Uploaded and analyzed tenders will appear here."
           actionHref="/"
           actionLabel="Upload tender"
         />

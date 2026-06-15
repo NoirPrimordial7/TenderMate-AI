@@ -6,6 +6,13 @@ This guide prepares the current MVP for deployment with:
 - FastAPI backend on Render or Railway
 - Supabase PostgreSQL database
 
+Current production URLs:
+
+- Frontend: https://tender-mate-ai.vercel.app
+- Backend: https://tendermate-ai-backend.onrender.com
+- Backend API: https://tendermate-ai-backend.onrender.com/api/v1
+- Backend health: https://tendermate-ai-backend.onrender.com/health
+
 Do not commit `.env.local`, `backend/.env`, Supabase keys, JWT secrets, virtual environments, cache folders, or runtime export files.
 
 ## A. Supabase
@@ -45,7 +52,7 @@ Production environment variables:
 
 ```text
 PROJECT_NAME=TenderMate AI Backend
-FRONTEND_URL=https://your-vercel-app.vercel.app
+FRONTEND_URL=https://tender-mate-ai.vercel.app
 CORS_ORIGINS=
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
@@ -76,13 +83,13 @@ Vercel settings:
 - Environment variable:
 
 ```text
-NEXT_PUBLIC_API_BASE_URL=https://your-backend-url/api/v1
+NEXT_PUBLIC_API_BASE_URL=https://tendermate-ai-backend.onrender.com/api/v1
 ```
 
 Deployment order:
 
 1. Deploy the backend first.
-2. Open `https://your-backend-url/health` and confirm it returns `status: ok`.
+2. Open `https://tendermate-ai-backend.onrender.com/health` and confirm it returns `status: ok`.
 3. Set `NEXT_PUBLIC_API_BASE_URL` in Vercel to the backend URL plus `/api/v1`.
 4. Deploy the frontend.
 5. Copy the deployed frontend URL.
@@ -104,6 +111,9 @@ The frontend only receives `NEXT_PUBLIC_API_BASE_URL`. Supabase keys, service ro
 - Protected APIs without a token return `401 Unauthorized`.
 - Protected APIs with a valid token work.
 - Tender history only shows records for the logged-in user.
+- Supabase `app_users` contains the new user.
+- Browser console has no CORS errors.
+- No secrets are committed.
 
 ## E. Common Errors
 

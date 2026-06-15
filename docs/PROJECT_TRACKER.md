@@ -12,18 +12,20 @@
 - Supabase project setup was completed manually.
 - Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
 - Frontend JWT integration completed for signup, login, logout, protected pages, `/auth/me`, tender history, and latest tender reads.
+- Backend deployment prep completed.
+- Backend deployment completed.
+- Frontend deployment completed.
 
 ## In Progress
 
-- Deployment preparation is in progress.
+- Production MVP polish is in progress.
 
 ## Next
 
-- Deploy backend, then frontend.
-- Postman test APIs using real Supabase data.
-- Replace upload simulation with real protected PDF upload storage.
-- Add PDF extraction pipeline after real upload is stable.
-- Add Gemini analysis pipeline after PDF extraction is stable.
+- Real PDF upload with Supabase Storage.
+- PDF text extraction.
+- Gemini tender analysis.
+- Persist extracted tender analyses for authenticated frontend users.
 - Persist extracted tender analyses for authenticated frontend users.
 
 ## Blocked

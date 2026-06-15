@@ -58,13 +58,13 @@ function getErrorMessage(status: number, body: unknown) {
     if (typeof detail === "string") return detail;
   }
 
-  if (status === 0) return "Backend unavailable. Please make sure the FastAPI server is running.";
+  if (status === 0) return "Backend unavailable or blocked by a network/CORS issue. Please check the API URL and try again.";
   if (status === 401) return "Your session has expired. Please sign in again.";
   if (status === 403) return "You do not have permission to perform this action.";
   if (status === 404) return "The requested resource was not found.";
   if (status === 409) return "This record already exists.";
   if (status === 422) return "Please check the form fields and try again.";
-  if (status >= 500) return "The backend is temporarily unavailable.";
+  if (status >= 500) return "The backend is temporarily unavailable. Please try again in a moment.";
 
   return "The request could not be completed.";
 }

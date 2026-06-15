@@ -58,15 +58,15 @@ export default function TenderDetailClient({ id }: { id: string }) {
       ) : null}
 
       {hasLoaded && !isLoading && error ? (
-        <EmptyState title="Could not load tender" description={error} actionHref="/history" actionLabel="View history" />
+        <EmptyState title="Tender not found" description={error} actionHref="/history" actionLabel="Back to history" />
       ) : null}
 
       {hasLoaded && !isLoading && !error && !analysis ? (
         <EmptyState
-          title="Tender analysis not found"
-          description="This tender was not found for your account, or it does not have analysis data yet."
+          title="Tender not found"
+          description="This tender does not exist, does not belong to your account, or does not have analysis data yet."
           actionHref="/history"
-          actionLabel="View history"
+          actionLabel="Back to history"
         />
       ) : null}
 

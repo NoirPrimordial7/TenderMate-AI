@@ -9,15 +9,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import { isApiError, toFriendlyApiMessage } from "@/services/api";
 
 function getNextPath() {
-  if (typeof window === "undefined") return "/dashboard";
-  return new URLSearchParams(window.location.search).get("next") || "/dashboard";
+  return "/dashboard";
 }
 
 function signupErrorMessage(error: unknown) {
   if (isApiError(error)) {
     if (error.status === 409) return "Email already exists. Try logging in instead.";
     if (error.status === 422) return "Please check the form fields and try again.";
-    if (error.status === 0 || error.status >= 500) return "Backend unavailable. Please try again after FastAPI is running.";
+    if (error.status === 0) return "Backend unavailable or blocked by a network/CORS issue. Please try again.";
+    if (error.status >= 500) return "Backend unavailable. Please try again in a moment.";
   }
 
   return toFriendlyApiMessage(error, "Signup failed. Please try again.");
@@ -119,7 +119,7 @@ export default function SignupPage() {
               className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <UserPlus className="h-4 w-4" aria-hidden="true" />}
-              Create account
+              {isSubmitting ? "Creating account..." : "Create account"}
             </button>
           </form>
 

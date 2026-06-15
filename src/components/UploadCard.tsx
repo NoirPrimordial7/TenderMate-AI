@@ -3,7 +3,7 @@
 import { ChangeEvent, DragEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, LogIn, Upload } from "lucide-react";
+import { FileText, LayoutDashboard, Loader2, LogIn, Upload, UserPlus } from "lucide-react";
 import LoadingState from "@/components/LoadingState";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -56,36 +56,47 @@ export default function UploadCard() {
 
   if (!isAuthenticated) {
     return (
-      <section className="card w-full max-w-xl p-6 sm:p-8" aria-labelledby="upload-login-title">
+      <section className="card w-full max-w-2xl p-6 sm:p-8" aria-labelledby="upload-login-title">
         <div className="mb-6">
-          <p className="muted-label">Tender PDF analysis</p>
+          <p className="muted-label">TenderMate AI</p>
           <h1 id="upload-login-title" className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">
-            Login required
+            AI-powered tender analysis for MSMEs
           </h1>
           <p className="mt-3 text-sm leading-6 text-gray-600">
-            Sign in before uploading so your tender history stays linked to your account.
+            Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision before
+            spending time on a bid.
           </p>
         </div>
-        <Link
-          href="/login?next=/"
-          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
-        >
-          <LogIn className="h-4 w-4" aria-hidden="true" />
-          Login to upload
-        </Link>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/login"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
+          >
+            <LogIn className="h-4 w-4" aria-hidden="true" />
+            Login to start
+          </Link>
+          <Link
+            href="/signup"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-950 hover:bg-gray-50"
+          >
+            <UserPlus className="h-4 w-4" aria-hidden="true" />
+            Sign up to start
+          </Link>
+        </div>
       </section>
     );
   }
 
   return (
-    <section className="card w-full max-w-xl p-6 sm:p-8" aria-labelledby="upload-title">
+    <section className="card w-full max-w-2xl p-6 sm:p-8" aria-labelledby="upload-title">
       <div className="mb-6">
-        <p className="muted-label">Tender PDF analysis</p>
+        <p className="muted-label">TenderMate AI</p>
         <h1 id="upload-title" className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">
-          Upload tender document
+          AI-powered tender analysis for MSMEs
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Upload a government tender PDF to get eligibility, documents, risks, financial terms, and source references.
+          Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision. This MVP
+          keeps your tender history linked to your account.
         </p>
       </div>
 
@@ -125,8 +136,15 @@ export default function UploadCard() {
         className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
       >
         {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-        {isAnalyzing ? "Analyzing tender..." : "Analyze Tender"}
+        {isAnalyzing ? "Analyzing tender..." : "Upload tender"}
       </button>
+      <Link
+        href="/dashboard"
+        className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-950 hover:bg-gray-50"
+      >
+        <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
+        Go to dashboard
+      </Link>
       {isAnalyzing ? <LoadingState message={loadingMessages[loadingStep]} /> : null}
     </section>
   );
