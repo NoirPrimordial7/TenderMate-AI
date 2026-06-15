@@ -8,7 +8,13 @@ const riskClass = {
   Low: "bg-gray-100 text-gray-700 ring-gray-200"
 };
 
-export default function HistoryTable({ items }: { items: HistoryTender[] }) {
+export default function HistoryTable({
+  items,
+  description = "Previously analyzed tender PDFs using development mock data."
+}: {
+  items: HistoryTender[];
+  description?: string;
+}) {
   return (
     <section className="card overflow-hidden" aria-labelledby="history-title">
       <div className="border-b border-gray-200 p-5">
@@ -16,7 +22,7 @@ export default function HistoryTable({ items }: { items: HistoryTender[] }) {
         <h1 id="history-title" className="mt-2 text-2xl font-semibold tracking-tight text-gray-950">
           Tender history
         </h1>
-        <p className="mt-2 text-sm text-gray-600">Previously analyzed tender PDFs using mock data.</p>
+        <p className="mt-2 text-sm text-gray-600">{description}</p>
       </div>
       <div className="hidden grid-cols-[1.3fr_1fr_0.8fr_0.7fr_0.7fr_0.6fr_0.5fr_0.45fr_0.7fr] gap-3 bg-gray-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 lg:grid">
         <span>Tender title</span>

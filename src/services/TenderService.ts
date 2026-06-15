@@ -1,4 +1,5 @@
 import { HistoryTender } from "@/domain/tender/types";
+import { backendTenderRepository, BackendTenderRepository } from "@/repositories/BackendTenderRepository";
 import { ITenderRepository } from "@/repositories/interfaces/ITenderRepository";
 import { tenderRepository } from "@/repositories/TenderRepository";
 import {
@@ -17,7 +18,10 @@ const historyMeta: Pick<HistoryTender, "uploadDate" | "status">[] = [
 ];
 
 export class TenderService {
-  constructor(private readonly repository: ITenderRepository = tenderRepository) {}
+  constructor(
+    private readonly repository: ITenderRepository = tenderRepository,
+    private readonly backendRepository: BackendTenderRepository = backendTenderRepository
+  ) {}
 
   getDashboardTender() {
     return this.repository.getLatestTender();
@@ -27,6 +31,37 @@ export class TenderService {
     return this.repository.getAllTenders().map((tender, index) =>
       toHistoryTender(tender, historyMeta[index] ?? { uploadDate: "Not available", status: "Analyzed" })
     );
+  }
+
+  async getBackendDashboardTender(options: { allowMockFallback?: boolean } = {}) {
+    try {
+      return await this.backendRepository.getLatestTender();
+    } catch (error) {
+      // Development-only escape hatch. It is intentionally opt-in so authenticated pages do not
+      // show another user's static data when the protected API is unavailable.
+      if (options.allowMockFallback) return this.getDashboardTender();
+      throw error;
+    }
+  }
+
+  async getBackendTenderHistory(options: { allowMockFallback?: boolean } = {}) {
+    try {
+      return await this.backendRepository.getAllTenders();
+    } catch (error) {
+      // Development-only escape hatch. Keep disabled in normal auth flows to avoid mixing accounts.
+      if (options.allowMockFallback) return this.getTenderHistory();
+      throw error;
+    }
+  }
+
+  async getBackendTenderDetails(id: string, options: { allowMockFallback?: boolean } = {}) {
+    try {
+      return await this.backendRepository.getTenderById(id);
+    } catch (error) {
+      // Development-only escape hatch for working on UI without the backend running.
+      if (options.allowMockFallback) return this.getTenderDetails(id) ?? null;
+      throw error;
+    }
   }
 
   getTenderDetails(id: string) {

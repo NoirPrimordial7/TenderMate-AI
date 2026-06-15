@@ -11,20 +11,19 @@
 - Added seed data with `analysis_json` fields matching the current frontend schema.
 - Supabase project setup was completed manually.
 - Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
+- Frontend JWT auth integration is wired for signup, login, logout, protected pages, `/auth/me`, tender history, and latest tender reads.
 
 ## In Progress
 
-- Auth + JWT + user-linked tender history is the current phase.
-- Tender and upload APIs are being scoped to the logged-in user profile.
+- Real PDF upload and extraction is the current phase.
 
 ## Next
 
 - Postman test APIs using real Supabase data.
-- Add frontend login/signup integration.
-- Add real file upload storage flow.
-- Add PDF extraction pipeline.
+- Replace upload simulation with real protected PDF upload storage.
+- Add PDF extraction pipeline after real upload is stable.
 - Add Gemini analysis pipeline after PDF extraction is stable.
-- Add frontend API repository implementation behind the existing frontend repository interface.
+- Persist extracted tender analyses for authenticated frontend users.
 
 ## Blocked
 
@@ -40,8 +39,11 @@
 - Use JWT bearer tokens to identify the current backend user.
 - Store tender history by `tenders.user_id`; uploads also carry `uploads.user_id`.
 - Do not add Gemini or PDF extraction in this foundation step.
+- Store the frontend JWT in `localStorage` for the MVP and attach it as `Authorization: Bearer <token>`.
+- Keep static frontend tender data as a development fallback only; authenticated pages should prefer the protected FastAPI API.
 
 ## Commit Log
 
 - 2026-06-13: Add FastAPI backend and database foundation.
 - 2026-06-13: Add Postman API testing guide.
+- 2026-06-15: Connect frontend to JWT authentication.

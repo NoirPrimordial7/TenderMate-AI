@@ -1,17 +1,20 @@
 "use client";
 
 import { ChangeEvent, DragEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { FileText, Loader2, Upload } from "lucide-react";
+import { FileText, Loader2, LogIn, Upload } from "lucide-react";
 import LoadingState from "@/components/LoadingState";
+import { useAuth } from "@/contexts/AuthContext";
 
 const loadingMessages = ["Extracting PDF...", "Analyzing eligibility...", "Finding risks...", "Preparing dashboard..."];
 
 export default function UploadCard() {
   const router = useRouter();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const [fileName, setFileName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
 
   const setFile = (file?: File) => {
@@ -30,13 +33,49 @@ export default function UploadCard() {
   };
 
   const analyzeTender = () => {
-    setIsLoading(true);
+    if (!isAuthenticated) {
+      router.push("/login?next=/");
+      return;
+    }
+
+    setIsAnalyzing(true);
     setLoadingStep(0);
     loadingMessages.forEach((_, index) => {
       window.setTimeout(() => setLoadingStep(index), index * 650);
     });
     window.setTimeout(() => router.push("/dashboard"), loadingMessages.length * 650 + 250);
   };
+
+  if (isAuthLoading) {
+    return (
+      <section className="card w-full max-w-xl p-6 sm:p-8" aria-live="polite">
+        <p className="text-sm font-semibold text-gray-950">Checking your session...</p>
+      </section>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <section className="card w-full max-w-xl p-6 sm:p-8" aria-labelledby="upload-login-title">
+        <div className="mb-6">
+          <p className="muted-label">Tender PDF analysis</p>
+          <h1 id="upload-login-title" className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">
+            Login required
+          </h1>
+          <p className="mt-3 text-sm leading-6 text-gray-600">
+            Sign in before uploading so your tender history stays linked to your account.
+          </p>
+        </div>
+        <Link
+          href="/login?next=/"
+          className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
+        >
+          <LogIn className="h-4 w-4" aria-hidden="true" />
+          Login to upload
+        </Link>
+      </section>
+    );
+  }
 
   return (
     <section className="card w-full max-w-xl p-6 sm:p-8" aria-labelledby="upload-title">
@@ -82,13 +121,13 @@ export default function UploadCard() {
       <button
         type="button"
         onClick={analyzeTender}
-        disabled={!fileName || isLoading}
+        disabled={!fileName || isAnalyzing}
         className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
       >
-        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-        {isLoading ? "Analyzing tender..." : "Analyze Tender"}
+        {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
+        {isAnalyzing ? "Analyzing tender..." : "Analyze Tender"}
       </button>
-      {isLoading ? <LoadingState message={loadingMessages[loadingStep]} /> : null}
+      {isAnalyzing ? <LoadingState message={loadingMessages[loadingStep]} /> : null}
     </section>
   );
 }
