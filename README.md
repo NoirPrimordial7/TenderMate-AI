@@ -25,6 +25,10 @@ Live URLs:
 - Free trial foundation with 5 tender AI analyses per new user
 - Pricing page and upgrade-required UI
 - Billing usage/plans/checkout placeholder API
+- Rate limits for auth, upload, and billing APIs
+- Daily upload quotas for placeholder tender uploads
+- Failed-login account lockout
+- Audit logs for auth, upload, and billing events
 - Production CORS configuration through `FRONTEND_URL` and `CORS_ORIGINS`
 - Deployment guide and production testing checklist
 
@@ -36,12 +40,20 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 ## Planned Next
 
-- Security rate limiting
 - Real PDF upload with Supabase Storage
 - PDF text extraction
 - Gemini-powered tender analysis
 - Razorpay payment integration
 - Persist generated analysis reports to user history
+
+## Security Highlights
+
+- APIs use JWT bearer authentication.
+- Tender history and upload metadata are scoped to the logged-in user.
+- Every user receives 5 free analysis credits.
+- Auth, upload, and billing endpoints have MVP in-memory rate limits.
+- Placeholder PDF uploads are capped at 5 per user per day.
+- Security-sensitive events are recorded in `audit_logs`.
 
 ## Local Setup
 

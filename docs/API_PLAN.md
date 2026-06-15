@@ -12,11 +12,22 @@ Creates an `app_users` row in Supabase, hashes the password with Argon2, and ret
 
 The Next.js signup page calls this endpoint through `NEXT_PUBLIC_API_BASE_URL`, stores the returned access token in browser `localStorage` for the MVP, and then loads protected frontend routes with `Authorization: Bearer <token>`.
 
+Rate limit: 5 requests/hour per IP.
+
 ### `POST /api/v1/auth/login`
 
 Verifies email and password for an active user and returns a JWT access token plus the user profile.
 
 The Next.js login page stores the returned token and user profile client-side for the MVP. Real secrets must not be committed; local API configuration belongs in ignored `.env.local` files.
+
+Rate limit: 10 requests/15 minutes per IP.
+
+Failed login protection:
+
+- Failed password attempts increment `app_users.failed_login_count`.
+- After 5 failed attempts, the account is locked for 15 minutes.
+- Successful login resets `failed_login_count`, clears `locked_until`, and sets `last_login_at`.
+- Locked accounts return `423 Locked` with `Account temporarily locked due to multiple failed login attempts.`
 
 ### `GET /api/v1/auth/me`
 
@@ -27,6 +38,8 @@ The frontend `AuthProvider` calls this endpoint on app load when a token exists.
 - `free_analysis_credits`
 - `plan_name`
 - `subscription_status`
+
+Rate limit: 120 requests/minute per user, with an IP-based guard for missing or invalid token requests.
 
 ### `GET /api/v1/tenders`
 
@@ -48,6 +61,18 @@ Protected endpoint. Returns one tender by UUID only when it belongs to the curre
 
 Protected endpoint. Creates placeholder upload metadata linked to the current JWT user. It accepts request metadata for now but does not store files, extract PDFs, or run AI.
 
+Rate limit: 10 requests/hour per user.
+
+Daily quota: 5 placeholder PDF uploads per user per UTC day. On success, the backend records a `pdf_upload` usage event and a `tender_upload_placeholder` audit log. If the quota is exceeded, the endpoint returns:
+
+```json
+{
+  "detail": "Daily upload limit reached. Please try again tomorrow."
+}
+```
+
+with HTTP status `429 Too Many Requests`.
+
 ### `GET /api/v1/billing/usage`
 
 Protected endpoint. Returns the current user's trial and usage state:
@@ -58,6 +83,8 @@ Protected endpoint. Returns the current user's trial and usage state:
 - `can_run_ai_analysis`
 - `usage_counts.analysis_completed`
 - `usage_counts.total_events`
+
+Rate limit: 120 requests/minute per user.
 
 ### `GET /api/v1/billing/plans`
 
@@ -81,6 +108,34 @@ Protected endpoint. Returns a placeholder response while live payments are disab
 ```
 
 This endpoint must not connect to Razorpay until the payment integration task is started.
+
+Rate limit: 5 requests/hour per user.
+
+## Common Security Responses
+
+### `401 Unauthorized`
+
+Used for missing, invalid, or expired bearer tokens.
+
+### `403 Forbidden`
+
+Used for inactive user accounts.
+
+### `423 Locked`
+
+Used when an account is temporarily locked after repeated failed login attempts.
+
+### `429 Too Many Requests`
+
+Used for endpoint rate limits and user quota limits.
+
+Generic rate-limit response:
+
+```json
+{
+  "detail": "Too many requests. Please try again later."
+}
+```
 
 ## Future Endpoints
 

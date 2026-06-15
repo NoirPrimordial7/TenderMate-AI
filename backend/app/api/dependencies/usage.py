@@ -7,6 +7,7 @@ from app.services.usage_service import UsageService, get_usage_service
 ANALYSIS_LIMIT_REACHED_MESSAGE = (
     "Free analysis limit reached. Please upgrade to continue."
 )
+SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again in a moment."
 
 
 def require_analysis_credit(
@@ -24,7 +25,7 @@ def require_analysis_credit(
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
+            detail=SERVICE_UNAVAILABLE_MESSAGE,
         ) from exc
 
     return current_user
