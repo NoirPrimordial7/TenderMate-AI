@@ -60,6 +60,7 @@ function getErrorMessage(status: number, body: unknown) {
 
   if (status === 0) return "Backend unavailable or blocked by a network/CORS issue. Please check the API URL and try again.";
   if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 402) return "Free analysis limit reached. Please upgrade to continue.";
   if (status === 403) return "You do not have permission to perform this action.";
   if (status === 404) return "The requested resource was not found.";
   if (status === 409) return "This record already exists.";
@@ -71,6 +72,10 @@ function getErrorMessage(status: number, body: unknown) {
 
 export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
+}
+
+export function isPaymentRequiredError(error: unknown): error is ApiError {
+  return isApiError(error) && error.status === 402;
 }
 
 export function toFriendlyApiMessage(error: unknown, fallback: string) {

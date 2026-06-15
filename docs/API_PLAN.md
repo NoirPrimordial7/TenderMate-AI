@@ -22,7 +22,11 @@ The Next.js login page stores the returned token and user profile client-side fo
 
 Protected endpoint. Returns the current user identified by `Authorization: Bearer <token>`.
 
-The frontend `AuthProvider` calls this endpoint on app load when a token exists. Invalid or expired tokens clear local auth state.
+The frontend `AuthProvider` calls this endpoint on app load when a token exists. Invalid or expired tokens clear local auth state. The response includes trial and billing fields:
+
+- `free_analysis_credits`
+- `plan_name`
+- `subscription_status`
 
 ### `GET /api/v1/tenders`
 
@@ -44,6 +48,40 @@ Protected endpoint. Returns one tender by UUID only when it belongs to the curre
 
 Protected endpoint. Creates placeholder upload metadata linked to the current JWT user. It accepts request metadata for now but does not store files, extract PDFs, or run AI.
 
+### `GET /api/v1/billing/usage`
+
+Protected endpoint. Returns the current user's trial and usage state:
+
+- `free_analysis_credits`
+- `plan_name`
+- `subscription_status`
+- `can_run_ai_analysis`
+- `usage_counts.analysis_completed`
+- `usage_counts.total_events`
+
+### `GET /api/v1/billing/plans`
+
+Protected endpoint. Returns static MVP plan metadata:
+
+- Free: 5 analyses included, ₹0
+- Starter: 25 analyses/month, ₹199/month, coming soon
+- Pro: 100 analyses/month, ₹499/month, coming soon
+- Business: 300 analyses/month, ₹999/month, coming soon
+
+### `POST /api/v1/billing/create-checkout`
+
+Protected endpoint. Returns a placeholder response while live payments are disabled:
+
+```json
+{
+  "message": "Payments are coming soon. Your free trial is active.",
+  "payments_enabled": false,
+  "checkout_url": null
+}
+```
+
+This endpoint must not connect to Razorpay until the payment integration task is started.
+
 ## Future Endpoints
 
 ### PDF Extraction
@@ -59,6 +97,18 @@ Purpose: extract text from an uploaded PDF and expose extraction status/results.
 - `GET /api/v1/tenders/{id}/analysis`
 
 Purpose: run AI analysis after extraction and return frontend-compatible `analysis_json`.
+
+The future analyze endpoint should depend on `require_analysis_credit`. When the user has no free credits and no active subscription, it should return:
+
+```json
+{
+  "detail": "Free analysis limit reached. Please upgrade to continue."
+}
+```
+
+with HTTP status `402 Payment Required`.
+
+The endpoint must call `consume_analysis_credit(user_id, tender_id)` only after PDF extraction, Gemini analysis, and persistence have succeeded. Failed analysis attempts must not deduct trial credits.
 
 ### Upload Storage
 

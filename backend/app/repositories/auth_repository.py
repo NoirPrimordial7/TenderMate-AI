@@ -3,7 +3,19 @@ from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
 
-USER_COLUMNS = "id,full_name,email,password_hash,role,is_active,created_at,updated_at"
+USER_COLUMNS = (
+    "id,"
+    "full_name,"
+    "email,"
+    "password_hash,"
+    "role,"
+    "is_active,"
+    "free_analysis_credits,"
+    "plan_name,"
+    "subscription_status,"
+    "created_at,"
+    "updated_at"
+)
 
 
 class AuthRepository:
@@ -47,6 +59,9 @@ class AuthRepository:
                     "full_name": full_name,
                     "email": email,
                     "password_hash": password_hash,
+                    "free_analysis_credits": 5,
+                    "plan_name": "free",
+                    "subscription_status": "trial",
                 }
             ),
         )

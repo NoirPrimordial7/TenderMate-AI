@@ -15,6 +15,10 @@ export default function DashboardClient() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const hasUsageFields = typeof user?.free_analysis_credits === "number";
+  const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
+  const displayCredits = hasUsageFields ? freeCredits : 5;
+  const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -53,9 +57,21 @@ export default function DashboardClient() {
   return (
     <ProtectedRoute>
       {user ? (
-        <div className="mb-5 rounded-lg border border-gray-200 bg-white px-5 py-4">
-          <p className="text-sm text-gray-600">Logged in as</p>
-          <p className="mt-1 font-semibold text-gray-950">{user.full_name || user.email}</p>
+        <div className="mb-5 grid gap-4 rounded-lg border border-gray-200 bg-white px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div>
+            <p className="text-sm text-gray-600">Logged in as</p>
+            <p className="mt-1 font-semibold text-gray-950">{user.full_name || user.email}</p>
+          </div>
+          <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+            <p className="font-semibold text-gray-950">
+              {hasUsageFields && freeCredits === 0 && !hasActiveSubscription
+                ? "Upgrade required"
+                : `Free analyses left: ${displayCredits}`}
+            </p>
+            <p className="mt-1 text-xs capitalize text-gray-500">
+              {user.plan_name ?? "free"} plan - {user.subscription_status ?? "trial"}
+            </p>
+          </div>
         </div>
       ) : null}
 

@@ -15,17 +15,21 @@
 - Backend deployment prep completed.
 - Backend deployment completed.
 - Frontend deployment completed.
+- Trial and billing foundation completed with 5 free AI analysis credits per user.
+- Added billing usage/plans/checkout placeholder endpoints.
+- Added frontend pricing page, trial usage badge, and upgrade-required UI.
 
 ## In Progress
 
-- Production MVP polish is in progress.
+- No active blockers for the trial/billing foundation branch.
 
 ## Next
 
+- Security rate limiting.
 - Real PDF upload with Supabase Storage.
 - PDF text extraction.
 - Gemini tender analysis.
-- Persist extracted tender analyses for authenticated frontend users.
+- Razorpay integration.
 - Persist extracted tender analyses for authenticated frontend users.
 
 ## Blocked
@@ -44,9 +48,13 @@
 - Do not add Gemini or PDF extraction in this foundation step.
 - Store the frontend JWT in `localStorage` for the MVP and attach it as `Authorization: Bearer <token>`.
 - Keep static frontend tender data as a development fallback only; authenticated pages should prefer the protected FastAPI API.
+- New users receive 5 free AI analysis credits by default.
+- Credits are deducted only after successful future AI analysis.
+- Live Razorpay payments are not enabled in the billing foundation branch.
 
 ## Commit Log
 
 - 2026-06-13: Add FastAPI backend and database foundation.
 - 2026-06-13: Add Postman API testing guide.
 - 2026-06-15: Connect frontend to JWT authentication.
+- 2026-06-15: Add trial billing and usage limits foundation.

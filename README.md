@@ -22,14 +22,25 @@ Live URLs:
 - Protected dashboard, history, upload, and tender detail flows
 - Supabase-backed tender reads scoped by logged-in user
 - Placeholder upload flow for MVP demos
+- Free trial foundation with 5 tender AI analyses per new user
+- Pricing page and upgrade-required UI
+- Billing usage/plans/checkout placeholder API
 - Production CORS configuration through `FRONTEND_URL` and `CORS_ORIGINS`
 - Deployment guide and production testing checklist
 
+## Trial and Payments
+
+Every new user starts with 5 free tender analyses. The pricing page shows Free, Starter, Pro, and Business plans.
+
+Payments are planned with Razorpay, but live payments are not enabled yet. The current implementation is a foundation only: it tracks trial credits, exposes billing endpoints, and returns a friendly coming-soon checkout response.
+
 ## Planned Next
 
+- Security rate limiting
 - Real PDF upload with Supabase Storage
 - PDF text extraction
 - Gemini-powered tender analysis
+- Razorpay payment integration
 - Persist generated analysis reports to user history
 
 ## Local Setup

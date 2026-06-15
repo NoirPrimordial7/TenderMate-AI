@@ -7,6 +7,9 @@ create table if not exists public.app_users (
   password_hash text not null,
   role text not null default 'msme_user',
   is_active boolean not null default true,
+  free_analysis_credits integer not null default 5,
+  plan_name text not null default 'free',
+  subscription_status text not null default 'trial',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -40,6 +43,37 @@ create table if not exists public.uploads (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_usage_events (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.app_users(id) on delete cascade,
+  event_type text not null,
+  resource_id uuid,
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.payments (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.app_users(id) on delete cascade,
+  provider text not null default 'manual',
+  provider_payment_id text,
+  provider_order_id text,
+  amount integer,
+  currency text not null default 'INR',
+  status text not null default 'pending',
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
+alter table public.app_users
+add column if not exists free_analysis_credits integer not null default 5;
+
+alter table public.app_users
+add column if not exists plan_name text not null default 'free';
+
+alter table public.app_users
+add column if not exists subscription_status text not null default 'trial';
+
 alter table public.tenders
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;
 
@@ -57,6 +91,11 @@ create index if not exists idx_tenders_analysis_json on public.tenders using gin
 create index if not exists idx_uploads_tender_id on public.uploads (tender_id);
 create index if not exists idx_uploads_user_id on public.uploads (user_id);
 create index if not exists idx_uploads_created_at on public.uploads (created_at desc);
+create index if not exists idx_usage_events_user_id on public.user_usage_events (user_id);
+create index if not exists idx_usage_events_type_created_at on public.user_usage_events (event_type, created_at desc);
+create index if not exists idx_usage_events_user_type_created_at on public.user_usage_events (user_id, event_type, created_at desc);
+create index if not exists idx_payments_user_id on public.payments (user_id);
+create index if not exists idx_payments_status_created_at on public.payments (status, created_at desc);
 
 create or replace function public.set_updated_at()
 returns trigger as $$
