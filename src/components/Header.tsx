@@ -1,11 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { FileSearch, History, LayoutDashboard, LogIn, LogOut, Upload, UserCircle, UserPlus } from "lucide-react";
+import { CreditCard, FileSearch, History, LayoutDashboard, LogIn, LogOut, Upload, UserCircle, UserPlus } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function Header() {
   const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const hasUsageFields = typeof user?.free_analysis_credits === "number";
+  const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
+  const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
+  const displayCredits = hasUsageFields ? freeCredits : 5;
+  const usageLabel =
+    hasUsageFields && !hasActiveSubscription && freeCredits === 0
+      ? "Upgrade required"
+      : `Free analyses left: ${displayCredits}`;
 
   return (
     <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 backdrop-blur">
@@ -38,8 +46,25 @@ export default function Header() {
             <History className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">History</span>
           </Link>
+          <Link
+            href="/pricing"
+            className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+          >
+            <CreditCard className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Pricing</span>
+          </Link>
           {!isLoading && isAuthenticated ? (
             <>
+              <Link
+                href="/pricing"
+                className={`ml-2 hidden h-9 items-center rounded-md border px-3 text-xs font-semibold lg:inline-flex ${
+                  hasUsageFields && !hasActiveSubscription && freeCredits === 0
+                    ? "border-amber-300 bg-amber-50 text-amber-800"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                }`}
+              >
+                {usageLabel}
+              </Link>
               <div className="ml-2 hidden max-w-52 items-center gap-2 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-left md:flex">
                 <UserCircle className="h-4 w-4 flex-none text-gray-600" aria-hidden="true" />
                 <div className="min-w-0">

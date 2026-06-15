@@ -21,6 +21,9 @@ class UserResponse(BaseModel):
     email: str
     role: str
     is_active: bool
+    free_analysis_credits: int
+    plan_name: str
+    subscription_status: str
     created_at: datetime | None = None
 
 

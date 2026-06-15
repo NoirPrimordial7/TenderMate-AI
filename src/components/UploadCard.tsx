@@ -5,17 +5,22 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FileText, LayoutDashboard, Loader2, LogIn, Upload, UserPlus } from "lucide-react";
 import LoadingState from "@/components/LoadingState";
+import UpgradeRequiredCard from "@/components/UpgradeRequiredCard";
 import { useAuth } from "@/contexts/AuthContext";
 
 const loadingMessages = ["Extracting PDF...", "Analyzing eligibility...", "Finding risks...", "Preparing dashboard..."];
 
 export default function UploadCard() {
   const router = useRouter();
-  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
   const [fileName, setFileName] = useState("");
   const [isDragging, setIsDragging] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [loadingStep, setLoadingStep] = useState(0);
+  const hasUsageFields = typeof user?.free_analysis_credits === "number";
+  const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
+  const displayCredits = hasUsageFields ? freeCredits : 5;
+  const hasAnalysisAccess = !hasUsageFields || freeCredits > 0 || user?.subscription_status?.toLowerCase() === "active";
 
   const setFile = (file?: File) => {
     if (!file) return;
@@ -87,6 +92,10 @@ export default function UploadCard() {
     );
   }
 
+  if (user && hasUsageFields && !hasAnalysisAccess) {
+    return <UpgradeRequiredCard className="w-full max-w-2xl" />;
+  }
+
   return (
     <section className="card w-full max-w-2xl p-6 sm:p-8" aria-labelledby="upload-title">
       <div className="mb-6">
@@ -97,6 +106,9 @@ export default function UploadCard() {
         <p className="mt-3 text-sm leading-6 text-gray-600">
           Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision. This MVP
           keeps your tender history linked to your account.
+        </p>
+        <p className="mt-3 inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
+          Free analyses left: {displayCredits}
         </p>
       </div>
 

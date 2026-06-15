@@ -4,6 +4,9 @@ export type AuthUser = {
   email: string;
   role: string;
   is_active: boolean;
+  free_analysis_credits: number;
+  plan_name: string;
+  subscription_status: string;
   created_at?: string | null;
 };
 

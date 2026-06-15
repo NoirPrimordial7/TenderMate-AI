@@ -8,6 +8,8 @@ The frontend now also has an auth-aware API client that reads `NEXT_PUBLIC_API_B
 
 `AuthProvider` owns client auth state. On app load it reads the stored token, calls `GET /api/v1/auth/me`, keeps the user when the token is valid, and clears auth when the token is invalid. Protected pages such as dashboard, history, and tender detail require a logged-in user before loading backend tender data.
 
+The auth user profile now carries the trial fields `free_analysis_credits`, `plan_name`, and `subscription_status`. The header and dashboard use these fields to show trial usage, and the pricing page calls the billing API when a user is logged in. Payments are not live yet; upgrade actions call a placeholder checkout endpoint.
+
 The frontend tender analysis schema is canonical for now. Backend `analysis_json` must keep the same field names currently used by the UI:
 
 - `id`
@@ -40,21 +42,27 @@ Tender read endpoints use the existing route -> service -> repository path. The 
 
 Authentication follows the same route -> service -> repository split. Auth routes call `AuthService`, which hashes passwords, verifies credentials, creates JWT access tokens, and uses `AuthRepository` as the Supabase `app_users` boundary.
 
+Trial and billing logic is handled by `UsageService`. It can summarize usage, check whether a user can run AI analysis, record usage events, and deduct one free analysis credit after a successful future AI analysis. The `require_analysis_credit` dependency is ready for the future Gemini endpoint and returns `402 Payment Required` when a user has no free credits and no active subscription.
+
 Frontend tender reads now go through a backend tender repository that adapts FastAPI `TenderResponse` records into the existing UI-friendly tender analysis and history shapes. Static JSON remains available for development, but authenticated frontend pages prefer the protected API.
 
 ## Database Role
 
 Supabase/PostgreSQL will store uploaded tender metadata and analysis results.
 
-The MVP database has three core tables:
+The MVP database has five core tables:
 
-- `app_users`: logged-in MSME user profiles and password hashes.
+- `app_users`: logged-in MSME user profiles, password hashes, free trial credits, plan name, and subscription status.
 - `tenders`: primary tender records and `analysis_json` payloads owned by `app_users`.
 - `uploads`: uploaded PDF metadata linked to a tender and the owning user.
+- `user_usage_events`: append-only usage events such as successful AI analyses.
+- `payments`: future payment records from manual or provider-backed checkout flows.
 
 The `analysis_json` column is `jsonb` so the current frontend analysis shape can be stored while the schema is still evolving.
 
 JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload placeholder metadata is also linked by `uploads.user_id`.
+
+Each new user starts with `free_analysis_credits = 5`, `plan_name = 'free'`, and `subscription_status = 'trial'`. A credit is deducted only when a future AI analysis succeeds. Failed analysis attempts must not call the credit consumption method. The payments table stores payment metadata only; card and bank details must never be stored.
 
 ## Deployment Architecture
 
@@ -82,9 +90,17 @@ The future pipeline should be added in stages:
 2. Extract text from the PDF.
 3. Store extracted text or extraction artifacts.
 4. Run Gemini analysis on extracted text.
-5. Persist frontend-compatible `analysis_json`.
-6. Replace the upload simulation with real protected PDF upload.
-7. Let authenticated frontend users view newly extracted analyses from the protected API.
+5. Gate analysis with `require_analysis_credit`.
+6. Persist frontend-compatible `analysis_json`.
+7. Call `consume_analysis_credit` only after the analysis has been saved successfully.
+8. Replace the upload simulation with real protected PDF upload.
+9. Let authenticated frontend users view newly extracted analyses from the protected API.
+
+## Future Payment Flow
+
+The current billing API is a foundation only. `GET /api/v1/billing/usage` returns the current trial state, `GET /api/v1/billing/plans` returns MVP plan metadata, and `POST /api/v1/billing/create-checkout` returns a friendly coming-soon response.
+
+When Razorpay is added later, the backend should create provider orders server-side, verify webhooks server-side, update `payments`, and then update `app_users.plan_name` and `app_users.subscription_status`. Provider secrets must remain in the backend environment and must never be exposed through `NEXT_PUBLIC_*` variables.
 
 ## Why FastAPI Is Used
 
