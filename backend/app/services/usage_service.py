@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -41,6 +42,18 @@ class UsageService:
 
     def can_run_ai_analysis(self, user_id: UUID) -> bool:
         return self._has_analysis_access(self._get_billing_user(user_id))
+
+    def count_usage_events(
+        self,
+        user_id: UUID,
+        event_type: str,
+        since_datetime: datetime,
+    ) -> int:
+        return self._count_usage_events(
+            user_id=user_id,
+            event_type=event_type,
+            since_datetime=since_datetime,
+        )
 
     def record_usage_event(
         self,
@@ -148,7 +161,12 @@ class UsageService:
 
         return rows[0]
 
-    def _count_usage_events(self, user_id: UUID, event_type: str | None = None) -> int:
+    def _count_usage_events(
+        self,
+        user_id: UUID,
+        event_type: str | None = None,
+        since_datetime: datetime | None = None,
+    ) -> int:
         query = (
             self._supabase_client.table("user_usage_events")
             .select("id", count="exact")
@@ -156,6 +174,8 @@ class UsageService:
         )
         if event_type is not None:
             query = query.eq("event_type", event_type)
+        if since_datetime is not None:
+            query = query.gte("created_at", since_datetime.isoformat())
 
         response = self._execute_query(
             "count usage events",

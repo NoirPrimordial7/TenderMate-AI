@@ -1,10 +1,12 @@
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.v1.routes import auth, billing, health, tenders, uploads
 from app.core.config import get_settings
 
 settings = get_settings()
+SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again in a moment."
 
 app = FastAPI(
     title=settings.project_name,
@@ -19,6 +21,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(RuntimeError)
+def runtime_error_handler(_request, _exc: RuntimeError) -> JSONResponse:
+    return JSONResponse(
+        status_code=503,
+        content={"detail": SERVICE_UNAVAILABLE_MESSAGE},
+    )
 
 
 @app.get("/")

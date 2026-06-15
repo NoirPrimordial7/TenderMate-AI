@@ -44,6 +44,13 @@ Authentication follows the same route -> service -> repository split. Auth route
 
 Trial and billing logic is handled by `UsageService`. It can summarize usage, check whether a user can run AI analysis, record usage events, and deduct one free analysis credit after a successful future AI analysis. The `require_analysis_credit` dependency is ready for the future Gemini endpoint and returns `402 Payment Required` when a user has no free credits and no active subscription.
 
+Security hardening now sits beside the route layer:
+
+- `RateLimitService` provides lightweight in-memory rate limiting for auth, billing, and upload endpoints. It is intentionally isolated behind a service/dependency boundary so Redis or Upstash can replace the store later.
+- Failed login protection tracks `failed_login_count`, `locked_until`, and `last_login_at` on `app_users`.
+- `record_audit_log` writes best-effort operational audit events to Supabase without blocking the main request when audit insertion fails.
+- Upload quota checks use `user_usage_events` before creating placeholder upload records.
+
 Frontend tender reads now go through a backend tender repository that adapts FastAPI `TenderResponse` records into the existing UI-friendly tender analysis and history shapes. Static JSON remains available for development, but authenticated frontend pages prefer the protected API.
 
 ## Database Role
@@ -57,12 +64,17 @@ The MVP database has five core tables:
 - `uploads`: uploaded PDF metadata linked to a tender and the owning user.
 - `user_usage_events`: append-only usage events such as successful AI analyses.
 - `payments`: future payment records from manual or provider-backed checkout flows.
+- `audit_logs`: security and operational audit trail for auth, upload, and billing actions.
 
 The `analysis_json` column is `jsonb` so the current frontend analysis shape can be stored while the schema is still evolving.
 
 JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload placeholder metadata is also linked by `uploads.user_id`.
 
 Each new user starts with `free_analysis_credits = 5`, `plan_name = 'free'`, and `subscription_status = 'trial'`. A credit is deducted only when a future AI analysis succeeds. Failed analysis attempts must not call the credit consumption method. The payments table stores payment metadata only; card and bank details must never be stored.
+
+Upload quotas and analysis credits are separate protections. The MVP allows at most 5 placeholder PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 5 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
+
+Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, upload placeholders, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, or provider secret data.
 
 ## Deployment Architecture
 

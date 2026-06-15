@@ -23,6 +23,14 @@ def _get_int_env(name: str, default: int) -> int:
         return default
 
 
+def _get_bool_env(name: str, default: bool) -> bool:
+    value = getenv(name)
+    if value is None:
+        return default
+
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
 def _split_csv_env(value: str) -> list[str]:
     return [
         item.strip()
@@ -43,6 +51,11 @@ class Settings:
     jwt_secret_key: str
     jwt_algorithm: str
     access_token_expire_minutes: int
+    rate_limit_enabled: bool
+    max_uploads_per_day: int
+    max_ai_analyses_per_day: int
+    failed_login_lock_threshold: int
+    failed_login_lock_minutes: int
 
     @property
     def cors_origins(self) -> list[str]:
@@ -74,4 +87,9 @@ def get_settings() -> Settings:
         jwt_secret_key=getenv("JWT_SECRET_KEY", ""),
         jwt_algorithm=getenv("JWT_ALGORITHM", "HS256"),
         access_token_expire_minutes=_get_int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 60),
+        rate_limit_enabled=_get_bool_env("RATE_LIMIT_ENABLED", True),
+        max_uploads_per_day=_get_int_env("MAX_UPLOADS_PER_DAY", 5),
+        max_ai_analyses_per_day=_get_int_env("MAX_AI_ANALYSES_PER_DAY", 3),
+        failed_login_lock_threshold=_get_int_env("FAILED_LOGIN_LOCK_THRESHOLD", 5),
+        failed_login_lock_minutes=_get_int_env("FAILED_LOGIN_LOCK_MINUTES", 15),
     )

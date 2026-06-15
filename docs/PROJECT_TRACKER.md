@@ -18,14 +18,15 @@
 - Trial and billing foundation completed with 5 free AI analysis credits per user.
 - Added billing usage/plans/checkout placeholder endpoints.
 - Added frontend pricing page, trial usage badge, and upgrade-required UI.
+- Security hardening and rate limiting foundation completed.
+- Added failed-login lockout, upload quota checks, audit logs, and friendly security errors.
 
 ## In Progress
 
-- No active blockers for the trial/billing foundation branch.
+- Security hardening/rate limiting is the current phase.
 
 ## Next
 
-- Security rate limiting.
 - Real PDF upload with Supabase Storage.
 - PDF text extraction.
 - Gemini tender analysis.
@@ -51,6 +52,8 @@
 - New users receive 5 free AI analysis credits by default.
 - Credits are deducted only after successful future AI analysis.
 - Live Razorpay payments are not enabled in the billing foundation branch.
+- Use in-memory rate limiting for the MVP; replace the store with Redis/Upstash later when traffic requires multi-instance limits.
+- Keep PDF upload quotas separate from AI analysis credits.
 
 ## Commit Log
 
@@ -58,3 +61,4 @@
 - 2026-06-13: Add Postman API testing guide.
 - 2026-06-15: Connect frontend to JWT authentication.
 - 2026-06-15: Add trial billing and usage limits foundation.
+- 2026-06-15: Add security rate limits and quotas.

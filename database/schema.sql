@@ -10,6 +10,9 @@ create table if not exists public.app_users (
   free_analysis_credits integer not null default 5,
   plan_name text not null default 'free',
   subscription_status text not null default 'trial',
+  failed_login_count integer not null default 0,
+  locked_until timestamptz,
+  last_login_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -65,6 +68,18 @@ create table if not exists public.payments (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.audit_logs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.app_users(id) on delete set null,
+  action text not null,
+  resource_type text,
+  resource_id uuid,
+  ip_address text,
+  user_agent text,
+  metadata jsonb,
+  created_at timestamptz not null default now()
+);
+
 alter table public.app_users
 add column if not exists free_analysis_credits integer not null default 5;
 
@@ -73,6 +88,15 @@ add column if not exists plan_name text not null default 'free';
 
 alter table public.app_users
 add column if not exists subscription_status text not null default 'trial';
+
+alter table public.app_users
+add column if not exists failed_login_count integer not null default 0;
+
+alter table public.app_users
+add column if not exists locked_until timestamptz;
+
+alter table public.app_users
+add column if not exists last_login_at timestamptz;
 
 alter table public.tenders
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;
@@ -96,6 +120,9 @@ create index if not exists idx_usage_events_type_created_at on public.user_usage
 create index if not exists idx_usage_events_user_type_created_at on public.user_usage_events (user_id, event_type, created_at desc);
 create index if not exists idx_payments_user_id on public.payments (user_id);
 create index if not exists idx_payments_status_created_at on public.payments (status, created_at desc);
+create index if not exists idx_audit_logs_user_id on public.audit_logs (user_id);
+create index if not exists idx_audit_logs_action_created_at on public.audit_logs (action, created_at desc);
+create index if not exists idx_audit_logs_created_at on public.audit_logs (created_at desc);
 
 create or replace function public.set_updated_at()
 returns trigger as $$

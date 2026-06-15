@@ -62,6 +62,8 @@ function getErrorMessage(status: number, body: unknown) {
   if (status === 401) return "Your session has expired. Please sign in again.";
   if (status === 402) return "Free analysis limit reached. Please upgrade to continue.";
   if (status === 403) return "You do not have permission to perform this action.";
+  if (status === 423) return "Account temporarily locked due to multiple failed login attempts.";
+  if (status === 429) return "Too many requests. Please try again later.";
   if (status === 404) return "The requested resource was not found.";
   if (status === 409) return "This record already exists.";
   if (status === 422) return "Please check the form fields and try again.";

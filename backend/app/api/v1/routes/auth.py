@@ -1,25 +1,49 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.dependencies.auth import get_current_user
+from app.api.dependencies.rate_limit import (
+    AUTH_ME_RATE_LIMIT,
+    LOGIN_RATE_LIMIT,
+    SIGNUP_RATE_LIMIT,
+    check_rate_limit_for_user_or_ip,
+    get_client_ip,
+    get_user_agent,
+    rate_limit_by_ip,
+)
+from app.core.config import Settings, get_settings
 from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserResponse
+from app.services.audit_service import record_audit_log
 from app.services.auth_service import (
+    AccountLockedError,
     AuthService,
     EmailAlreadyExistsError,
     InactiveUserError,
     InvalidCredentialsError,
     get_auth_service,
 )
+from app.services.rate_limit_service import RateLimitService, get_rate_limit_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again in a moment."
 
 
-@router.post("/signup", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/signup",
+    response_model=TokenResponse,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(rate_limit_by_ip(SIGNUP_RATE_LIMIT))],
+)
 def signup(
-    request: SignupRequest,
+    request: Request,
+    payload: SignupRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> TokenResponse:
     try:
-        return service.signup(request)
+        return service.signup(
+            payload,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
     except EmailAlreadyExistsError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -28,17 +52,26 @@ def signup(
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
+            detail=SERVICE_UNAVAILABLE_MESSAGE,
         ) from exc
 
 
-@router.post("/login", response_model=TokenResponse)
+@router.post(
+    "/login",
+    response_model=TokenResponse,
+    dependencies=[Depends(rate_limit_by_ip(LOGIN_RATE_LIMIT))],
+)
 def login(
-    request: LoginRequest,
+    request: Request,
+    payload: LoginRequest,
     service: AuthService = Depends(get_auth_service),
 ) -> TokenResponse:
     try:
-        return service.login(request)
+        return service.login(
+            payload,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+        )
     except InvalidCredentialsError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -49,13 +82,40 @@ def login(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(exc),
         ) from exc
+    except AccountLockedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail=str(exc),
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
+            detail=SERVICE_UNAVAILABLE_MESSAGE,
         ) from exc
 
 
-@router.get("/me", response_model=UserResponse)
-def me(current_user: UserResponse = Depends(get_current_user)) -> UserResponse:
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    dependencies=[Depends(rate_limit_by_ip(AUTH_ME_RATE_LIMIT))],
+)
+def me(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
+    limiter: RateLimitService = Depends(get_rate_limit_service),
+) -> UserResponse:
+    check_rate_limit_for_user_or_ip(
+        request=request,
+        current_user=current_user,
+        rule=AUTH_ME_RATE_LIMIT,
+        settings=settings,
+        limiter=limiter,
+    )
+    record_audit_log(
+        action="auth_me_access",
+        user_id=current_user.id,
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+    )
     return current_user

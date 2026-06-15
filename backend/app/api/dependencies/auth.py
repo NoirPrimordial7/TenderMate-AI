@@ -3,6 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.schemas.auth import UserResponse
 from app.services.auth_service import (
+    AccountLockedError,
     AuthService,
     InactiveUserError,
     InvalidCredentialsError,
@@ -10,6 +11,7 @@ from app.services.auth_service import (
 )
 
 bearer_scheme = HTTPBearer(auto_error=False)
+SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again in a moment."
 
 
 def get_current_user(
@@ -36,8 +38,13 @@ def get_current_user(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(exc),
         ) from exc
+    except AccountLockedError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_423_LOCKED,
+            detail=str(exc),
+        ) from exc
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
+            detail=SERVICE_UNAVAILABLE_MESSAGE,
         ) from exc
