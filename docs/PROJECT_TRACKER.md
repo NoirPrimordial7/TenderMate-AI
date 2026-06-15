@@ -9,16 +9,16 @@
 - Added Postman API testing documentation for the current backend endpoints.
 - Added Supabase/PostgreSQL MVP schema for `tenders` and `uploads`.
 - Added seed data with `analysis_json` fields matching the current frontend schema.
+- Supabase project setup was completed manually.
 
 ## In Progress
 
-- Backend routes currently return mock responses.
-- Postman API testing is ready for manual screenshot capture and college submission evidence.
-- Supabase client is prepared but not wired into repository methods.
+- Supabase integration is in progress.
+- Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
 
 ## Next
 
-- Connect `TenderRepository` to Supabase when credentials are available.
+- Postman test APIs using real Supabase data.
 - Add real file upload storage flow.
 - Add PDF extraction pipeline.
 - Add Gemini analysis pipeline after PDF extraction is stable.
@@ -27,7 +27,7 @@
 ## Blocked
 
 - No blockers for backend foundation.
-- Real Supabase integration is waiting on project credentials and storage decisions.
+- No blockers for Supabase read testing.
 
 ## Decisions Taken
 

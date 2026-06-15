@@ -32,7 +32,7 @@ The backend uses FastAPI with a simple layered structure:
 - `db`: Supabase client creation.
 - `core`: environment and runtime configuration.
 
-Current endpoints return placeholder responses so the backend contract can be exercised without adding AI, PDF extraction, or real Supabase credentials.
+Tender read endpoints use the existing route -> service -> repository path. The repository reads from Supabase `public.tenders` when Supabase config is available, and keeps the mock fallback when config is missing so the backend contract can still be exercised without credentials.
 
 ## Database Role
 
