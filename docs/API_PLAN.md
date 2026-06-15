@@ -6,21 +6,33 @@
 
 Returns backend health and service status.
 
+### `POST /api/v1/auth/signup`
+
+Creates an `app_users` row in Supabase, hashes the password with Argon2, and returns a JWT access token plus the created user profile.
+
+### `POST /api/v1/auth/login`
+
+Verifies email and password for an active user and returns a JWT access token plus the user profile.
+
+### `GET /api/v1/auth/me`
+
+Protected endpoint. Returns the current user identified by `Authorization: Bearer <token>`.
+
 ### `GET /api/v1/tenders`
 
-Returns tender rows from Supabase `public.tenders` when Supabase config is available. Falls back to the current mock tender list when config is missing.
+Protected endpoint. Returns only Supabase `public.tenders` rows where `user_id` matches the current JWT user. The repository still has mock fallback behavior for development when Supabase config is missing, but protected API access expects a valid user token.
 
 ### `GET /api/v1/tenders/latest`
 
-Returns the newest Supabase tender by `created_at` when Supabase config is available. Falls back to the latest mock tender when config is missing.
+Protected endpoint. Returns the newest tender by `created_at` for the current JWT user only.
 
 ### `GET /api/v1/tenders/{id}`
 
-Returns one Supabase tender by UUID when Supabase config is available. Falls back to the matching mock tender when config is missing.
+Protected endpoint. Returns one tender by UUID only when it belongs to the current JWT user. Other users' tenders return `404 Not Found`.
 
 ### `POST /api/v1/tenders/upload`
 
-Returns a placeholder upload response. It accepts request metadata for now but does not store files, extract PDFs, or run AI.
+Protected endpoint. Creates placeholder upload metadata linked to the current JWT user. It accepts request metadata for now but does not store files, extract PDFs, or run AI.
 
 ## Future Endpoints
 

@@ -89,46 +89,58 @@ class TenderRepository:
             )
         ]
 
-    def list_tenders(self) -> list[TenderResponse]:
+    def list_tenders(self, user_id: UUID | None = None) -> list[TenderResponse]:
         if self._supabase_client is None:
             return self._tenders
 
+        query = self._supabase_client.table("tenders").select(TENDER_COLUMNS)
+        if user_id is not None:
+            query = query.eq("user_id", str(user_id))
+
         rows = self._query_tenders(
             "list tenders",
-            self._supabase_client.table("tenders")
-            .select(TENDER_COLUMNS)
-            .order("created_at", desc=True),
+            query.order("created_at", desc=True),
         )
 
         return [self._row_to_tender(row) for row in rows]
 
-    def get_latest_tender(self) -> TenderResponse | None:
+    def get_latest_tender(self, user_id: UUID | None = None) -> TenderResponse | None:
         if self._supabase_client is None:
             return self._tenders[0] if self._tenders else None
 
+        query = self._supabase_client.table("tenders").select(TENDER_COLUMNS)
+        if user_id is not None:
+            query = query.eq("user_id", str(user_id))
+
         rows = self._query_tenders(
             "get latest tender",
-            self._supabase_client.table("tenders")
-            .select(TENDER_COLUMNS)
-            .order("created_at", desc=True)
-            .limit(1),
+            query.order("created_at", desc=True).limit(1),
         )
 
         return self._row_to_tender(rows[0]) if rows else None
 
-    def get_tender_by_id(self, tender_id: UUID) -> TenderResponse | None:
+    def get_tender_by_id(
+        self,
+        tender_id: UUID,
+        user_id: UUID | None = None,
+    ) -> TenderResponse | None:
         if self._supabase_client is None:
             return next(
                 (tender for tender in self._tenders if tender.id == tender_id),
                 None,
             )
 
-        rows = self._query_tenders(
-            f"get tender {tender_id}",
+        query = (
             self._supabase_client.table("tenders")
             .select(TENDER_COLUMNS)
             .eq("id", str(tender_id))
-            .limit(1),
+        )
+        if user_id is not None:
+            query = query.eq("user_id", str(user_id))
+
+        rows = self._query_tenders(
+            f"get tender {tender_id}",
+            query.limit(1),
         )
 
         return self._row_to_tender(rows[0]) if rows else None
@@ -175,13 +187,35 @@ class TenderRepository:
         file_name: str,
         file_size: int | None,
         mime_type: str | None,
+        user_id: UUID | None = None,
     ) -> UploadResponse:
-        latest_tender = self.get_latest_tender()
-        tender_id = latest_tender.id if latest_tender else MOCK_TENDER_ID
+        latest_tender = self.get_latest_tender(user_id=user_id)
+        tender_id = latest_tender.id if latest_tender else None
+
+        if self._supabase_client is not None:
+            rows = self._query_uploads(
+                "create upload placeholder",
+                self._supabase_client.table("uploads").insert(
+                    {
+                        "tender_id": str(tender_id) if tender_id else None,
+                        "user_id": str(user_id) if user_id else None,
+                        "file_name": file_name,
+                        "file_size": file_size,
+                        "mime_type": mime_type,
+                        "storage_bucket": None,
+                        "storage_path": None,
+                        "pdf_url": None,
+                    }
+                ),
+            )
+            if not rows:
+                raise RuntimeError("Supabase did not return the created uploads row.")
+
+            return self._row_to_upload_response(rows[0])
 
         return UploadResponse(
             id=uuid4(),
-            tender_id=tender_id,
+            tender_id=tender_id or MOCK_TENDER_ID,
             file_name=file_name,
             file_size=file_size,
             mime_type=mime_type,
@@ -189,6 +223,49 @@ class TenderRepository:
             storage_path=None,
             pdf_url=None,
             created_at=datetime.now(timezone.utc),
+            status="accepted",
+            message="Upload endpoint is wired with a placeholder response. PDF extraction and AI analysis are not enabled yet.",
+        )
+
+    def _query_uploads(self, action: str, query: Any) -> list[dict[str, Any]]:
+        try:
+            response = query.execute()
+            error = getattr(response, "error", None)
+            if error:
+                raise RuntimeError(
+                    f"Failed to {action} from Supabase public.uploads: {error}"
+                )
+
+            data = getattr(response, "data", None)
+            if data is None:
+                return []
+
+            if not isinstance(data, list):
+                raise RuntimeError(
+                    f"Supabase returned an unexpected response for {action}: expected a list."
+                )
+
+            return data
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to {action} from Supabase public.uploads. "
+                "Verify Supabase credentials, table schema, and network access."
+            ) from exc
+
+    @staticmethod
+    def _row_to_upload_response(row: dict[str, Any]) -> UploadResponse:
+        return UploadResponse(
+            id=row["id"],
+            tender_id=row.get("tender_id"),
+            file_name=row["file_name"],
+            file_size=row.get("file_size"),
+            mime_type=row.get("mime_type"),
+            storage_bucket=row.get("storage_bucket"),
+            storage_path=row.get("storage_path"),
+            pdf_url=row.get("pdf_url"),
+            created_at=row["created_at"],
             status="accepted",
             message="Upload endpoint is wired with a placeholder response. PDF extraction and AI analysis are not enabled yet.",
         )

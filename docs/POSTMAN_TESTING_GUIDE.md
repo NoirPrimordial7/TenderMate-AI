@@ -1,15 +1,16 @@
 # TenderMate AI Postman Testing Guide
 
-This guide explains how to run the FastAPI backend locally and test the current mock API endpoints with Postman.
+This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, and placeholder uploads.
 
 Current scope:
 
-- FastAPI local backend testing only.
-- No Supabase integration yet.
+- FastAPI local backend testing.
+- Supabase PostgreSQL required for auth.
+- Tender APIs are protected and user-specific.
 - No Gemini analysis yet.
-- No PDF extraction or file storage yet.
+- No PDF extraction or real file storage yet.
 
-## 1. Open Backend Folder
+## 1. Backend Setup
 
 Open Windows CMD and move to the backend folder:
 
@@ -17,100 +18,77 @@ Open Windows CMD and move to the backend folder:
 cd /d E:\TenderMate-AI\backend
 ```
 
-If the project is in another location, replace `E:\TenderMate-AI` with your local project path.
-
-## 2. Activate Backend Virtual Environment
-
-If the virtual environment already exists:
+Activate the virtual environment:
 
 ```bat
 venv\Scripts\activate.bat
 ```
 
-After activation, CMD should show `(venv)` before the prompt.
-
-If the virtual environment does not exist yet, create it first:
-
-```bat
-python -m venv venv
-venv\Scripts\activate.bat
-```
-
-## 3. Install Backend Dependencies
-
-With `(venv)` active, install the Python packages:
+Install dependencies:
 
 ```bat
 python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-The dependencies include FastAPI, Uvicorn, python-dotenv, python-multipart, and Supabase client libraries. Supabase credentials are not required for the current mock API test.
+Create `backend/.env` from `backend/.env.example` and set:
 
-## 4. Run FastAPI With Uvicorn
+```text
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+SUPABASE_ANON_KEY=
+FRONTEND_URL=http://localhost:3000
+JWT_SECRET_KEY=
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+```
 
-Run the backend from the `backend` folder:
+Generate `JWT_SECRET_KEY` locally and never commit `backend/.env`. `SUPABASE_SERVICE_ROLE_KEY` is backend-only and must never be exposed to the frontend.
+
+Run the backend:
 
 ```bat
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-Expected CMD output includes:
-
-```text
-Uvicorn running on http://127.0.0.1:8000
-```
-
-Keep this CMD window open while testing in Postman.
-
-## 5. Open Swagger UI
-
-Open this URL in a browser:
+Swagger UI should be available at:
 
 ```text
 http://127.0.0.1:8000/docs
 ```
 
-Swagger UI should show these route groups:
+## 2. Postman Setup
 
-- `health`
-- `tenders`
-- `uploads`
-
-This is also useful for confirming request methods and response schemas before testing in Postman.
-
-## 6. Postman Setup
-
-Create a new Postman collection named:
+Create a collection named:
 
 ```text
 TenderMate AI Backend API Testing
 ```
 
-Optional collection variable:
+Recommended collection variables:
 
 ```text
 base_url = http://127.0.0.1:8000
+access_token =
+tender_id =
 ```
 
-If using the variable, write request URLs as:
+For protected requests, set the Authorization tab to:
 
 ```text
-{{base_url}}/health
+Type: Bearer Token
+Token: {{access_token}}
 ```
 
-Otherwise, use the full URLs shown below.
+## 3. Full Testing Flow
 
-## 7. API Test Cases
+### 3.1 Health Check
 
-### 7.1 Health Check
+```text
+GET {{base_url}}/health
+```
 
-| Field | Value |
-| --- | --- |
-| Method | `GET` |
-| URL | `http://127.0.0.1:8000/health` |
-| Purpose | Confirm that the FastAPI backend is running. |
-| Expected status | `200 OK` |
+Expected status: `200 OK`
 
 Expected response:
 
@@ -121,388 +99,222 @@ Expected response:
 }
 ```
 
-Postman steps:
+### 3.2 Signup
 
-1. Create a new request.
-2. Select `GET`.
-3. Enter `http://127.0.0.1:8000/health`.
-4. Click `Send`.
-5. Confirm status `200 OK` and the JSON response above.
-
-### 7.2 List Tenders
-
-| Field | Value |
-| --- | --- |
-| Method | `GET` |
-| URL | `http://127.0.0.1:8000/api/v1/tenders` |
-| Purpose | Return the current mock tender list. |
-| Expected status | `200 OK` |
-
-Expected response:
-
-```json
-[
-  {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "title": "Mock Municipal Office Furniture Tender",
-    "organization": "Demo Municipal Corporation",
-    "category": "Office Supplies",
-    "location": "Pune, Maharashtra",
-    "deadline": "30 June 2026",
-    "risk_level": "Medium",
-    "fit_score": 72,
-    "status": "uploaded",
-    "analysis_json": {
-      "id": "11111111-1111-1111-1111-111111111111",
-      "snapshot": {
-        "title": "Mock Municipal Office Furniture Tender",
-        "tenderId": "TMAI/MOCK/2026/001",
-        "organization": "Demo Municipal Corporation",
-        "location": "Pune, Maharashtra",
-        "category": "Office Supplies",
-        "estimatedValue": "Rs 12 Lakh",
-        "emdAmount": "Rs 24,000",
-        "submissionDeadline": "30 June 2026",
-        "contractDuration": "30 days"
-      },
-      "decision": {
-        "shouldApply": "Review",
-        "recommendation": "Placeholder analysis only. Full AI analysis will be added later.",
-        "overallFitScore": 72,
-        "riskLevel": "Medium",
-        "deadlineUrgency": "Medium",
-        "missingCriticalRequirements": 1
-      },
-      "scores": [
-        {
-          "label": "Overall Fit",
-          "value": 72,
-          "display": "72%"
-        },
-        {
-          "label": "Document Readiness",
-          "value": 65,
-          "display": "65%"
-        }
-      ],
-      "beforeApply": [
-        {
-          "label": "Verify eligibility criteria",
-          "status": "warning"
-        },
-        {
-          "label": "Confirm EMD payment readiness",
-          "status": "ready"
-        }
-      ],
-      "documents": [],
-      "eligibility": [],
-      "financials": [],
-      "technical": [],
-      "dates": [
-        {
-          "label": "Last Submission Date",
-          "date": "30 June 2026",
-          "status": "upcoming"
-        }
-      ],
-      "risks": [],
-      "missingInformation": [
-        "Original PDF extraction has not been implemented yet."
-      ],
-      "departmentQuestions": [
-        "Can the department confirm delivery location and warranty terms?"
-      ],
-      "proposalDraft": "This is a placeholder proposal draft for backend testing."
-    },
-    "created_at": "dynamic timestamp",
-    "updated_at": "dynamic timestamp"
-  }
-]
+```text
+POST {{base_url}}/api/v1/auth/signup
+Content-Type: application/json
 ```
 
-Notes:
-
-- `created_at` and `updated_at` are generated when the backend starts, so their exact values will vary.
-- The endpoint currently returns mock data from the repository layer.
-
-Postman steps:
-
-1. Create a new request.
-2. Select `GET`.
-3. Enter `http://127.0.0.1:8000/api/v1/tenders`.
-4. Click `Send`.
-5. Confirm status `200 OK`.
-6. Confirm the response is a JSON array containing the mock tender.
-
-### 7.3 Latest Tender
-
-| Field | Value |
-| --- | --- |
-| Method | `GET` |
-| URL | `http://127.0.0.1:8000/api/v1/tenders/latest` |
-| Purpose | Return the latest available mock tender. |
-| Expected status | `200 OK` |
-
-Expected response:
+Body:
 
 ```json
 {
-  "id": "11111111-1111-1111-1111-111111111111",
-  "title": "Mock Municipal Office Furniture Tender",
-  "organization": "Demo Municipal Corporation",
-  "category": "Office Supplies",
-  "location": "Pune, Maharashtra",
-  "deadline": "30 June 2026",
-  "risk_level": "Medium",
-  "fit_score": 72,
-  "status": "uploaded",
-  "analysis_json": {
-    "id": "11111111-1111-1111-1111-111111111111",
-    "snapshot": {
-      "title": "Mock Municipal Office Furniture Tender",
-      "tenderId": "TMAI/MOCK/2026/001"
-    },
-    "decision": {
-      "shouldApply": "Review",
-      "overallFitScore": 72,
-      "riskLevel": "Medium"
-    }
-  },
-  "created_at": "dynamic timestamp",
-  "updated_at": "dynamic timestamp"
+  "full_name": "Postman Test User",
+  "email": "postman.user@tendermate.ai",
+  "password": "ChangeThisPassword123"
 }
 ```
 
-Notes:
+Expected status: `201 Created`
 
-- The actual `analysis_json` includes the full placeholder frontend-compatible analysis object.
-- The sample above is shortened for readability.
+Copy `access_token` from the response into the Postman `access_token` collection variable.
 
-Postman steps:
+Note: `database/seed.sql` includes a demo user with a placeholder password hash for ownership links. Real test users should be created through `/api/v1/auth/signup`.
 
-1. Create a new request.
-2. Select `GET`.
-3. Enter `http://127.0.0.1:8000/api/v1/tenders/latest`.
-4. Click `Send`.
-5. Confirm status `200 OK`.
-6. Confirm the response contains the mock tender ID.
+### 3.3 Login
 
-### 7.4 Tender Detail by ID
+```text
+POST {{base_url}}/api/v1/auth/login
+Content-Type: application/json
+```
 
-| Field | Value |
-| --- | --- |
-| Method | `GET` |
-| URL | `http://127.0.0.1:8000/api/v1/tenders/11111111-1111-1111-1111-111111111111` |
-| Purpose | Return one tender by UUID. |
-| Expected status | `200 OK` |
-
-Expected response:
+Body:
 
 ```json
 {
-  "id": "11111111-1111-1111-1111-111111111111",
-  "title": "Mock Municipal Office Furniture Tender",
-  "organization": "Demo Municipal Corporation",
-  "category": "Office Supplies",
-  "location": "Pune, Maharashtra",
-  "deadline": "30 June 2026",
-  "risk_level": "Medium",
-  "fit_score": 72,
-  "status": "uploaded",
-  "analysis_json": {
-    "id": "11111111-1111-1111-1111-111111111111"
-  },
-  "created_at": "dynamic timestamp",
-  "updated_at": "dynamic timestamp"
+  "email": "postman.user@tendermate.ai",
+  "password": "ChangeThisPassword123"
 }
 ```
 
-Notes:
+Expected status: `200 OK`
 
-- The actual `analysis_json` includes the full placeholder analysis object.
-- The path parameter must be a valid UUID.
+Copy the returned `access_token` into the Postman `access_token` collection variable.
 
-Postman steps:
+### 3.4 Current User
 
-1. Create a new request.
-2. Select `GET`.
-3. Enter `http://127.0.0.1:8000/api/v1/tenders/11111111-1111-1111-1111-111111111111`.
-4. Click `Send`.
-5. Confirm status `200 OK`.
-6. Confirm the returned `id` matches the ID in the URL.
+```text
+GET {{base_url}}/api/v1/auth/me
+Authorization: Bearer {{access_token}}
+```
 
-### 7.5 Upload Tender Placeholder
+Expected status: `200 OK`
 
-| Field | Value |
-| --- | --- |
-| Method | `POST` |
-| URL | `http://127.0.0.1:8000/api/v1/tenders/upload` |
-| Purpose | Test the upload placeholder route. It records request metadata only. |
-| Expected status | `202 Accepted` |
-
-Recommended headers:
-
-| Header | Value |
-| --- | --- |
-| `x-file-name` | `sample-tender.pdf` |
-| `Content-Type` | `application/pdf` |
-
-Recommended body:
-
-- In Postman, select `Body`.
-- Select `binary`.
-- Choose any sample PDF.
-
-Expected response:
+Expected response includes:
 
 ```json
 {
-  "id": "generated upload UUID",
-  "tender_id": "11111111-1111-1111-1111-111111111111",
+  "email": "postman.user@tendermate.ai",
+  "role": "msme_user",
+  "is_active": true
+}
+```
+
+### 3.5 List Tenders
+
+```text
+GET {{base_url}}/api/v1/tenders
+Authorization: Bearer {{access_token}}
+```
+
+Expected status: `200 OK`
+
+Expected response is an array of tenders belonging only to the logged-in user. A newly signed-up user may receive an empty array:
+
+```json
+[]
+```
+
+If rows exist, copy one `id` into the Postman `tender_id` collection variable.
+
+### 3.6 Latest Tender
+
+```text
+GET {{base_url}}/api/v1/tenders/latest
+Authorization: Bearer {{access_token}}
+```
+
+Expected status:
+
+- `200 OK` when the current user has at least one tender.
+- `404 Not Found` when the current user has no tenders.
+
+### 3.7 Tender Detail
+
+```text
+GET {{base_url}}/api/v1/tenders/{{tender_id}}
+Authorization: Bearer {{access_token}}
+```
+
+Expected status:
+
+- `200 OK` when the tender exists and belongs to the current user.
+- `404 Not Found` when the tender does not exist or belongs to another user.
+
+### 3.8 Placeholder Upload
+
+```text
+POST {{base_url}}/api/v1/tenders/upload
+Authorization: Bearer {{access_token}}
+Content-Type: application/pdf
+x-file-name: sample-tender.pdf
+```
+
+Body: choose `binary` and select a sample PDF.
+
+Expected status: `202 Accepted`
+
+Expected response includes:
+
+```json
+{
   "file_name": "sample-tender.pdf",
-  "file_size": 12345,
-  "mime_type": "application/pdf",
-  "storage_bucket": null,
-  "storage_path": null,
-  "pdf_url": null,
-  "created_at": "dynamic timestamp",
-  "status": "accepted",
-  "message": "Upload endpoint is wired with a placeholder response. PDF extraction and AI analysis are not enabled yet."
+  "status": "accepted"
 }
 ```
 
-Notes:
+The endpoint stores placeholder upload metadata linked to the current user. It does not extract PDF text or run AI analysis yet.
 
-- `id` is generated for every upload request.
-- `file_size` depends on the selected file and can be `null` if no `Content-Length` header is sent.
-- `storage_bucket`, `storage_path`, and `pdf_url` are `null` because file storage is not implemented yet.
-- The endpoint does not extract PDFs or run AI analysis yet.
+## 4. Common Errors
 
-Postman steps:
+### 4.1 `401 Unauthorized` Missing Token
 
-1. Create a new request.
-2. Select `POST`.
-3. Enter `http://127.0.0.1:8000/api/v1/tenders/upload`.
-4. Add header `x-file-name: sample-tender.pdf`.
-5. Add header `Content-Type: application/pdf`.
-6. In `Body`, choose `binary` and select a sample PDF.
-7. Click `Send`.
-8. Confirm status `202 Accepted`.
-9. Confirm response `status` is `accepted`.
+Request a protected endpoint without Authorization:
 
-## 8. Common Errors
+```text
+GET {{base_url}}/api/v1/tenders
+```
 
-### 8.1 `404 Not Found` on `/`
+Expected response:
+
+```json
+{
+  "detail": "Missing bearer token."
+}
+```
+
+### 4.2 `401 Unauthorized` Invalid Token
+
+Use an invalid bearer token:
+
+```text
+Authorization: Bearer invalid-token
+```
+
+Expected response:
+
+```json
+{
+  "detail": "Invalid or expired access token."
+}
+```
+
+### 4.3 `403 Forbidden` Inactive User
+
+If `public.app_users.is_active` is set to `false`, login or `/auth/me` should return:
+
+```json
+{
+  "detail": "User account is inactive."
+}
+```
+
+### 4.4 `409 Conflict` Email Already Exists
+
+Signup with an existing email:
+
+```json
+{
+  "detail": "Email already exists."
+}
+```
+
+### 4.5 `404 Not Found` Tender Not Owned By Current User
+
+Request a valid tender UUID that does not belong to the current user:
+
+```json
+{
+  "detail": "Tender <id> was not found or does not belong to the current user."
+}
+```
+
+### 4.6 `422 Unprocessable Entity` Invalid Tender ID
 
 Request:
 
 ```text
-GET http://127.0.0.1:8000/
+GET {{base_url}}/api/v1/tenders/not-a-uuid
 ```
-
-Expected status:
-
-```text
-404 Not Found
-```
-
-Reason:
-
-The backend does not currently define a root route. This is normal. Use `/health` or `/docs` to confirm the backend is running.
-
-### 8.2 `422 Unprocessable Entity` When Calling Upload With `GET`
-
-Incorrect request:
-
-```text
-GET http://127.0.0.1:8000/api/v1/tenders/upload
-```
-
-Expected status:
-
-```text
-422 Unprocessable Entity
-```
-
-Reason:
-
-The upload endpoint only supports `POST`. With `GET`, FastAPI matches `upload` as the `{id}` value for `GET /api/v1/tenders/{id}` and then fails UUID validation.
-
-Correct request:
-
-```text
-POST http://127.0.0.1:8000/api/v1/tenders/upload
-```
-
-### 8.3 `422 Unprocessable Entity` for Invalid Tender ID
-
-Incorrect request:
-
-```text
-GET http://127.0.0.1:8000/api/v1/tenders/not-a-uuid
-```
-
-Expected status:
-
-```text
-422 Unprocessable Entity
-```
-
-Reason:
 
 The `{id}` path parameter must be a valid UUID.
 
-Correct example:
-
-```text
-GET http://127.0.0.1:8000/api/v1/tenders/11111111-1111-1111-1111-111111111111
-```
-
-### 8.4 `404 Not Found` for Valid UUID That Does Not Exist
-
-Request:
-
-```text
-GET http://127.0.0.1:8000/api/v1/tenders/22222222-2222-2222-2222-222222222222
-```
-
-Expected status:
-
-```text
-404 Not Found
-```
-
-Expected response:
-
-```json
-{
-  "detail": "Tender 22222222-2222-2222-2222-222222222222 was not found."
-}
-```
-
-Reason:
-
-The UUID format is valid, but the mock repository only contains the tender ID `11111111-1111-1111-1111-111111111111`.
-
-## 9. Screenshot Checklist for College Submission
-
-Capture these screenshots after the backend is running:
+## 5. Screenshot Checklist
 
 - CMD showing `(venv)` activated.
 - CMD showing `uvicorn app.main:app --reload --host 127.0.0.1 --port 8000`.
 - Browser showing Swagger UI at `http://127.0.0.1:8000/docs`.
-- Postman `GET /health` with `200 OK`.
-- Postman `GET /api/v1/tenders` with `200 OK`.
-- Postman `GET /api/v1/tenders/latest` with `200 OK`.
-- Postman `GET /api/v1/tenders/{id}` using `11111111-1111-1111-1111-111111111111` with `200 OK`.
-- Postman `POST /api/v1/tenders/upload` with `202 Accepted`.
-- Optional: Postman `GET /` showing `404 Not Found` and a note that no root route exists.
-- Optional: Postman invalid UUID request showing `422 Unprocessable Entity`.
-- Optional: Postman valid missing UUID request showing `404 Not Found`.
+- Postman `POST /api/v1/auth/signup`.
+- Postman `POST /api/v1/auth/login`.
+- Postman `GET /api/v1/auth/me` with bearer token.
+- Postman `GET /api/v1/tenders` with bearer token.
+- Postman `GET /api/v1/tenders/latest` with bearer token.
+- Postman `GET /api/v1/tenders/{id}` with bearer token when a user-owned tender exists.
+- Postman `POST /api/v1/tenders/upload` with bearer token.
 
 Recommended submission note:
 
 ```text
-The backend was tested locally using FastAPI, Uvicorn, Swagger UI, and Postman. The current endpoints return mock data and placeholder upload responses. Supabase storage, PDF extraction, and Gemini AI analysis are planned future steps.
+The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, JWT authentication, and Postman. Tender history and upload metadata are scoped to the logged-in user. PDF extraction and Gemini AI analysis are planned future steps.
 ```
