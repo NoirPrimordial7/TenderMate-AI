@@ -20,6 +20,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@app.get("/")
+def root() -> dict[str, str]:
+    return {
+        "service": "TenderMate AI Backend",
+        "status": "running",
+        "docs": "/docs",
+        "health": "/health",
+    }
+
+
 app.include_router(health.router)
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(uploads.router, prefix=settings.api_v1_prefix)

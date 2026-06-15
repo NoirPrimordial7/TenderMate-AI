@@ -56,6 +56,24 @@ The `analysis_json` column is `jsonb` so the current frontend analysis shape can
 
 JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload placeholder metadata is also linked by `uploads.user_id`.
 
+## Deployment Architecture
+
+Production deployment should follow this flow:
+
+```text
+Vercel Frontend
+    | HTTPS
+    v
+FastAPI Backend
+    |
+    v
+Supabase PostgreSQL
+```
+
+The frontend only receives `NEXT_PUBLIC_API_BASE_URL`, which points to the deployed FastAPI backend plus `/api/v1`. Backend secrets stay in the FastAPI deployment environment: Supabase URL, Supabase service role key, Supabase anon key, and JWT secret. The Supabase service role key must never go to the frontend.
+
+FastAPI CORS should explicitly allow the deployed Vercel URL through `FRONTEND_URL` or `CORS_ORIGINS`. Do not use unrestricted `*` origins with credentialed auth requests.
+
 ## Future AI/PDF Pipeline
 
 The future pipeline should be added in stages:

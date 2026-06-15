@@ -11,14 +11,15 @@
 - Added seed data with `analysis_json` fields matching the current frontend schema.
 - Supabase project setup was completed manually.
 - Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
-- Frontend JWT auth integration is wired for signup, login, logout, protected pages, `/auth/me`, tender history, and latest tender reads.
+- Frontend JWT integration completed for signup, login, logout, protected pages, `/auth/me`, tender history, and latest tender reads.
 
 ## In Progress
 
-- Real PDF upload and extraction is the current phase.
+- Deployment preparation is in progress.
 
 ## Next
 
+- Deploy backend, then frontend.
 - Postman test APIs using real Supabase data.
 - Replace upload simulation with real protected PDF upload storage.
 - Add PDF extraction pipeline after real upload is stable.

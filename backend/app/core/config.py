@@ -23,6 +23,14 @@ def _get_int_env(name: str, default: int) -> int:
         return default
 
 
+def _split_csv_env(value: str) -> list[str]:
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip() and item.strip() != "*"
+    ]
+
+
 @dataclass(frozen=True)
 class Settings:
     project_name: str
@@ -31,13 +39,19 @@ class Settings:
     supabase_service_role_key: str
     supabase_anon_key: str
     frontend_url: str
+    cors_origins_env: str
     jwt_secret_key: str
     jwt_algorithm: str
     access_token_expire_minutes: int
 
     @property
     def cors_origins(self) -> list[str]:
-        origins = [self.frontend_url, "http://127.0.0.1:3000"]
+        origins = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            self.frontend_url,
+            *_split_csv_env(self.cors_origins_env),
+        ]
         return list(dict.fromkeys(origin.rstrip("/") for origin in origins if origin))
 
     @property
@@ -56,6 +70,7 @@ def get_settings() -> Settings:
         supabase_service_role_key=getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
         supabase_anon_key=getenv("SUPABASE_ANON_KEY", ""),
         frontend_url=getenv("FRONTEND_URL", "http://localhost:3000"),
+        cors_origins_env=getenv("CORS_ORIGINS", ""),
         jwt_secret_key=getenv("JWT_SECRET_KEY", ""),
         jwt_algorithm=getenv("JWT_ALGORITHM", "HS256"),
         access_token_expire_minutes=_get_int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 60),
