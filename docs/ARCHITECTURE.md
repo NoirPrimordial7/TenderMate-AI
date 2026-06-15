@@ -4,6 +4,10 @@
 
 The current frontend MVP is a Next.js app that reads static tender JSON files from `src/data/tenders`. UI pages and components do not read the JSON directly. They call the existing `TenderService`, which depends on a repository implementation. This repository/service pattern should remain the frontend integration boundary when the backend is connected.
 
+The frontend now also has an auth-aware API client that reads `NEXT_PUBLIC_API_BASE_URL`, attaches `Authorization: Bearer <token>` when a JWT is available, and clears local auth state on protected `401` responses. JWTs and the current user profile are stored in browser `localStorage` for the MVP.
+
+`AuthProvider` owns client auth state. On app load it reads the stored token, calls `GET /api/v1/auth/me`, keeps the user when the token is valid, and clears auth when the token is invalid. Protected pages such as dashboard, history, and tender detail require a logged-in user before loading backend tender data.
+
 The frontend tender analysis schema is canonical for now. Backend `analysis_json` must keep the same field names currently used by the UI:
 
 - `id`
@@ -36,6 +40,8 @@ Tender read endpoints use the existing route -> service -> repository path. The 
 
 Authentication follows the same route -> service -> repository split. Auth routes call `AuthService`, which hashes passwords, verifies credentials, creates JWT access tokens, and uses `AuthRepository` as the Supabase `app_users` boundary.
 
+Frontend tender reads now go through a backend tender repository that adapts FastAPI `TenderResponse` records into the existing UI-friendly tender analysis and history shapes. Static JSON remains available for development, but authenticated frontend pages prefer the protected API.
+
 ## Database Role
 
 Supabase/PostgreSQL will store uploaded tender metadata and analysis results.
@@ -59,8 +65,8 @@ The future pipeline should be added in stages:
 3. Store extracted text or extraction artifacts.
 4. Run Gemini analysis on extracted text.
 5. Persist frontend-compatible `analysis_json`.
-6. Add frontend login/signup and token storage.
-7. Let the frontend switch from static JSON to the protected API repository implementation.
+6. Replace the upload simulation with real protected PDF upload.
+7. Let authenticated frontend users view newly extracted analyses from the protected API.
 
 ## Why FastAPI Is Used
 
