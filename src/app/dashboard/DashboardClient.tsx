@@ -77,7 +77,7 @@ export default function DashboardClient() {
       {hasLoaded && !isLoading && !error && !tender ? (
         <EmptyState
           title="No tenders analyzed yet"
-          description="No tenders analyzed yet. Upload a tender to begin."
+          description="Upload your first tender to generate an MSME readiness report."
           actionHref="/"
           actionLabel="Upload tender"
         />
