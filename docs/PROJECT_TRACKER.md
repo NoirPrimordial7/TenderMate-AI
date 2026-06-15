@@ -20,10 +20,12 @@
 - Added frontend pricing page, trial usage badge, and upgrade-required UI.
 - Security hardening and rate limiting foundation completed.
 - Added failed-login lockout, upload quota checks, audit logs, and friendly security errors.
+- Profile and billing UI polish completed with premium account, billing, pricing, upload, dashboard, and history surfaces.
+- Added protected `/profile` and `/billing` pages.
 
 ## In Progress
 
-- Security hardening/rate limiting is the current phase.
+- Profile/Billing UI polish is the current phase on this branch.
 
 ## Next
 
@@ -62,3 +64,4 @@
 - 2026-06-15: Connect frontend to JWT authentication.
 - 2026-06-15: Add trial billing and usage limits foundation.
 - 2026-06-15: Add security rate limits and quotas.
+- 2026-06-15: Polish profile billing and premium UI.

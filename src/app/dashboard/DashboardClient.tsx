@@ -57,12 +57,13 @@ export default function DashboardClient() {
   return (
     <ProtectedRoute>
       {user ? (
-        <div className="mb-5 grid gap-4 rounded-lg border border-gray-200 bg-white px-5 py-4 sm:grid-cols-[1fr_auto] sm:items-center">
+        <div className="mb-5 grid gap-4 rounded-xl border border-gray-200 bg-white px-5 py-4 shadow-sm sm:grid-cols-[1fr_auto] sm:items-center">
           <div>
-            <p className="text-sm text-gray-600">Logged in as</p>
-            <p className="mt-1 font-semibold text-gray-950">{user.full_name || user.email}</p>
+            <p className="muted-label">Workspace overview</p>
+            <p className="mt-1 text-lg font-semibold text-gray-950">{user.full_name || user.email}</p>
+            <p className="mt-1 text-sm text-gray-500">Protected tender dashboard</p>
           </div>
-          <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm">
             <p className="font-semibold text-gray-950">
               {hasUsageFields && freeCredits === 0 && !hasActiveSubscription
                 ? "Upgrade required"
@@ -96,6 +97,8 @@ export default function DashboardClient() {
           description="Upload your first tender to generate an MSME readiness report."
           actionHref="/"
           actionLabel="Upload tender"
+          secondaryActionHref="/pricing"
+          secondaryActionLabel="View pricing"
         />
       ) : null}
 

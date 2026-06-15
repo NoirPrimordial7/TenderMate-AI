@@ -1,5 +1,6 @@
 export type UsageCounts = {
   analysis_completed: number;
+  pdf_upload_today?: number | null;
   total_events: number;
 };
 

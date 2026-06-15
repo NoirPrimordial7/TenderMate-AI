@@ -3,6 +3,7 @@ from pydantic import BaseModel
 
 class UsageCounts(BaseModel):
     analysis_completed: int
+    pdf_upload_today: int | None = None
     total_events: int
 
 

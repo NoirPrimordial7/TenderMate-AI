@@ -5,12 +5,16 @@ export default function EmptyState({
   title,
   description,
   actionHref = "/",
-  actionLabel = "Upload tender"
+  actionLabel = "Upload tender",
+  secondaryActionHref,
+  secondaryActionLabel
 }: {
   title: string;
   description: string;
   actionHref?: string;
   actionLabel?: string;
+  secondaryActionHref?: string;
+  secondaryActionLabel?: string;
 }) {
   return (
     <section className="card p-8 text-center" aria-labelledby="empty-title">
@@ -21,12 +25,22 @@ export default function EmptyState({
         {title}
       </h1>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-600">{description}</p>
-      <Link
-        href={actionHref}
-        className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
-      >
-        {actionLabel}
-      </Link>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <Link
+          href={actionHref}
+          className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
+        >
+          {actionLabel}
+        </Link>
+        {secondaryActionHref && secondaryActionLabel ? (
+          <Link
+            href={secondaryActionHref}
+            className="inline-flex h-10 items-center justify-center rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-950 hover:bg-gray-50"
+          >
+            {secondaryActionLabel}
+          </Link>
+        ) : null}
+      </div>
     </section>
   );
 }

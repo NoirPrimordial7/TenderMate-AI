@@ -9,6 +9,7 @@ import UpgradeRequiredCard from "@/components/UpgradeRequiredCard";
 import { useAuth } from "@/contexts/AuthContext";
 
 const loadingMessages = ["Extracting PDF...", "Analyzing eligibility...", "Finding risks...", "Preparing dashboard..."];
+const benefitChips = ["Eligibility", "Documents", "Risks", "Dates", "Apply/No-Apply decision"];
 
 export default function UploadCard() {
   const router = useRouter();
@@ -67,11 +68,18 @@ export default function UploadCard() {
           <h1 id="upload-login-title" className="mt-2 text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">
             AI-powered tender analysis for MSMEs
           </h1>
-          <p className="mt-3 text-sm leading-6 text-gray-600">
-            Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision before
-            spending time on a bid.
-          </p>
+        <p className="mt-3 text-sm leading-6 text-gray-600">
+          Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision before
+          spending time on a bid.
+        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {benefitChips.map((chip) => (
+            <span key={chip} className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+              {chip}
+            </span>
+          ))}
         </div>
+      </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
             href="/login"
@@ -107,9 +115,17 @@ export default function UploadCard() {
           Upload tender PDFs, understand eligibility, documents, risks, dates, and apply/no-apply decision. This MVP
           keeps your tender history linked to your account.
         </p>
-        <p className="mt-3 inline-flex rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-          Free analyses left: {displayCredits}
-        </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {benefitChips.map((chip) => (
+            <span key={chip} className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-semibold text-gray-700">
+              {chip}
+            </span>
+          ))}
+        </div>
+        <div className="mt-5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Current credits</p>
+          <p className="mt-1 text-sm font-semibold text-emerald-900">Free analyses left: {displayCredits}</p>
+        </div>
       </div>
 
       <label
@@ -148,7 +164,7 @@ export default function UploadCard() {
         className="mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-5 text-sm font-semibold text-white transition hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
       >
         {isAnalyzing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-        {isAnalyzing ? "Analyzing tender..." : "Upload tender"}
+        {isAnalyzing ? "Analyzing tender..." : fileName ? "Upload tender" : "Select a PDF to continue"}
       </button>
       <Link
         href="/dashboard"
