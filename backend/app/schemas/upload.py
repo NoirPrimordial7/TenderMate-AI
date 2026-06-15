@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 class UploadResponse(BaseModel):
     id: UUID
-    tender_id: UUID
+    tender_id: UUID | None = None
     file_name: str
     file_size: int | None = None
     mime_type: str | None = None

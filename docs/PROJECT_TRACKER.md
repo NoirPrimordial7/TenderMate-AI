@@ -10,15 +10,17 @@
 - Added Supabase/PostgreSQL MVP schema for `tenders` and `uploads`.
 - Added seed data with `analysis_json` fields matching the current frontend schema.
 - Supabase project setup was completed manually.
+- Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
 
 ## In Progress
 
-- Supabase integration is in progress.
-- Backend repository supports Supabase-backed tender reads with mock fallback when config is missing.
+- Auth + JWT + user-linked tender history is the current phase.
+- Tender and upload APIs are being scoped to the logged-in user profile.
 
 ## Next
 
 - Postman test APIs using real Supabase data.
+- Add frontend login/signup integration.
 - Add real file upload storage flow.
 - Add PDF extraction pipeline.
 - Add Gemini analysis pipeline after PDF extraction is stable.
@@ -35,6 +37,8 @@
 - Preserve `analysis_json` field names: `id`, `snapshot`, `decision`, `scores`, `beforeApply`, `documents`, `eligibility`, `financials`, `technical`, `dates`, `risks`, `missingInformation`, `departmentQuestions`, and `proposalDraft`.
 - Use FastAPI for a small, typed Python backend that can later host PDF extraction and AI analysis.
 - Keep the backend path clean: routes call services, services call repositories.
+- Use JWT bearer tokens to identify the current backend user.
+- Store tender history by `tenders.user_id`; uploads also carry `uploads.user_id`.
 - Do not add Gemini or PDF extraction in this foundation step.
 
 ## Commit Log

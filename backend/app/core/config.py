@@ -12,6 +12,17 @@ def _load_dotenv_if_available() -> None:
     load_dotenv()
 
 
+def _get_int_env(name: str, default: int) -> int:
+    value = getenv(name)
+    if value is None:
+        return default
+
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
 @dataclass(frozen=True)
 class Settings:
     project_name: str
@@ -20,6 +31,9 @@ class Settings:
     supabase_service_role_key: str
     supabase_anon_key: str
     frontend_url: str
+    jwt_secret_key: str
+    jwt_algorithm: str
+    access_token_expire_minutes: int
 
     @property
     def cors_origins(self) -> list[str]:
@@ -42,4 +56,7 @@ def get_settings() -> Settings:
         supabase_service_role_key=getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
         supabase_anon_key=getenv("SUPABASE_ANON_KEY", ""),
         frontend_url=getenv("FRONTEND_URL", "http://localhost:3000"),
+        jwt_secret_key=getenv("JWT_SECRET_KEY", ""),
+        jwt_algorithm=getenv("JWT_ALGORITHM", "HS256"),
+        access_token_expire_minutes=_get_int_env("ACCESS_TOKEN_EXPIRE_MINUTES", 60),
     )
