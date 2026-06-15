@@ -1,10 +1,27 @@
 from datetime import datetime, timezone
+from typing import Any
 from uuid import UUID, uuid4
 
+from app.db.supabase_client import get_supabase_client
 from app.schemas.tender import TenderResponse
 from app.schemas.upload import UploadResponse
 
 MOCK_TENDER_ID = UUID("11111111-1111-1111-1111-111111111111")
+
+TENDER_COLUMNS = (
+    "id,"
+    "title,"
+    "organization,"
+    "category,"
+    "location,"
+    "deadline,"
+    "risk_level,"
+    "fit_score,"
+    "status,"
+    "analysis_json,"
+    "created_at,"
+    "updated_at"
+)
 
 MOCK_ANALYSIS_JSON = {
     "id": str(MOCK_TENDER_ID),
@@ -50,7 +67,10 @@ MOCK_ANALYSIS_JSON = {
 
 
 class TenderRepository:
-    def __init__(self) -> None:
+    def __init__(self, supabase_client: Any | None = None) -> None:
+        self._supabase_client = (
+            supabase_client if supabase_client is not None else get_supabase_client()
+        )
         now = datetime.now(timezone.utc)
         self._tenders = [
             TenderResponse(
@@ -70,13 +90,85 @@ class TenderRepository:
         ]
 
     def list_tenders(self) -> list[TenderResponse]:
-        return self._tenders
+        if self._supabase_client is None:
+            return self._tenders
+
+        rows = self._query_tenders(
+            "list tenders",
+            self._supabase_client.table("tenders")
+            .select(TENDER_COLUMNS)
+            .order("created_at", desc=True),
+        )
+
+        return [self._row_to_tender(row) for row in rows]
 
     def get_latest_tender(self) -> TenderResponse | None:
-        return self._tenders[0] if self._tenders else None
+        if self._supabase_client is None:
+            return self._tenders[0] if self._tenders else None
+
+        rows = self._query_tenders(
+            "get latest tender",
+            self._supabase_client.table("tenders")
+            .select(TENDER_COLUMNS)
+            .order("created_at", desc=True)
+            .limit(1),
+        )
+
+        return self._row_to_tender(rows[0]) if rows else None
 
     def get_tender_by_id(self, tender_id: UUID) -> TenderResponse | None:
-        return next((tender for tender in self._tenders if tender.id == tender_id), None)
+        if self._supabase_client is None:
+            return next(
+                (tender for tender in self._tenders if tender.id == tender_id),
+                None,
+            )
+
+        rows = self._query_tenders(
+            f"get tender {tender_id}",
+            self._supabase_client.table("tenders")
+            .select(TENDER_COLUMNS)
+            .eq("id", str(tender_id))
+            .limit(1),
+        )
+
+        return self._row_to_tender(rows[0]) if rows else None
+
+    def _query_tenders(self, action: str, query: Any) -> list[dict[str, Any]]:
+        try:
+            response = query.execute()
+            error = getattr(response, "error", None)
+            if error:
+                raise RuntimeError(
+                    f"Failed to {action} from Supabase public.tenders: {error}"
+                )
+
+            data = getattr(response, "data", None)
+            if data is None:
+                return []
+
+            if not isinstance(data, list):
+                raise RuntimeError(
+                    f"Supabase returned an unexpected response for {action}: expected a list."
+                )
+
+            return data
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError(
+                f"Failed to {action} from Supabase public.tenders. "
+                "Verify Supabase credentials, table schema, and network access."
+            ) from exc
+
+    @staticmethod
+    def _row_to_tender(row: dict[str, Any]) -> TenderResponse:
+        try:
+            return TenderResponse(**row)
+        except Exception as exc:
+            raise RuntimeError(
+                "Supabase public.tenders returned a row that does not match "
+                "the TenderResponse schema."
+            ) from exc
 
     def create_upload_placeholder(
         self,
