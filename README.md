@@ -36,6 +36,7 @@ Live URLs:
 - Audit logs for auth, upload, and billing events
 - Production CORS configuration through `FRONTEND_URL` and `CORS_ORIGINS`
 - Deployment guide and production testing checklist
+- Production Postman collection and environment under `postman/`
 
 ## Trial and Payments
 
@@ -107,3 +108,7 @@ npm run dev
 - Set backend `FRONTEND_URL` or `CORS_ORIGINS` to the deployed Vercel URL.
 
 Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET_KEY`, or `GEMINI_API_KEY` in frontend environment variables.
+
+## Production API Testing
+
+Import the production Postman collection and environment from `postman/` to test the Render backend. The collection uses variables for URLs, JWTs, tender IDs, and upload IDs; do not save real tokens or secrets into the JSON files.

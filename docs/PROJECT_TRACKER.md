@@ -30,14 +30,16 @@
 - Added protected `POST /api/v1/tenders/{id}/analyze`, strict JSON validation, source references, credit deduction after successful persistence, and analysis UI.
 - Gemini OCR scanned PDF support completed for Render-compatible scanned/image-only tender PDFs.
 - Added low-text `pypdf` detection, Gemini PDF-byte OCR fallback, page-wise OCR storage, extraction method metadata, OCR usage events, and OCR audit logs.
+- Production Postman Collection completed for testing all deployed Render FastAPI APIs.
+- Added clean Postman collection, production environment variables, JWT auto-save scripts, PDF upload workflow, and usage README under `postman/`.
 
 ## In Progress
 
-- No active blocker; Gemini OCR support is ready for deployment validation.
+- No active blocker; Production Postman Collection is ready for deployment testing.
 
 ## Next
 
-- Tender workspace redesign or admin panel.
+- OCR scanned PDF support refinements or Tender Workspace Redesign.
 - Razorpay payments.
 
 ## Blocked
@@ -77,3 +79,4 @@
 - 2026-06-16: Add PDF text extraction foundation.
 - 2026-06-16: Add Gemini AI tender analysis.
 - 2026-06-16: Add Render-compatible Gemini OCR fallback.
+- 2026-06-16: Add production Postman API collection.
