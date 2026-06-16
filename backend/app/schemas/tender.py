@@ -39,5 +39,8 @@ class TenderResponse(BaseModel):
     error_message: str | None = None
     extracted_text_preview: str | None = None
     page_count: int | None = None
+    extraction_method: str | None = None
+    ocr_used: bool = False
+    ocr_confidence: float | None = None
     created_at: datetime
     updated_at: datetime

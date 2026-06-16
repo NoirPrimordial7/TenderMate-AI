@@ -56,6 +56,12 @@ class Settings:
     max_ai_analyses_per_day: int
     gemini_api_key: str
     gemini_model: str
+    gemini_ocr_enabled: bool
+    gemini_ocr_model: str
+    ocr_min_text_threshold: int
+    max_ocr_pdf_size_mb: int
+    ocr_max_pages: int
+    gemini_ocr_timeout_seconds: int
     free_analysis_credits_default: int
     max_gemini_input_chars: int
     gemini_request_timeout_seconds: int
@@ -80,6 +86,7 @@ class Settings:
 @lru_cache
 def get_settings() -> Settings:
     _load_dotenv_if_available()
+    gemini_model = getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
     return Settings(
         project_name=getenv("PROJECT_NAME", "TenderMate AI Backend"),
@@ -96,7 +103,19 @@ def get_settings() -> Settings:
         max_uploads_per_day=_get_int_env("MAX_UPLOADS_PER_DAY", 5),
         max_ai_analyses_per_day=_get_int_env("MAX_AI_ANALYSES_PER_DAY", 3),
         gemini_api_key=getenv("GEMINI_API_KEY", ""),
-        gemini_model=getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
+        gemini_model=gemini_model,
+        gemini_ocr_enabled=_get_bool_env("GEMINI_OCR_ENABLED", True),
+        gemini_ocr_model=getenv(
+            "GEMINI_OCR_MODEL",
+            gemini_model or "gemini-3.1-flash-lite",
+        ),
+        ocr_min_text_threshold=_get_int_env("OCR_MIN_TEXT_THRESHOLD", 300),
+        max_ocr_pdf_size_mb=_get_int_env("MAX_OCR_PDF_SIZE_MB", 20),
+        ocr_max_pages=_get_int_env("OCR_MAX_PAGES", 30),
+        gemini_ocr_timeout_seconds=_get_int_env(
+            "GEMINI_OCR_TIMEOUT_SECONDS",
+            90,
+        ),
         free_analysis_credits_default=_get_int_env(
             "FREE_ANALYSIS_CREDITS_DEFAULT",
             15,

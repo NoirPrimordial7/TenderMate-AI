@@ -61,9 +61,11 @@ Real PDF upload follows the same route -> service -> repository structure:
 PDF text extraction also follows route -> service -> repository:
 
 - `POST /api/v1/tenders/{id}/extract` is protected by JWT and scoped to the current tender owner.
-- `PDFExtractionService` confirms ownership, loads upload metadata, downloads the private PDF, extracts text page by page with `pypdf`, stores page rows, updates tender status, and records usage.
-- `PDFExtractionRepository` owns Supabase Storage download, `tender_pages` replacement, and tender extraction status updates.
+- `PDFExtractionService` confirms ownership, loads upload metadata, downloads the private PDF, extracts text page by page with `pypdf`, and counts extracted characters.
+- If the `pypdf` text is below `OCR_MIN_TEXT_THRESHOLD`, `PDFExtractionService` sends the original PDF bytes to Gemini OCR as `application/pdf`, stores returned page-wise text, and marks the tender `extraction_method = 'gemini_ocr'` or `mixed`.
+- `PDFExtractionRepository` owns Supabase Storage download, `tender_pages` replacement, page extraction methods, and tender extraction status updates.
 - Failed extraction marks the tender `status = 'failed'` with a friendly `error_message` and records a `pdf_extract_failed` audit log.
+- Failed Gemini OCR records `gemini_ocr_failed`. If partial `pypdf` text exists, that text is retained so Gemini analysis can still run on the available pages.
 
 Gemini analysis follows the same route -> service -> repository boundary:
 
@@ -96,7 +98,7 @@ Each new user starts with `free_analysis_credits = 15`, `plan_name = 'free'`, an
 
 Upload quotas and analysis credits are separate protections. The MVP allows at most 5 PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 15 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
 
-Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, `upload_pdf`, `extract_pdf`, `pdf_extract_failed`, `run_gemini_analysis`, `gemini_analysis_failed`, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, provider secret data, raw PDF contents, or API keys.
+Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, `upload_pdf`, `extract_pdf`, `pdf_extract_failed`, `gemini_ocr_completed`, `gemini_ocr_failed`, `run_gemini_analysis`, `gemini_analysis_failed`, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, provider secret data, raw PDF contents, or API keys.
 
 ## Supabase Storage
 
@@ -133,11 +135,12 @@ FastAPI CORS should explicitly allow the deployed Vercel URL through `FRONTEND_U
 Real PDF upload, private Storage persistence, page-wise text extraction, and Gemini analysis are now in place:
 
 1. Upload the private PDF to `tender-pdfs`.
-2. Extract page text into `tender_pages`.
-3. Build a Gemini prompt with `[PAGE n]` markers.
-4. Persist frontend-compatible `analysis_json`.
-5. Include source references with page numbers and snippets for major findings.
-6. Call `consume_analysis_credit` only after the analysis has been saved successfully.
+2. Extract page text into `tender_pages` with `pypdf`.
+3. If extracted text is too low, use the Render-compatible OCR flow: `pypdf -> low text -> Gemini OCR with PDF bytes -> tender_pages`.
+4. Build a Gemini prompt with `[PAGE n]` markers from `tender_pages`.
+5. Persist frontend-compatible `analysis_json`.
+6. Include source references with page numbers and snippets for major findings.
+7. Call `consume_analysis_credit` only after the analysis has been saved successfully. Gemini OCR usage is logged separately and does not deduct analysis credits.
 
 ## Future Payment Flow
 

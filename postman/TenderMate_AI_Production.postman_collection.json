@@ -1,0 +1,467 @@
+{
+  "info": {
+    "_postman_id": "d6b1f4d2-3f60-4ac8-b82a-214df57f8e5f",
+    "name": "TenderMate AI Production",
+    "description": "Production API tests for the deployed TenderMate AI FastAPI backend on Render. Uses environment variables only; do not save real JWT tokens or secrets in this collection.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Public",
+      "item": [
+        {
+          "name": "GET Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Swagger Docs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/docs"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST Signup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try {",
+                  "  jsonData = pm.response.json();",
+                  "} catch (error) {",
+                  "  jsonData = {};",
+                  "}",
+                  "",
+                  "if (jsonData.access_token) {",
+                  "  pm.environment.set(\"access_token\", jsonData.access_token);",
+                  "}",
+                  "",
+                  "if (jsonData.user && jsonData.user.id) {",
+                  "  pm.environment.set(\"user_id\", jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"full_name\": \"{{full_name}}\",\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base_url}}/auth/signup"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try {",
+                  "  jsonData = pm.response.json();",
+                  "} catch (error) {",
+                  "  jsonData = {};",
+                  "}",
+                  "",
+                  "if (jsonData.access_token) {",
+                  "  pm.environment.set(\"access_token\", jsonData.access_token);",
+                  "}",
+                  "",
+                  "if (jsonData.user && jsonData.user.id) {",
+                  "  pm.environment.set(\"user_id\", jsonData.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{api_base_url}}/auth/login"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Auth Me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/auth/me"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Billing",
+      "item": [
+        {
+          "name": "GET Billing Usage",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/billing/usage"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Billing Plans",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/billing/plans"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Create Checkout Placeholder",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/billing/create-checkout"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tenders",
+      "item": [
+        {
+          "name": "GET My Tenders",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Latest Tender",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders/latest"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tender Detail",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders/{{tender_id}}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Upload Tender PDF",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try {",
+                  "  jsonData = pm.response.json();",
+                  "} catch (error) {",
+                  "  jsonData = {};",
+                  "}",
+                  "",
+                  "if (jsonData.tender_id) {",
+                  "  pm.environment.set(\"tender_id\", jsonData.tender_id);",
+                  "}",
+                  "",
+                  "if (jsonData.upload_id) {",
+                  "  pm.environment.set(\"upload_id\", jsonData.upload_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "",
+                  "description": "Select a tender PDF manually in Postman before sending."
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{api_base_url}}/tenders/upload"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Extract PDF Text",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try {",
+                  "  jsonData = pm.response.json();",
+                  "} catch (error) {",
+                  "  jsonData = {};",
+                  "}",
+                  "",
+                  "if (jsonData.tender_id) {",
+                  "  pm.environment.set(\"tender_id\", jsonData.tender_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders/{{tender_id}}/extract"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST Analyze with Gemini",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let jsonData = {};",
+                  "try {",
+                  "  jsonData = pm.response.json();",
+                  "} catch (error) {",
+                  "  jsonData = {};",
+                  "}",
+                  "",
+                  "if (jsonData.tender_id) {",
+                  "  pm.environment.set(\"tender_id\", jsonData.tender_id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders/{{tender_id}}/analyze"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET Tender Detail After Analysis",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{access_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{api_base_url}}/tenders/{{tender_id}}"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
