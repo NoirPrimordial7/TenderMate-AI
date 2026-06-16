@@ -1,6 +1,6 @@
 # TenderMate AI
 
-TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, and Supabase PostgreSQL so users can sign up, log in, and view protected tender history.
+TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, and Supabase Storage so users can sign up, log in, upload tender PDFs, and view protected tender history.
 
 Live URLs:
 
@@ -13,7 +13,7 @@ Live URLs:
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
 - Backend: FastAPI, Python, PyJWT, pwdlib Argon2 password hashing
-- Database: Supabase PostgreSQL
+- Database and storage: Supabase PostgreSQL and private Supabase Storage
 - Deployment: Vercel frontend, Render backend
 
 ## Completed Features
@@ -21,7 +21,8 @@ Live URLs:
 - JWT signup, login, logout, and `/auth/me`
 - Protected dashboard, history, upload, and tender detail flows
 - Supabase-backed tender reads scoped by logged-in user
-- Placeholder upload flow for MVP demos
+- Real PDF upload to private Supabase Storage bucket `tender-pdfs`
+- User-linked tender and upload records for uploaded PDFs
 - Free trial foundation with 5 tender AI analyses per new user
 - Profile/account area with plan, credits, billing status, and account actions
 - Pricing and billing pages with upgrade-required UI
@@ -41,7 +42,6 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 ## Planned Next
 
-- Real PDF upload with Supabase Storage
 - PDF text extraction
 - Gemini-powered tender analysis
 - Razorpay payment integration
@@ -51,9 +51,11 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 - APIs use JWT bearer authentication.
 - Tender history and upload metadata are scoped to the logged-in user.
+- PDFs are stored privately in Supabase Storage at `users/{user_id}/tenders/{tender_id}/original.pdf`.
+- The Supabase service role key is used only by the backend and is never exposed to the frontend.
 - Every user receives 5 free analysis credits.
 - Auth, upload, and billing endpoints have MVP in-memory rate limits.
-- Placeholder PDF uploads are capped at 5 per user per day.
+- PDF uploads are capped at 5 per user per day.
 - Security-sensitive events are recorded in `audit_logs`.
 
 ## Local Setup

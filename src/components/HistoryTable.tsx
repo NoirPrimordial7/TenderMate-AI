@@ -8,6 +8,13 @@ const riskClass = {
   Low: "bg-gray-100 text-gray-700 ring-gray-200"
 };
 
+const statusClass = {
+  Uploaded: "bg-blue-50 text-blue-800 ring-blue-200",
+  Analyzed: "bg-emerald-50 text-emerald-800 ring-emerald-200",
+  "Needs Review": "bg-amber-50 text-amber-800 ring-amber-200",
+  "High Risk": "bg-red-50 text-red-800 ring-red-200"
+};
+
 export default function HistoryTable({
   items,
   description = "Previously analyzed tender PDFs using development mock data."
@@ -49,18 +56,18 @@ export default function HistoryTable({
             <p className="text-gray-600">{item.category}</p>
             <p className="text-gray-600">{item.uploadDate}</p>
             <p className="font-medium text-gray-950">{item.deadline}</p>
-            <span className="w-fit rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700">
+            <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${statusClass[item.status]}`}>
               {item.status}
             </span>
             <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${riskClass[item.riskLevel]}`}>
               {item.riskLevel}
             </span>
-            <p className="font-semibold text-gray-950">{item.fitScore}%</p>
+            <p className="font-semibold text-gray-950">{item.status === "Uploaded" ? "Pending" : `${item.fitScore}%`}</p>
             <Link
               href={`/tender/${item.id}`}
               className="inline-flex w-fit items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:border-gray-400 hover:bg-gray-50"
             >
-              View Analysis
+              {item.status === "Uploaded" ? "View Status" : "View Analysis"}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>

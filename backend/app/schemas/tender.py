@@ -35,5 +35,7 @@ class TenderResponse(BaseModel):
     fit_score: int | None = Field(default=None, ge=0, le=100)
     status: str = "uploaded"
     analysis_json: TenderAnalysisPayload | None = None
+    original_file_name: str | None = None
+    error_message: str | None = None
     created_at: datetime
     updated_at: datetime

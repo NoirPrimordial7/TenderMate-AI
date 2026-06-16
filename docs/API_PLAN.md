@@ -51,7 +51,7 @@ The frontend history page now calls this endpoint for authenticated users. If th
 
 Protected endpoint. Returns the newest tender by `created_at` for the current JWT user only.
 
-The frontend dashboard calls this endpoint for authenticated users and shows an empty state when no analyzed tender is available.
+The frontend dashboard calls this endpoint for authenticated users. Uploaded tenders without `analysis_json` show a pending state instead of trying to render an analysis report.
 
 ### `GET /api/v1/tenders/{id}`
 
@@ -59,11 +59,13 @@ Protected endpoint. Returns one tender by UUID only when it belongs to the curre
 
 ### `POST /api/v1/tenders/upload`
 
-Protected endpoint. Creates placeholder upload metadata linked to the current JWT user. It accepts request metadata for now but does not store files, extract PDFs, or run AI.
+Protected endpoint. Accepts `multipart/form-data` with a required `file` field. The backend validates the PDF, stores it in the private Supabase Storage bucket `tender-pdfs`, creates a `tenders` row linked to the current user, creates an `uploads` metadata row linked to the tender and user, records `pdf_upload` usage, and writes an `upload_pdf` audit log.
+
+The frontend sends the selected PDF file directly to this endpoint with `Authorization: Bearer <token>`. The Supabase service role key stays on the FastAPI backend and is never exposed to the browser.
 
 Rate limit: 10 requests/hour per user.
 
-Daily quota: 5 placeholder PDF uploads per user per UTC day. On success, the backend records a `pdf_upload` usage event and a `tender_upload_placeholder` audit log. If the quota is exceeded, the endpoint returns:
+Daily quota: 5 PDF uploads per user per UTC day. If the quota is exceeded, the endpoint returns:
 
 ```json
 {
@@ -72,6 +74,34 @@ Daily quota: 5 placeholder PDF uploads per user per UTC day. On success, the bac
 ```
 
 with HTTP status `429 Too Many Requests`.
+
+Successful response status: `201 Created`.
+
+```json
+{
+  "id": "33333333-3333-3333-3333-333333333333",
+  "upload_id": "33333333-3333-3333-3333-333333333333",
+  "tender_id": "11111111-1111-1111-1111-111111111111",
+  "file_name": "municipal-road-tender.pdf",
+  "file_size": 245760,
+  "mime_type": "application/pdf",
+  "storage_bucket": "tender-pdfs",
+  "storage_path": "users/{user_id}/tenders/{tender_id}/original.pdf",
+  "pdf_url": null,
+  "created_at": "2026-06-16T09:00:00Z",
+  "status": "uploaded",
+  "message": "PDF uploaded successfully. PDF extraction and AI analysis are coming next."
+}
+```
+
+Possible responses:
+
+- `201 Created`: PDF stored and metadata created.
+- `400 Bad Request`: missing file, empty file, or non-PDF upload.
+- `401 Unauthorized`: missing, invalid, or expired JWT.
+- `413 Payload Too Large`: PDF exceeds 20 MB.
+- `429 Too Many Requests`: upload quota or endpoint rate limit exceeded.
+- `500 Internal Server Error`: Supabase configuration or Storage upload issue.
 
 ### `GET /api/v1/billing/usage`
 
@@ -166,9 +196,8 @@ with HTTP status `402 Payment Required`.
 
 The endpoint must call `consume_analysis_credit(user_id, tender_id)` only after PDF extraction, Gemini analysis, and persistence have succeeded. Failed analysis attempts must not deduct trial credits.
 
-### Upload Storage
+### Upload Storage Utilities
 
-- `POST /api/v1/uploads/presign`
 - `GET /api/v1/uploads/{upload_id}`
 
-Purpose: support direct browser uploads to Supabase Storage and track upload metadata.
+Purpose: expose upload metadata and short-lived signed download URLs later if the product needs PDF previews or re-downloads. Direct browser uploads are not used in the current MVP because the backend owns validation, quotas, user ownership, and Storage writes.

@@ -5,13 +5,13 @@ import EmptyState from "@/components/EmptyState";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TenderAnalysisView from "@/components/TenderAnalysisView";
 import { useAuth } from "@/contexts/AuthContext";
-import { TenderAnalysis } from "@/domain/tender/types";
+import { TenderRecordView } from "@/domain/tender/types";
 import { tenderService } from "@/services/TenderService";
 import { toFriendlyApiMessage } from "@/services/api";
 
 export default function TenderDetailClient({ id }: { id: string }) {
   const { isAuthenticated } = useAuth();
-  const [analysis, setAnalysis] = useState<TenderAnalysis | null>(null);
+  const [tender, setTender] = useState<TenderRecordView | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -19,20 +19,20 @@ export default function TenderDetailClient({ id }: { id: string }) {
   useEffect(() => {
     if (!isAuthenticated) {
       setHasLoaded(false);
-      setAnalysis(null);
+      setTender(null);
       return;
     }
 
     let isMounted = true;
     setIsLoading(true);
     setHasLoaded(false);
-    setAnalysis(null);
+    setTender(null);
     setError("");
 
     tenderService
       .getBackendTenderDetails(id)
       .then((tender) => {
-        if (isMounted) setAnalysis(tender);
+        if (isMounted) setTender(tender);
       })
       .catch((loadError) => {
         if (!isMounted) return;
@@ -61,16 +61,27 @@ export default function TenderDetailClient({ id }: { id: string }) {
         <EmptyState title="Tender not found" description={error} actionHref="/history" actionLabel="Back to history" />
       ) : null}
 
-      {hasLoaded && !isLoading && !error && !analysis ? (
+      {hasLoaded && !isLoading && !error && !tender ? (
         <EmptyState
           title="Tender not found"
-          description="This tender does not exist, does not belong to your account, or does not have analysis data yet."
+          description="This tender does not exist or does not belong to your account."
           actionHref="/history"
           actionLabel="Back to history"
         />
       ) : null}
 
-      {hasLoaded && !isLoading && !error && analysis ? <TenderAnalysisView analysis={analysis} /> : null}
+      {hasLoaded && !isLoading && !error && tender && !tender.analysis ? (
+        <EmptyState
+          title="PDF uploaded successfully"
+          description="Analysis has not started yet. PDF extraction and AI analysis are coming next."
+          actionHref="/history"
+          actionLabel="Back to history"
+          secondaryActionHref="/"
+          secondaryActionLabel="Upload another tender"
+        />
+      ) : null}
+
+      {hasLoaded && !isLoading && !error && tender?.analysis ? <TenderAnalysisView analysis={tender.analysis} /> : null}
     </ProtectedRoute>
   );
 }

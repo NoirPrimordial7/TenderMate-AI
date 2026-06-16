@@ -5,13 +5,13 @@ import EmptyState from "@/components/EmptyState";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import TenderAnalysisView from "@/components/TenderAnalysisView";
 import { useAuth } from "@/contexts/AuthContext";
-import { TenderAnalysis } from "@/domain/tender/types";
+import { TenderRecordView } from "@/domain/tender/types";
 import { tenderService } from "@/services/TenderService";
 import { toFriendlyApiMessage } from "@/services/api";
 
 export default function DashboardClient() {
   const { isAuthenticated, user } = useAuth();
-  const [tender, setTender] = useState<TenderAnalysis | null>(null);
+  const [tender, setTender] = useState<TenderRecordView | null>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -102,7 +102,18 @@ export default function DashboardClient() {
         />
       ) : null}
 
-      {hasLoaded && !isLoading && !error && tender ? <TenderAnalysisView analysis={tender} /> : null}
+      {hasLoaded && !isLoading && !error && tender && !tender.analysis ? (
+        <EmptyState
+          title="Tender uploaded"
+          description="Tender uploaded. PDF extraction and AI analysis are coming next."
+          actionHref={`/tender/${tender.id}`}
+          actionLabel="View upload status"
+          secondaryActionHref="/history"
+          secondaryActionLabel="View history"
+        />
+      ) : null}
+
+      {hasLoaded && !isLoading && !error && tender?.analysis ? <TenderAnalysisView analysis={tender.analysis} /> : null}
     </ProtectedRoute>
   );
 }

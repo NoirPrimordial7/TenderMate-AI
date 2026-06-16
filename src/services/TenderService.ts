@@ -1,4 +1,4 @@
-import { HistoryTender } from "@/domain/tender/types";
+import { HistoryTender, TenderAnalysis, TenderRecordView } from "@/domain/tender/types";
 import { backendTenderRepository, BackendTenderRepository } from "@/repositories/BackendTenderRepository";
 import { ITenderRepository } from "@/repositories/interfaces/ITenderRepository";
 import { tenderRepository } from "@/repositories/TenderRepository";
@@ -16,6 +16,19 @@ const historyMeta: Pick<HistoryTender, "uploadDate" | "status">[] = [
   { uploadDate: "09 June 2026", status: "Analyzed" },
   { uploadDate: "08 June 2026", status: "Needs Review" }
 ];
+
+function toTenderRecordView(analysis: TenderAnalysis | null): TenderRecordView | null {
+  if (!analysis) return null;
+
+  return {
+    id: analysis.id,
+    title: analysis.snapshot.title,
+    status: "analyzed",
+    analysis,
+    createdAt: "",
+    updatedAt: ""
+  };
+}
 
 export class TenderService {
   constructor(
@@ -39,7 +52,7 @@ export class TenderService {
     } catch (error) {
       // Development-only escape hatch. It is intentionally opt-in so authenticated pages do not
       // show another user's static data when the protected API is unavailable.
-      if (options.allowMockFallback) return this.getDashboardTender();
+      if (options.allowMockFallback) return toTenderRecordView(this.getDashboardTender());
       throw error;
     }
   }
@@ -59,9 +72,13 @@ export class TenderService {
       return await this.backendRepository.getTenderById(id);
     } catch (error) {
       // Development-only escape hatch for working on UI without the backend running.
-      if (options.allowMockFallback) return this.getTenderDetails(id) ?? null;
+      if (options.allowMockFallback) return toTenderRecordView(this.getTenderDetails(id) ?? null);
       throw error;
     }
+  }
+
+  async uploadTenderPdf(file: File) {
+    return this.backendRepository.uploadTenderPdf(file);
   }
 
   getTenderDetails(id: string) {
