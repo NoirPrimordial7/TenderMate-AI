@@ -10,11 +10,14 @@ import { toFriendlyApiMessage } from "@/services/api";
 import { useAuth } from "@/contexts/AuthContext";
 
 export default function HistoryClient() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const [history, setHistory] = useState<HistoryTender[]>([]);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
+  const hasUsageFields = typeof user?.free_analysis_credits === "number";
+  const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
+  const shouldShowPricingCta = hasUsageFields && freeCredits === 0 && user?.subscription_status?.toLowerCase() !== "active";
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -68,10 +71,12 @@ export default function HistoryClient() {
 
       {hasLoaded && !isLoading && !error && history.length === 0 ? (
         <EmptyState
-          title="Your tender history is empty"
-          description="Uploaded and analyzed tenders will appear here."
+          title="No analyzed tenders yet"
+          description="Analyzed tenders will appear here with fit scores, risk levels, deadlines, and decision summaries."
           actionHref="/"
           actionLabel="Upload tender"
+          secondaryActionHref={shouldShowPricingCta ? "/pricing" : undefined}
+          secondaryActionLabel={shouldShowPricingCta ? "View pricing" : undefined}
         />
       ) : null}
 

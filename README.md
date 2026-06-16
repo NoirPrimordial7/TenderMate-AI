@@ -23,7 +23,8 @@ Live URLs:
 - Supabase-backed tender reads scoped by logged-in user
 - Placeholder upload flow for MVP demos
 - Free trial foundation with 5 tender AI analyses per new user
-- Pricing page and upgrade-required UI
+- Profile/account area with plan, credits, billing status, and account actions
+- Pricing and billing pages with upgrade-required UI
 - Billing usage/plans/checkout placeholder API
 - Rate limits for auth, upload, and billing APIs
 - Daily upload quotas for placeholder tender uploads
@@ -34,7 +35,7 @@ Live URLs:
 
 ## Trial and Payments
 
-Every new user starts with 5 free tender analyses. The pricing page shows Free, Starter, Pro, and Business plans.
+Every new user starts with 5 free tender analyses. The profile, billing, and pricing pages show the current plan, credits left, subscription status, and usage summary. The pricing page shows Free, Starter, Pro, and Business plans.
 
 Payments are planned with Razorpay, but live payments are not enabled yet. The current implementation is a foundation only: it tracks trial credits, exposes billing endpoints, and returns a friendly coming-soon checkout response.
 

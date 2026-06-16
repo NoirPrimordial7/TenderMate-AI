@@ -82,6 +82,7 @@ Protected endpoint. Returns the current user's trial and usage state:
 - `subscription_status`
 - `can_run_ai_analysis`
 - `usage_counts.analysis_completed`
+- `usage_counts.pdf_upload_today`
 - `usage_counts.total_events`
 
 Rate limit: 120 requests/minute per user.

@@ -59,7 +59,7 @@ function getErrorMessage(status: number, body: unknown) {
   }
 
   if (status === 0) return "Backend unavailable or blocked by a network/CORS issue. Please check the API URL and try again.";
-  if (status === 401) return "Your session has expired. Please sign in again.";
+  if (status === 401) return "Login required. Please sign in again.";
   if (status === 402) return "Free analysis limit reached. Please upgrade to continue.";
   if (status === 403) return "You do not have permission to perform this action.";
   if (status === 423) return "Account temporarily locked due to multiple failed login attempts.";

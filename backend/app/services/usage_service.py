@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
@@ -28,6 +28,17 @@ class UsageService:
             user_id,
             event_type=ANALYSIS_COMPLETED_EVENT,
         )
+        start_of_day = datetime.now(timezone.utc).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+        pdf_upload_today = self._count_usage_events(
+            user_id,
+            event_type="pdf_upload",
+            since_datetime=start_of_day,
+        )
 
         return {
             "free_analysis_credits": user["free_analysis_credits"],
@@ -36,6 +47,7 @@ class UsageService:
             "can_run_ai_analysis": self._has_analysis_access(user),
             "usage_counts": {
                 "analysis_completed": analysis_completed,
+                "pdf_upload_today": pdf_upload_today,
                 "total_events": total_events,
             },
         }
