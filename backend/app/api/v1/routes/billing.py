@@ -29,10 +29,10 @@ MVP_PLANS = [
         id="free",
         name="Free",
         price_label="₹0",
-        analyses_included=5,
+        analyses_included=15,
         interval=None,
         coming_soon=False,
-        description="5 AI tender analyses included for every new user.",
+        description="15 AI tender analyses included for every new user.",
     ),
     BillingPlan(
         id="starter",
@@ -100,9 +100,24 @@ def get_usage(
 @router.get("/plans", response_model=BillingPlansResponse)
 def get_plans(
     current_user: UserResponse = Depends(get_current_user),
+    settings: Settings = Depends(get_settings),
 ) -> BillingPlansResponse:
     _ = current_user
-    return BillingPlansResponse(plans=MVP_PLANS)
+    plans = [
+        plan.copy(
+            update={
+                "analyses_included": settings.free_analysis_credits_default,
+                "description": (
+                    f"{settings.free_analysis_credits_default} AI tender analyses "
+                    "included for every new user."
+                ),
+            }
+        )
+        if plan.id == "free"
+        else plan
+        for plan in MVP_PLANS
+    ]
+    return BillingPlansResponse(plans=plans)
 
 
 @router.post("/create-checkout", response_model=CheckoutResponse)

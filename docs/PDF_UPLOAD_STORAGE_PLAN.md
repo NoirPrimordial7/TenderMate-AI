@@ -9,7 +9,7 @@
 5. The backend stores the PDF in Supabase Storage.
 6. The backend creates a user-owned `uploads` row linked to the tender.
 7. The backend records a `pdf_upload` usage event and an `upload_pdf` audit log.
-8. The frontend redirects to the tender detail page, which shows the pending analysis state.
+8. The frontend redirects to the tender detail page, where the user can extract PDF text and then run AI analysis.
 
 ## Storage Bucket
 
@@ -43,4 +43,4 @@ Each upload creates a tender row and an upload row for the logged-in user. The s
 
 ## Next Step
 
-PDF text extraction now reads the private stored PDF from `tender-pdfs` and persists page-wise text. The next implementation phase is Gemini analysis using the extracted page text.
+PDF text extraction and Gemini analysis now use the private stored PDF and extracted page text. The next implementation phase is Razorpay payments or admin tooling.

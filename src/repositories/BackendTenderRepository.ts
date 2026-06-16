@@ -1,4 +1,5 @@
 import {
+  GeminiAnalysisResponse,
   HistoryTender,
   PDFExtractionResponse,
   RiskLevel,
@@ -127,6 +128,13 @@ export class BackendTenderRepository {
 
   async extractTenderText(tenderId: string) {
     return apiRequest<PDFExtractionResponse>(`/tenders/${tenderId}/extract`, {
+      method: "POST",
+      body: {}
+    });
+  }
+
+  async analyzeTender(tenderId: string) {
+    return apiRequest<GeminiAnalysisResponse>(`/tenders/${tenderId}/analyze`, {
       method: "POST",
       body: {}
     });

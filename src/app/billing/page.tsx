@@ -55,7 +55,7 @@ export default function BillingPage() {
 
   const planName = titleCase(usage?.plan_name ?? user?.plan_name);
   const subscriptionStatus = usage?.subscription_status ?? user?.subscription_status ?? "trial";
-  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 5);
+  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 15);
   const isUpgradeRequired = creditsLeft === 0 && subscriptionStatus.toLowerCase() !== "active";
 
   return (
@@ -106,7 +106,7 @@ export default function BillingPage() {
               <h2 id="billing-credits-title" className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
                 {creditsLeft} remaining
               </h2>
-              <p className="mt-2 text-sm text-gray-600">5 free AI analyses are included in the trial.</p>
+              <p className="mt-2 text-sm text-gray-600">15 free AI analyses are included in the trial.</p>
             </section>
 
             <section className="card p-6" aria-labelledby="billing-usage-title">

@@ -168,7 +168,7 @@ export default function UploadCard() {
           Upload tender PDF
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
-          Store a tender PDF in your private workspace. PDF extraction and AI analysis are coming next.
+          Store a tender PDF in your private workspace, then extract text and run AI analysis from the tender detail page.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {benefitChips.map((chip) => (
@@ -181,7 +181,7 @@ export default function UploadCard() {
           <p className="text-xs font-medium uppercase tracking-wide text-emerald-700">Current credits</p>
           <p className="mt-1 text-sm font-semibold text-emerald-900">Free analyses left: {displayCredits}</p>
           <p className="mt-1 text-xs leading-5 text-emerald-800">
-            Upload quota is separate: 5 PDF uploads per day. Analysis will require credits when it launches.
+            Upload quota is separate: 5 PDF uploads per day. AI analysis uses one credit after it succeeds.
           </p>
         </div>
       </div>

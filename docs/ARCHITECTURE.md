@@ -42,7 +42,7 @@ Tender read endpoints use the existing route -> service -> repository path. The 
 
 Authentication follows the same route -> service -> repository split. Auth routes call `AuthService`, which hashes passwords, verifies credentials, creates JWT access tokens, and uses `AuthRepository` as the Supabase `app_users` boundary.
 
-Trial and billing logic is handled by `UsageService`. It can summarize usage, check whether a user can run AI analysis, record usage events, and deduct one free analysis credit after a successful future AI analysis. The `require_analysis_credit` dependency is ready for the future Gemini endpoint and returns `402 Payment Required` when a user has no free credits and no active subscription.
+Trial and billing logic is handled by `UsageService`. It can summarize usage, check whether a user can run AI analysis, record usage events, and deduct one free analysis credit after a successful Gemini analysis. Analysis endpoints return `402 Payment Required` when a user has no free credits and no active subscription.
 
 Security hardening now sits beside the route layer:
 
@@ -65,6 +65,13 @@ PDF text extraction also follows route -> service -> repository:
 - `PDFExtractionRepository` owns Supabase Storage download, `tender_pages` replacement, and tender extraction status updates.
 - Failed extraction marks the tender `status = 'failed'` with a friendly `error_message` and records a `pdf_extract_failed` audit log.
 
+Gemini analysis follows the same route -> service -> repository boundary:
+
+- `POST /api/v1/tenders/{id}/analyze` is protected by JWT and scoped to the current tender owner.
+- `GeminiAnalysisService` requires extracted page text, checks credits and daily AI quota, builds a bounded page-numbered prompt, calls Gemini server-side, validates strict JSON, saves `tenders.analysis_json`, and deducts one credit only after persistence succeeds.
+- `GeminiAnalysisRepository` loads `tender_pages`, updates tender analysis fields, and marks friendly analysis failures without exposing provider details.
+- Gemini keys live only in the backend environment. `GEMINI_API_KEY` must never be exposed through frontend `NEXT_PUBLIC_*` variables.
+
 Frontend tender reads now go through a backend tender repository that adapts FastAPI `TenderResponse` records into the existing UI-friendly tender analysis and history shapes. Static JSON remains available for development, but authenticated frontend pages prefer the protected API.
 
 ## Database Role
@@ -81,15 +88,15 @@ The MVP database has five core tables:
 - `payments`: future payment records from manual or provider-backed checkout flows.
 - `audit_logs`: security and operational audit trail for auth, upload, and billing actions.
 
-The `analysis_json` column is `jsonb` so the current frontend analysis shape can be stored while the schema is still evolving. The `tender_pages` table keeps one row per `tender_id` and `page_number`, which preserves source-page boundaries for future Gemini prompts and source references.
+The `analysis_json` column is `jsonb` so the current frontend analysis shape can be stored while the schema is still evolving. The `tender_pages` table keeps one row per `tender_id` and `page_number`, which preserves source-page boundaries for Gemini prompts and source references.
 
 JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload metadata is also linked by `uploads.user_id`.
 
-Each new user starts with `free_analysis_credits = 5`, `plan_name = 'free'`, and `subscription_status = 'trial'`. A credit is deducted only when a future AI analysis succeeds. Failed analysis attempts must not call the credit consumption method. The payments table stores payment metadata only; card and bank details must never be stored.
+Each new user starts with `free_analysis_credits = 15`, `plan_name = 'free'`, and `subscription_status = 'trial'`. A credit is deducted only when Gemini analysis succeeds and `analysis_json` has been saved. Failed analysis attempts must not call the credit consumption method. The payments table stores payment metadata only; card and bank details must never be stored.
 
-Upload quotas and analysis credits are separate protections. The MVP allows at most 5 PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 5 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
+Upload quotas and analysis credits are separate protections. The MVP allows at most 5 PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 15 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
 
-Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, `upload_pdf`, `extract_pdf`, `pdf_extract_failed`, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, provider secret data, or raw PDF contents.
+Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, `upload_pdf`, `extract_pdf`, `pdf_extract_failed`, `run_gemini_analysis`, `gemini_analysis_failed`, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, provider secret data, raw PDF contents, or API keys.
 
 ## Supabase Storage
 
@@ -121,15 +128,16 @@ The frontend only receives `NEXT_PUBLIC_API_BASE_URL`, which points to the deplo
 
 FastAPI CORS should explicitly allow the deployed Vercel URL through `FRONTEND_URL` or `CORS_ORIGINS`. Do not use unrestricted `*` origins with credentialed auth requests.
 
-## Future AI/PDF Pipeline
+## AI/PDF Pipeline
 
-Real PDF upload, private Storage persistence, and page-wise text extraction are now in place. The remaining pipeline should be added in stages:
+Real PDF upload, private Storage persistence, page-wise text extraction, and Gemini analysis are now in place:
 
-1. Run Gemini analysis on extracted page text.
-2. Gate analysis with `require_analysis_credit`.
-3. Persist frontend-compatible `analysis_json`.
-4. Call `consume_analysis_credit` only after the analysis has been saved successfully.
-5. Let authenticated frontend users view generated analyses from the protected API.
+1. Upload the private PDF to `tender-pdfs`.
+2. Extract page text into `tender_pages`.
+3. Build a Gemini prompt with `[PAGE n]` markers.
+4. Persist frontend-compatible `analysis_json`.
+5. Include source references with page numbers and snippets for major findings.
+6. Call `consume_analysis_credit` only after the analysis has been saved successfully.
 
 ## Future Payment Flow
 

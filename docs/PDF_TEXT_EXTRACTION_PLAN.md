@@ -40,8 +40,8 @@ The unique index on `(tender_id, page_number)` keeps extraction idempotent after
 
 ## Source Reference Importance
 
-Page-wise text storage preserves source boundaries for future Gemini prompts. Analysis outputs can later cite exact page numbers in eligibility, document, financial, technical, and risk sections instead of returning unsupported recommendations.
+Page-wise text storage preserves source boundaries for Gemini prompts. Analysis outputs cite exact page numbers in eligibility, document, financial, technical, and risk sections instead of returning unsupported recommendations.
 
-## Next Gemini Analysis Phase
+## Current Gemini Analysis Phase
 
-The next phase should read `tender_pages`, build a bounded prompt with page references, call Gemini server-side, persist frontend-compatible `analysis_json`, and deduct free analysis credits only after the analysis is saved successfully.
+Gemini analysis now reads `tender_pages`, builds a bounded prompt with page references, calls Gemini server-side, persists frontend-compatible `analysis_json`, and deducts free analysis credits only after the analysis is saved successfully.

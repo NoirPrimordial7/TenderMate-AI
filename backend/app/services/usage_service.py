@@ -4,7 +4,7 @@ from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
 
-ANALYSIS_COMPLETED_EVENT = "analysis_completed"
+ANALYSIS_COMPLETED_EVENT = "ai_analysis"
 
 USER_BILLING_COLUMNS = "id,free_analysis_credits,plan_name,subscription_status"
 

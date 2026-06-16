@@ -55,6 +55,7 @@ class AuthRepository:
         full_name: str,
         email: str,
         password_hash: str,
+        free_analysis_credits: int,
     ) -> dict[str, Any]:
         rows = self._query_users(
             f"create user {email}",
@@ -63,7 +64,7 @@ class AuthRepository:
                     "full_name": full_name,
                     "email": email,
                     "password_hash": password_hash,
-                    "free_analysis_credits": 5,
+                    "free_analysis_credits": free_analysis_credits,
                     "plan_name": "free",
                     "subscription_status": "trial",
                 }
