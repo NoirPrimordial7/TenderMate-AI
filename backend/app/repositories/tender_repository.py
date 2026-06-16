@@ -1,10 +1,9 @@
 from datetime import datetime, timezone
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
 from app.schemas.tender import TenderResponse
-from app.schemas.upload import UploadResponse
 
 MOCK_TENDER_ID = UUID("11111111-1111-1111-1111-111111111111")
 
@@ -19,6 +18,8 @@ TENDER_COLUMNS = (
     "fit_score,"
     "status,"
     "analysis_json,"
+    "original_file_name,"
+    "error_message,"
     "created_at,"
     "updated_at"
 )
@@ -145,6 +146,53 @@ class TenderRepository:
 
         return self._row_to_tender(rows[0]) if rows else None
 
+    def create_uploaded_tender(
+        self,
+        user_id: UUID,
+        title: str,
+        original_file_name: str,
+    ) -> TenderResponse:
+        if self._supabase_client is None:
+            raise RuntimeError("Supabase configuration is required for PDF upload.")
+
+        rows = self._query_tenders(
+            "create uploaded tender",
+            self._supabase_client.table("tenders")
+            .insert(
+                {
+                    "user_id": str(user_id),
+                    "title": title,
+                    "status": "uploaded",
+                    "analysis_json": None,
+                    "original_file_name": original_file_name,
+                    "error_message": None,
+                }
+            )
+            .select(TENDER_COLUMNS),
+        )
+        if not rows:
+            raise RuntimeError("Supabase did not return the created tenders row.")
+
+        return self._row_to_tender(rows[0])
+
+    def mark_tender_upload_failed(
+        self,
+        tender_id: UUID,
+        user_id: UUID,
+        error_message: str,
+    ) -> None:
+        if self._supabase_client is None:
+            return
+
+        self._query_tenders(
+            f"mark tender {tender_id} upload failed",
+            self._supabase_client.table("tenders")
+            .update({"status": "upload_failed", "error_message": error_message})
+            .eq("id", str(tender_id))
+            .eq("user_id", str(user_id))
+            .select(TENDER_COLUMNS),
+        )
+
     def _query_tenders(self, action: str, query: Any) -> list[dict[str, Any]]:
         try:
             response = query.execute()
@@ -181,91 +229,3 @@ class TenderRepository:
                 "Supabase public.tenders returned a row that does not match "
                 "the TenderResponse schema."
             ) from exc
-
-    def create_upload_placeholder(
-        self,
-        file_name: str,
-        file_size: int | None,
-        mime_type: str | None,
-        user_id: UUID | None = None,
-    ) -> UploadResponse:
-        latest_tender = self.get_latest_tender(user_id=user_id)
-        tender_id = latest_tender.id if latest_tender else None
-
-        if self._supabase_client is not None:
-            rows = self._query_uploads(
-                "create upload placeholder",
-                self._supabase_client.table("uploads").insert(
-                    {
-                        "tender_id": str(tender_id) if tender_id else None,
-                        "user_id": str(user_id) if user_id else None,
-                        "file_name": file_name,
-                        "file_size": file_size,
-                        "mime_type": mime_type,
-                        "storage_bucket": None,
-                        "storage_path": None,
-                        "pdf_url": None,
-                    }
-                ),
-            )
-            if not rows:
-                raise RuntimeError("Supabase did not return the created uploads row.")
-
-            return self._row_to_upload_response(rows[0])
-
-        return UploadResponse(
-            id=uuid4(),
-            tender_id=tender_id or MOCK_TENDER_ID,
-            file_name=file_name,
-            file_size=file_size,
-            mime_type=mime_type,
-            storage_bucket=None,
-            storage_path=None,
-            pdf_url=None,
-            created_at=datetime.now(timezone.utc),
-            status="accepted",
-            message="Upload endpoint is wired with a placeholder response. PDF extraction and AI analysis are not enabled yet.",
-        )
-
-    def _query_uploads(self, action: str, query: Any) -> list[dict[str, Any]]:
-        try:
-            response = query.execute()
-            error = getattr(response, "error", None)
-            if error:
-                raise RuntimeError(
-                    f"Failed to {action} from Supabase public.uploads: {error}"
-                )
-
-            data = getattr(response, "data", None)
-            if data is None:
-                return []
-
-            if not isinstance(data, list):
-                raise RuntimeError(
-                    f"Supabase returned an unexpected response for {action}: expected a list."
-                )
-
-            return data
-        except RuntimeError:
-            raise
-        except Exception as exc:
-            raise RuntimeError(
-                f"Failed to {action} from Supabase public.uploads. "
-                "Verify Supabase credentials, table schema, and network access."
-            ) from exc
-
-    @staticmethod
-    def _row_to_upload_response(row: dict[str, Any]) -> UploadResponse:
-        return UploadResponse(
-            id=row["id"],
-            tender_id=row.get("tender_id"),
-            file_name=row["file_name"],
-            file_size=row.get("file_size"),
-            mime_type=row.get("mime_type"),
-            storage_bucket=row.get("storage_bucket"),
-            storage_path=row.get("storage_path"),
-            pdf_url=row.get("pdf_url"),
-            created_at=row["created_at"],
-            status="accepted",
-            message="Upload endpoint is wired with a placeholder response. PDF extraction and AI analysis are not enabled yet.",
-        )

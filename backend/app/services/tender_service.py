@@ -2,7 +2,6 @@ from uuid import UUID
 
 from app.repositories.tender_repository import TenderRepository
 from app.schemas.tender import TenderResponse
-from app.schemas.upload import UploadResponse
 
 
 class TenderService:
@@ -21,20 +20,6 @@ class TenderService:
         user_id: UUID | None = None,
     ) -> TenderResponse | None:
         return self.repository.get_tender_by_id(tender_id, user_id=user_id)
-
-    def create_upload_placeholder(
-        self,
-        file_name: str,
-        file_size: int | None,
-        mime_type: str | None,
-        user_id: UUID | None = None,
-    ) -> UploadResponse:
-        return self.repository.create_upload_placeholder(
-            file_name=file_name,
-            file_size=file_size,
-            mime_type=mime_type,
-            user_id=user_id,
-        )
 
 
 _tender_service = TenderService()

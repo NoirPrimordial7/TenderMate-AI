@@ -1,4 +1,10 @@
-import { HistoryTender, RiskLevel, TenderAnalysis } from "@/domain/tender/types";
+import {
+  HistoryTender,
+  RiskLevel,
+  TenderAnalysis,
+  TenderRecordView,
+  UploadTenderResponse
+} from "@/domain/tender/types";
 import { apiRequest, ApiError } from "@/services/api";
 
 export type BackendTenderRecord = {
@@ -12,6 +18,8 @@ export type BackendTenderRecord = {
   fit_score?: number | null;
   status: string;
   analysis_json?: TenderAnalysis | null;
+  original_file_name?: string | null;
+  error_message?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -28,6 +36,7 @@ function formatDate(value: string) {
 }
 
 function toHistoryStatus(record: BackendTenderRecord): HistoryTender["status"] {
+  if (!record.analysis_json && record.status === "uploaded") return "Uploaded";
   if (record.risk_level === "High") return "High Risk";
   if (record.risk_level === "Medium" || record.status !== "analyzed") return "Needs Review";
   return "Analyzed";
@@ -54,6 +63,21 @@ function toHistoryTender(record: BackendTenderRecord): HistoryTender {
   };
 }
 
+function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
+  const analysis = analysisFromRecord(record);
+
+  return {
+    id: record.id,
+    title: analysis?.snapshot.title ?? record.title,
+    status: record.status,
+    analysis,
+    createdAt: record.created_at,
+    updatedAt: record.updated_at,
+    originalFileName: record.original_file_name,
+    errorMessage: record.error_message
+  };
+}
+
 export class BackendTenderRepository {
   async getAllTenders() {
     const records = await apiRequest<BackendTenderRecord[]>("/tenders");
@@ -63,7 +87,7 @@ export class BackendTenderRepository {
   async getLatestTender() {
     try {
       const record = await apiRequest<BackendTenderRecord>("/tenders/latest");
-      return analysisFromRecord(record);
+      return toTenderRecordView(record);
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return null;
@@ -76,7 +100,7 @@ export class BackendTenderRepository {
   async getTenderById(id: string) {
     try {
       const record = await apiRequest<BackendTenderRecord>(`/tenders/${id}`);
-      return analysisFromRecord(record);
+      return toTenderRecordView(record);
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
         return null;
@@ -84,6 +108,16 @@ export class BackendTenderRepository {
 
       throw error;
     }
+  }
+
+  async uploadTenderPdf(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    return apiRequest<UploadTenderResponse>("/tenders/upload", {
+      method: "POST",
+      body: formData
+    });
   }
 }
 

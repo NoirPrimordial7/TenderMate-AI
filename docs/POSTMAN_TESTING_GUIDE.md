@@ -1,14 +1,15 @@
 # TenderMate AI Postman Testing Guide
 
-This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, and placeholder uploads.
+This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, and real PDF uploads to Supabase Storage.
 
 Current scope:
 
 - FastAPI local backend testing.
 - Supabase PostgreSQL required for auth.
+- Private Supabase Storage bucket `tender-pdfs` required for PDF upload.
 - Tender APIs are protected and user-specific.
 - No Gemini analysis yet.
-- No PDF extraction or real file storage yet.
+- No PDF extraction yet.
 
 ## 1. Backend Setup
 
@@ -202,29 +203,31 @@ Expected status:
 - `200 OK` when the tender exists and belongs to the current user.
 - `404 Not Found` when the tender does not exist or belongs to another user.
 
-### 3.8 Placeholder Upload
+### 3.8 Real PDF Upload
 
 ```text
 POST {{base_url}}/api/v1/tenders/upload
 Authorization: Bearer {{access_token}}
-Content-Type: application/pdf
-x-file-name: sample-tender.pdf
 ```
 
-Body: choose `binary` and select a sample PDF.
+Body: choose `form-data`, add key `file`, set the key type to `File`, and select a sample PDF.
 
-Expected status: `202 Accepted`
+Expected status: `201 Created`
 
 Expected response includes:
 
 ```json
 {
+  "upload_id": "<uuid>",
+  "tender_id": "<uuid>",
   "file_name": "sample-tender.pdf",
-  "status": "accepted"
+  "storage_bucket": "tender-pdfs",
+  "storage_path": "users/<user_id>/tenders/<tender_id>/original.pdf",
+  "status": "uploaded"
 }
 ```
 
-The endpoint stores placeholder upload metadata linked to the current user. It does not extract PDF text or run AI analysis yet.
+The endpoint stores the PDF in Supabase Storage, creates user-owned tender/upload metadata, and does not extract PDF text or run AI analysis yet. Copy `tender_id` into the Postman `tender_id` collection variable to test the pending tender detail response.
 
 ## 4. Common Errors
 
@@ -316,5 +319,5 @@ The `{id}` path parameter must be a valid UUID.
 Recommended submission note:
 
 ```text
-The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, JWT authentication, and Postman. Tender history and upload metadata are scoped to the logged-in user. PDF extraction and Gemini AI analysis are planned future steps.
+The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, Supabase Storage, JWT authentication, and Postman. Tender history and upload metadata are scoped to the logged-in user. PDF extraction and Gemini AI analysis are planned future steps.
 ```

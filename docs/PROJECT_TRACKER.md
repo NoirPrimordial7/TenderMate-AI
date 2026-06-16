@@ -22,14 +22,15 @@
 - Added failed-login lockout, upload quota checks, audit logs, and friendly security errors.
 - Profile and billing UI polish completed with premium account, billing, pricing, upload, dashboard, and history surfaces.
 - Added protected `/profile` and `/billing` pages.
+- Real PDF upload with Supabase Storage completed for logged-in users.
+- Added private `tender-pdfs` storage writes, user-owned tender/upload records, upload usage events, and `upload_pdf` audit logs.
 
 ## In Progress
 
-- Real PDF upload with Supabase Storage is the next implementation phase.
+- PDF text extraction is the next implementation phase.
 
 ## Next
 
-- Real PDF upload with Supabase Storage.
 - PDF text extraction.
 - Gemini tender analysis.
 - Razorpay integration.
@@ -56,6 +57,7 @@
 - Live Razorpay payments are not enabled in the billing foundation branch.
 - Use in-memory rate limiting for the MVP; replace the store with Redis/Upstash later when traffic requires multi-instance limits.
 - Keep PDF upload quotas separate from AI analysis credits.
+- Store original PDFs in the private Supabase Storage bucket `tender-pdfs` at `users/{user_id}/tenders/{tender_id}/original.pdf`.
 
 ## Commit Log
 
@@ -65,3 +67,4 @@
 - 2026-06-15: Add trial billing and usage limits foundation.
 - 2026-06-15: Add security rate limits and quotas.
 - 2026-06-15: Polish profile billing and premium UI.
+- 2026-06-16: Add real PDF upload to Supabase Storage.

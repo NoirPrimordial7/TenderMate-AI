@@ -49,13 +49,20 @@ Security hardening now sits beside the route layer:
 - `RateLimitService` provides lightweight in-memory rate limiting for auth, billing, and upload endpoints. It is intentionally isolated behind a service/dependency boundary so Redis or Upstash can replace the store later.
 - Failed login protection tracks `failed_login_count`, `locked_until`, and `last_login_at` on `app_users`.
 - `record_audit_log` writes best-effort operational audit events to Supabase without blocking the main request when audit insertion fails.
-- Upload quota checks use `user_usage_events` before creating placeholder upload records.
+- Upload quota checks use `user_usage_events` before storing PDFs and creating upload records.
+
+Real PDF upload follows the same route -> service -> repository structure:
+
+- `POST /api/v1/tenders/upload` accepts multipart PDF uploads from logged-in users.
+- `UploadService` validates file type, rejects empty files, enforces the 20 MB limit, checks the daily upload quota, creates the tender row, uploads to Storage, creates upload metadata, and records usage.
+- `TenderRepository` creates the user-owned `tenders` row with `status = 'uploaded'` and nullable `analysis_json`.
+- `UploadRepository` writes the PDF to Supabase Storage and stores the metadata row in `public.uploads`.
 
 Frontend tender reads now go through a backend tender repository that adapts FastAPI `TenderResponse` records into the existing UI-friendly tender analysis and history shapes. Static JSON remains available for development, but authenticated frontend pages prefer the protected API.
 
 ## Database Role
 
-Supabase/PostgreSQL will store uploaded tender metadata and analysis results.
+Supabase/PostgreSQL stores uploaded tender metadata and analysis results.
 
 The MVP database has five core tables:
 
@@ -68,13 +75,25 @@ The MVP database has five core tables:
 
 The `analysis_json` column is `jsonb` so the current frontend analysis shape can be stored while the schema is still evolving.
 
-JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload placeholder metadata is also linked by `uploads.user_id`.
+JWT access tokens identify the current user through the `sub` claim. Protected tender routes load that user and filter tender history by `tenders.user_id`, so one user cannot read another user's tender history. Upload metadata is also linked by `uploads.user_id`.
 
 Each new user starts with `free_analysis_credits = 5`, `plan_name = 'free'`, and `subscription_status = 'trial'`. A credit is deducted only when a future AI analysis succeeds. Failed analysis attempts must not call the credit consumption method. The payments table stores payment metadata only; card and bank details must never be stored.
 
-Upload quotas and analysis credits are separate protections. The MVP allows at most 5 placeholder PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 5 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
+Upload quotas and analysis credits are separate protections. The MVP allows at most 5 PDF uploads per user per UTC day, recorded as `pdf_upload` events in `user_usage_events`. AI analysis remains protected by the 5 free-credit rule until paid subscriptions are enabled. Future paid users may bypass the free-credit limit only when `subscription_status = 'active'`.
 
-Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, upload placeholders, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, or provider secret data.
+Audit logs record actions such as signup, login success/failure, account lock, optional `/auth/me` access, `upload_pdf`, billing usage views, and checkout placeholder calls. They are for operational review and should not contain card, bank, provider secret data, or raw PDF contents.
+
+## Supabase Storage
+
+PDF files are stored in a private Supabase Storage bucket named `tender-pdfs`. The frontend never receives the Supabase service role key and never writes directly to Storage.
+
+Storage path pattern:
+
+```text
+users/{user_id}/tenders/{tender_id}/original.pdf
+```
+
+This path keeps files grouped by owner and tender. The `uploads` table stores `storage_bucket = 'tender-pdfs'`, the storage path, original file name, file size, MIME type, and an optional `pdf_url`. Because the bucket is private, `pdf_url` is nullable; future download or preview work should generate short-lived signed URLs from the backend.
 
 ## Deployment Architecture
 
@@ -85,9 +104,9 @@ Vercel Frontend
     | HTTPS
     v
 FastAPI Backend
-    |
+    | service role key, server-side only
     v
-Supabase PostgreSQL
+Supabase PostgreSQL + private Storage bucket
 ```
 
 The frontend only receives `NEXT_PUBLIC_API_BASE_URL`, which points to the deployed FastAPI backend plus `/api/v1`. Backend secrets stay in the FastAPI deployment environment: Supabase URL, Supabase service role key, Supabase anon key, and JWT secret. The Supabase service role key must never go to the frontend.
@@ -96,17 +115,15 @@ FastAPI CORS should explicitly allow the deployed Vercel URL through `FRONTEND_U
 
 ## Future AI/PDF Pipeline
 
-The future pipeline should be added in stages:
+Real PDF upload and private Storage persistence are now in place. The remaining pipeline should be added in stages:
 
-1. Upload PDF metadata and file storage path.
-2. Extract text from the PDF.
-3. Store extracted text or extraction artifacts.
-4. Run Gemini analysis on extracted text.
-5. Gate analysis with `require_analysis_credit`.
-6. Persist frontend-compatible `analysis_json`.
-7. Call `consume_analysis_credit` only after the analysis has been saved successfully.
-8. Replace the upload simulation with real protected PDF upload.
-9. Let authenticated frontend users view newly extracted analyses from the protected API.
+1. Extract text from the stored PDF.
+2. Store extracted text or extraction artifacts.
+3. Run Gemini analysis on extracted text.
+4. Gate analysis with `require_analysis_credit`.
+5. Persist frontend-compatible `analysis_json`.
+6. Call `consume_analysis_credit` only after the analysis has been saved successfully.
+7. Let authenticated frontend users view newly extracted analyses from the protected API.
 
 ## Future Payment Flow
 

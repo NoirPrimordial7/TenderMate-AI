@@ -106,8 +106,34 @@ export type HistoryTender = {
   organization: string;
   uploadDate: string;
   deadline: string;
-  status: "Analyzed" | "Needs Review" | "High Risk";
+  status: "Uploaded" | "Analyzed" | "Needs Review" | "High Risk";
   riskLevel: RiskLevel;
   fitScore: number;
   category: string;
+};
+
+export type TenderRecordView = {
+  id: string;
+  title: string;
+  status: string;
+  analysis: TenderAnalysis | null;
+  createdAt: string;
+  updatedAt: string;
+  originalFileName?: string | null;
+  errorMessage?: string | null;
+};
+
+export type UploadTenderResponse = {
+  id: string;
+  upload_id: string;
+  tender_id: string;
+  file_name: string;
+  file_size: number;
+  mime_type: string;
+  storage_bucket: string;
+  storage_path: string;
+  pdf_url?: string | null;
+  created_at: string;
+  status: string;
+  message: string;
 };

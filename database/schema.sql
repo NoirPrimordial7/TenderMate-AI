@@ -29,6 +29,8 @@ create table if not exists public.tenders (
   fit_score integer check (fit_score is null or (fit_score >= 0 and fit_score <= 100)),
   status text not null default 'uploaded',
   analysis_json jsonb,
+  original_file_name text,
+  error_message text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -101,8 +103,44 @@ add column if not exists last_login_at timestamptz;
 alter table public.tenders
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;
 
+alter table public.tenders
+add column if not exists status text not null default 'uploaded';
+
+alter table public.tenders
+add column if not exists analysis_json jsonb;
+
+alter table public.tenders
+add column if not exists original_file_name text;
+
+alter table public.tenders
+add column if not exists error_message text;
+
 alter table public.uploads
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;
+
+alter table public.uploads
+add column if not exists tender_id uuid references public.tenders(id) on delete cascade;
+
+alter table public.uploads
+add column if not exists file_name text;
+
+alter table public.uploads
+add column if not exists file_size bigint;
+
+alter table public.uploads
+add column if not exists mime_type text;
+
+alter table public.uploads
+add column if not exists storage_bucket text;
+
+alter table public.uploads
+add column if not exists storage_path text;
+
+alter table public.uploads
+add column if not exists pdf_url text;
+
+alter table public.uploads
+add column if not exists created_at timestamptz not null default now();
 
 create index if not exists idx_app_users_email on public.app_users (email);
 create index if not exists idx_tenders_created_at on public.tenders (created_at desc);

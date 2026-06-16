@@ -1,12 +1,12 @@
 # Security Hardening Plan
 
-TenderMate AI now has an MVP security layer for auth, rate limits, quotas, and audit logging. The current implementation is intentionally lightweight and can be expanded before real PDF upload, Gemini analysis, and payments go live.
+TenderMate AI now has an MVP security layer for auth, rate limits, quotas, file upload, and audit logging. The current implementation is intentionally lightweight and can be expanded before PDF extraction, Gemini analysis, and payments go live.
 
 ## Auth Protections
 
 - JWT bearer tokens protect dashboard, tender history, tender detail, upload, and billing APIs.
 - Tender reads are scoped by `tenders.user_id`.
-- Upload placeholder metadata is scoped by `uploads.user_id`.
+- Upload metadata is scoped by `uploads.user_id`.
 - Backend service role credentials stay in the backend environment only.
 - Frontend receives only `NEXT_PUBLIC_API_BASE_URL`.
 
@@ -33,8 +33,8 @@ The rate limit store is in memory for the MVP. Replace it with Redis or Upstash 
 
 ## User Quotas
 
-- PDF upload placeholders are capped at 5 per user per UTC day.
-- Successful placeholder uploads record `pdf_upload` usage events.
+- PDF uploads are capped at 5 per user per UTC day.
+- Successful uploads record `pdf_upload` usage events.
 - AI analysis remains capped by `free_analysis_credits`.
 - Future paid users can bypass the free-credit limit only when `subscription_status = 'active'`.
 
@@ -47,7 +47,7 @@ The `audit_logs` table records operational events:
 - `login_failed`
 - `account_locked`
 - `auth_me_access`
-- `tender_upload_placeholder`
+- `upload_pdf`
 - `billing_usage_view`
 - `checkout_placeholder`
 
@@ -55,13 +55,11 @@ Audit logging is best-effort so a logging failure does not block user-facing flo
 
 ## Upload Security Checklist
 
-Before real PDF upload:
-
 - Enforce MIME type and file extension checks.
 - Set a backend-approved max file size.
 - Store files under user-scoped paths.
 - Avoid trusting frontend-provided file names for storage paths.
-- Virus/malware scan uploads if feasible.
+- Add virus/malware scanning when feasible.
 - Strip or normalize unsafe filename characters.
 - Keep upload metadata user-scoped.
 - Return friendly errors for rejected files.
