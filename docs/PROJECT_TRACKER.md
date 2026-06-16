@@ -25,7 +25,7 @@
 
 ## In Progress
 
-- Profile/Billing UI polish is the current phase on this branch.
+- Real PDF upload with Supabase Storage is the next implementation phase.
 
 ## Next
 
