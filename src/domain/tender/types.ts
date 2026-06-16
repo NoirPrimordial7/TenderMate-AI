@@ -106,7 +106,7 @@ export type HistoryTender = {
   organization: string;
   uploadDate: string;
   deadline: string;
-  status: "Uploaded" | "Analyzed" | "Needs Review" | "High Risk";
+  status: "Uploaded" | "Extracted" | "Failed" | "Analyzed";
   riskLevel: RiskLevel;
   fitScore: number;
   category: string;
@@ -121,6 +121,8 @@ export type TenderRecordView = {
   updatedAt: string;
   originalFileName?: string | null;
   errorMessage?: string | null;
+  extractedTextPreview?: string | null;
+  pageCount?: number | null;
 };
 
 export type UploadTenderResponse = {
@@ -135,5 +137,13 @@ export type UploadTenderResponse = {
   pdf_url?: string | null;
   created_at: string;
   status: string;
+  message: string;
+};
+
+export type PDFExtractionResponse = {
+  tender_id: string;
+  status: string;
+  page_count: number;
+  pages_with_text: number;
   message: string;
 };

@@ -23,12 +23,13 @@ Live URLs:
 - Supabase-backed tender reads scoped by logged-in user
 - Real PDF upload to private Supabase Storage bucket `tender-pdfs`
 - User-linked tender and upload records for uploaded PDFs
+- PDF text extraction foundation with page-wise text stored in Supabase
 - Free trial foundation with 5 tender AI analyses per new user
 - Profile/account area with plan, credits, billing status, and account actions
 - Pricing and billing pages with upgrade-required UI
 - Billing usage/plans/checkout placeholder API
 - Rate limits for auth, upload, and billing APIs
-- Daily upload quotas for placeholder tender uploads
+- Daily upload quotas for tender PDFs
 - Failed-login account lockout
 - Audit logs for auth, upload, and billing events
 - Production CORS configuration through `FRONTEND_URL` and `CORS_ORIGINS`
@@ -42,7 +43,6 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 ## Planned Next
 
-- PDF text extraction
 - Gemini-powered tender analysis
 - Razorpay payment integration
 - Persist generated analysis reports to user history

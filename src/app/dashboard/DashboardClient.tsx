@@ -104,8 +104,12 @@ export default function DashboardClient() {
 
       {hasLoaded && !isLoading && !error && tender && !tender.analysis ? (
         <EmptyState
-          title="Tender uploaded"
-          description="Tender uploaded. PDF extraction and AI analysis are coming next."
+          title={tender.status === "extracted" ? "PDF text extracted" : "Tender uploaded"}
+          description={
+            tender.status === "extracted"
+              ? "PDF text extracted successfully. AI analysis with Gemini is coming next."
+              : "Tender uploaded. PDF extraction and AI analysis are coming next."
+          }
           actionHref={`/tender/${tender.id}`}
           actionLabel="View upload status"
           secondaryActionHref="/history"

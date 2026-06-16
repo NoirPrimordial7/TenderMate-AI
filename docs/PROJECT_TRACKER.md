@@ -24,14 +24,15 @@
 - Added protected `/profile` and `/billing` pages.
 - Real PDF upload with Supabase Storage completed for logged-in users.
 - Added private `tender-pdfs` storage writes, user-owned tender/upload records, upload usage events, and `upload_pdf` audit logs.
+- PDF text extraction foundation completed with page-wise `tender_pages` storage.
+- Added protected `POST /api/v1/tenders/{id}/extract`, extraction status fields, and extraction pending UI.
 
 ## In Progress
 
-- PDF text extraction is the next implementation phase.
+- Gemini AI tender analysis is the next implementation phase.
 
 ## Next
 
-- PDF text extraction.
 - Gemini tender analysis.
 - Razorpay integration.
 - Persist extracted tender analyses for authenticated frontend users.
@@ -49,7 +50,7 @@
 - Keep the backend path clean: routes call services, services call repositories.
 - Use JWT bearer tokens to identify the current backend user.
 - Store tender history by `tenders.user_id`; uploads also carry `uploads.user_id`.
-- Do not add Gemini or PDF extraction in this foundation step.
+- Do not add Gemini in the PDF extraction foundation step.
 - Store the frontend JWT in `localStorage` for the MVP and attach it as `Authorization: Bearer <token>`.
 - Keep static frontend tender data as a development fallback only; authenticated pages should prefer the protected FastAPI API.
 - New users receive 5 free AI analysis credits by default.
@@ -58,6 +59,7 @@
 - Use in-memory rate limiting for the MVP; replace the store with Redis/Upstash later when traffic requires multi-instance limits.
 - Keep PDF upload quotas separate from AI analysis credits.
 - Store original PDFs in the private Supabase Storage bucket `tender-pdfs` at `users/{user_id}/tenders/{tender_id}/original.pdf`.
+- Store extracted text page by page in `public.tender_pages` so future AI analysis can cite source pages.
 
 ## Commit Log
 
@@ -68,3 +70,4 @@
 - 2026-06-15: Add security rate limits and quotas.
 - 2026-06-15: Polish profile billing and premium UI.
 - 2026-06-16: Add real PDF upload to Supabase Storage.
+- 2026-06-16: Add PDF text extraction foundation.

@@ -20,6 +20,8 @@ TENDER_COLUMNS = (
     "analysis_json,"
     "original_file_name,"
     "error_message,"
+    "extracted_text_preview,"
+    "page_count,"
     "created_at,"
     "updated_at"
 )
