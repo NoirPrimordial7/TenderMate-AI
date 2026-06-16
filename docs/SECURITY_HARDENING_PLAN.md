@@ -1,6 +1,6 @@
 # Security Hardening Plan
 
-TenderMate AI now has an MVP security layer for auth, rate limits, quotas, file upload, and audit logging. The current implementation is intentionally lightweight and can be expanded before PDF extraction, Gemini analysis, and payments go live.
+TenderMate AI now has an MVP security layer for auth, rate limits, quotas, file upload, PDF extraction, and audit logging. The current implementation is intentionally lightweight and can be expanded before Gemini analysis and payments go live.
 
 ## Auth Protections
 
@@ -18,6 +18,7 @@ Current in-memory limits:
 - `POST /api/v1/auth/login`: 10 requests/15 minutes per IP.
 - `GET /api/v1/auth/me`: 120 requests/minute per user, with IP guarding for invalid token calls.
 - `POST /api/v1/tenders/upload`: 10 requests/hour per user.
+- `POST /api/v1/tenders/{id}/extract`: 10 requests/hour per user.
 - `GET /api/v1/billing/usage`: 120 requests/minute per user.
 - `POST /api/v1/billing/create-checkout`: 5 requests/hour per user.
 
@@ -48,6 +49,8 @@ The `audit_logs` table records operational events:
 - `account_locked`
 - `auth_me_access`
 - `upload_pdf`
+- `extract_pdf`
+- `pdf_extract_failed`
 - `billing_usage_view`
 - `checkout_placeholder`
 

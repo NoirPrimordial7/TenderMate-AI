@@ -1,6 +1,6 @@
 # TenderMate AI Postman Testing Guide
 
-This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, and real PDF uploads to Supabase Storage.
+This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, real PDF uploads to Supabase Storage, and PDF text extraction.
 
 Current scope:
 
@@ -9,7 +9,6 @@ Current scope:
 - Private Supabase Storage bucket `tender-pdfs` required for PDF upload.
 - Tender APIs are protected and user-specific.
 - No Gemini analysis yet.
-- No PDF extraction yet.
 
 ## 1. Backend Setup
 
@@ -227,7 +226,29 @@ Expected response includes:
 }
 ```
 
-The endpoint stores the PDF in Supabase Storage, creates user-owned tender/upload metadata, and does not extract PDF text or run AI analysis yet. Copy `tender_id` into the Postman `tender_id` collection variable to test the pending tender detail response.
+The endpoint stores the PDF in Supabase Storage and creates user-owned tender/upload metadata. Copy `tender_id` into the Postman `tender_id` collection variable to test extraction.
+
+### 3.9 PDF Text Extraction
+
+```text
+POST {{base_url}}/api/v1/tenders/{{tender_id}}/extract
+Authorization: Bearer {{access_token}}
+```
+
+Expected status: `200 OK`
+
+Expected response includes:
+
+```json
+{
+  "tender_id": "<uuid>",
+  "status": "extracted",
+  "page_count": 12,
+  "pages_with_text": 11
+}
+```
+
+If the PDF is scanned and has no selectable text, the endpoint can still return `200 OK` with `pages_with_text: 0`.
 
 ## 4. Common Errors
 
@@ -315,9 +336,10 @@ The `{id}` path parameter must be a valid UUID.
 - Postman `GET /api/v1/tenders/latest` with bearer token.
 - Postman `GET /api/v1/tenders/{id}` with bearer token when a user-owned tender exists.
 - Postman `POST /api/v1/tenders/upload` with bearer token.
+- Postman `POST /api/v1/tenders/{id}/extract` with bearer token.
 
 Recommended submission note:
 
 ```text
-The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, Supabase Storage, JWT authentication, and Postman. Tender history and upload metadata are scoped to the logged-in user. PDF extraction and Gemini AI analysis are planned future steps.
+The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, Supabase Storage, JWT authentication, and Postman. Tender history, upload metadata, and extracted page text are scoped to the logged-in user. Gemini AI analysis is a planned future step.
 ```

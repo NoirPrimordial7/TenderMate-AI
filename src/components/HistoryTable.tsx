@@ -10,9 +10,9 @@ const riskClass = {
 
 const statusClass = {
   Uploaded: "bg-blue-50 text-blue-800 ring-blue-200",
+  Extracted: "bg-purple-50 text-purple-800 ring-purple-200",
+  Failed: "bg-red-50 text-red-800 ring-red-200",
   Analyzed: "bg-emerald-50 text-emerald-800 ring-emerald-200",
-  "Needs Review": "bg-amber-50 text-amber-800 ring-amber-200",
-  "High Risk": "bg-red-50 text-red-800 ring-red-200"
 };
 
 export default function HistoryTable({
@@ -62,12 +62,12 @@ export default function HistoryTable({
             <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${riskClass[item.riskLevel]}`}>
               {item.riskLevel}
             </span>
-            <p className="font-semibold text-gray-950">{item.status === "Uploaded" ? "Pending" : `${item.fitScore}%`}</p>
+            <p className="font-semibold text-gray-950">{item.status === "Analyzed" ? `${item.fitScore}%` : "Pending"}</p>
             <Link
               href={`/tender/${item.id}`}
               className="inline-flex w-fit items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-800 hover:border-gray-400 hover:bg-gray-50"
             >
-              {item.status === "Uploaded" ? "View Status" : "View Analysis"}
+              {item.status === "Analyzed" ? "View Analysis" : "View Status"}
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
           </div>

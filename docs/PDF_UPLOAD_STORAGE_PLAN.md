@@ -43,4 +43,4 @@ Each upload creates a tender row and an upload row for the logged-in user. The s
 
 ## Next Step
 
-The next implementation phase is PDF text extraction. Extraction should read the private stored PDF from `tender-pdfs`, persist extraction status/artifacts, and only then feed extracted text into the future Gemini analysis workflow.
+PDF text extraction now reads the private stored PDF from `tender-pdfs` and persists page-wise text. The next implementation phase is Gemini analysis using the extracted page text.

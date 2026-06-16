@@ -31,6 +31,8 @@ create table if not exists public.tenders (
   analysis_json jsonb,
   original_file_name text,
   error_message text,
+  extracted_text_preview text,
+  page_count integer,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -82,6 +84,15 @@ create table if not exists public.audit_logs (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.tender_pages (
+  id uuid primary key default gen_random_uuid(),
+  tender_id uuid references public.tenders(id) on delete cascade,
+  user_id uuid references public.app_users(id) on delete cascade,
+  page_number integer not null,
+  text text,
+  created_at timestamptz not null default now()
+);
+
 alter table public.app_users
 add column if not exists free_analysis_credits integer not null default 5;
 
@@ -114,6 +125,12 @@ add column if not exists original_file_name text;
 
 alter table public.tenders
 add column if not exists error_message text;
+
+alter table public.tenders
+add column if not exists extracted_text_preview text;
+
+alter table public.tenders
+add column if not exists page_count integer;
 
 alter table public.uploads
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;
@@ -161,6 +178,9 @@ create index if not exists idx_payments_status_created_at on public.payments (st
 create index if not exists idx_audit_logs_user_id on public.audit_logs (user_id);
 create index if not exists idx_audit_logs_action_created_at on public.audit_logs (action, created_at desc);
 create index if not exists idx_audit_logs_created_at on public.audit_logs (created_at desc);
+create index if not exists idx_tender_pages_tender_id on public.tender_pages (tender_id);
+create index if not exists idx_tender_pages_user_id on public.tender_pages (user_id);
+create unique index if not exists idx_tender_pages_tender_page on public.tender_pages (tender_id, page_number);
 
 create or replace function public.set_updated_at()
 returns trigger as $$

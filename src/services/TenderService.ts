@@ -11,10 +11,10 @@ import {
 } from "@/services/tenderTransforms";
 
 const historyMeta: Pick<HistoryTender, "uploadDate" | "status">[] = [
-  { uploadDate: "12 June 2026", status: "Needs Review" },
-  { uploadDate: "11 June 2026", status: "High Risk" },
+  { uploadDate: "12 June 2026", status: "Analyzed" },
+  { uploadDate: "11 June 2026", status: "Analyzed" },
   { uploadDate: "09 June 2026", status: "Analyzed" },
-  { uploadDate: "08 June 2026", status: "Needs Review" }
+  { uploadDate: "08 June 2026", status: "Analyzed" }
 ];
 
 function toTenderRecordView(analysis: TenderAnalysis | null): TenderRecordView | null {
@@ -79,6 +79,10 @@ export class TenderService {
 
   async uploadTenderPdf(file: File) {
     return this.backendRepository.uploadTenderPdf(file);
+  }
+
+  async extractTenderText(tenderId: string) {
+    return this.backendRepository.extractTenderText(tenderId);
   }
 
   getTenderDetails(id: string) {

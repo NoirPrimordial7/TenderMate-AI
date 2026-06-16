@@ -1,5 +1,6 @@
 import {
   HistoryTender,
+  PDFExtractionResponse,
   RiskLevel,
   TenderAnalysis,
   TenderRecordView,
@@ -20,6 +21,8 @@ export type BackendTenderRecord = {
   analysis_json?: TenderAnalysis | null;
   original_file_name?: string | null;
   error_message?: string | null;
+  extracted_text_preview?: string | null;
+  page_count?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -36,10 +39,10 @@ function formatDate(value: string) {
 }
 
 function toHistoryStatus(record: BackendTenderRecord): HistoryTender["status"] {
-  if (!record.analysis_json && record.status === "uploaded") return "Uploaded";
-  if (record.risk_level === "High") return "High Risk";
-  if (record.risk_level === "Medium" || record.status !== "analyzed") return "Needs Review";
-  return "Analyzed";
+  if (record.status === "failed" || record.status === "upload_failed") return "Failed";
+  if (record.status === "extracted") return "Extracted";
+  if (record.analysis_json || record.status === "analyzed") return "Analyzed";
+  return "Uploaded";
 }
 
 function analysisFromRecord(record: BackendTenderRecord) {
@@ -74,7 +77,9 @@ function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
     createdAt: record.created_at,
     updatedAt: record.updated_at,
     originalFileName: record.original_file_name,
-    errorMessage: record.error_message
+    errorMessage: record.error_message,
+    extractedTextPreview: record.extracted_text_preview,
+    pageCount: record.page_count
   };
 }
 
@@ -117,6 +122,13 @@ export class BackendTenderRepository {
     return apiRequest<UploadTenderResponse>("/tenders/upload", {
       method: "POST",
       body: formData
+    });
+  }
+
+  async extractTenderText(tenderId: string) {
+    return apiRequest<PDFExtractionResponse>(`/tenders/${tenderId}/extract`, {
+      method: "POST",
+      body: {}
     });
   }
 }

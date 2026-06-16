@@ -57,6 +57,13 @@ The frontend dashboard calls this endpoint for authenticated users. Uploaded ten
 
 Protected endpoint. Returns one tender by UUID only when it belongs to the current JWT user. Other users' tenders return `404 Not Found`.
 
+The response includes extraction fields used by the frontend pending states:
+
+- `status`
+- `page_count`
+- `extracted_text_preview`
+- `error_message`
+
 ### `POST /api/v1/tenders/upload`
 
 Protected endpoint. Accepts `multipart/form-data` with a required `file` field. The backend validates the PDF, stores it in the private Supabase Storage bucket `tender-pdfs`, creates a `tenders` row linked to the current user, creates an `uploads` metadata row linked to the tender and user, records `pdf_upload` usage, and writes an `upload_pdf` audit log.
@@ -102,6 +109,35 @@ Possible responses:
 - `413 Payload Too Large`: PDF exceeds 20 MB.
 - `429 Too Many Requests`: upload quota or endpoint rate limit exceeded.
 - `500 Internal Server Error`: Supabase configuration or Storage upload issue.
+
+### `POST /api/v1/tenders/{id}/extract`
+
+Protected endpoint. Downloads the current user's stored PDF from private Supabase Storage, extracts text page by page with `pypdf`, replaces existing rows in `public.tender_pages`, updates the tender extraction status, records `pdf_extract` usage, and writes an `extract_pdf` audit log.
+
+Rate limit: 10 requests/hour per user.
+
+Successful response status: `200 OK`.
+
+```json
+{
+  "tender_id": "11111111-1111-1111-1111-111111111111",
+  "status": "extracted",
+  "page_count": 12,
+  "pages_with_text": 11,
+  "message": "PDF text extracted successfully."
+}
+```
+
+If a PDF has no selectable text, the endpoint still returns success with `pages_with_text = 0` and a message explaining that the PDF may be scanned. OCR is not part of this phase.
+
+Possible responses:
+
+- `200 OK`: extraction completed and page rows were stored.
+- `400 Bad Request`: no uploaded PDF metadata exists for the tender.
+- `401 Unauthorized`: missing, invalid, or expired JWT.
+- `404 Not Found`: tender does not exist or does not belong to the current user.
+- `429 Too Many Requests`: extraction rate limit exceeded.
+- `500 Internal Server Error`: Supabase configuration, Storage download, PDF parsing, or database write issue. The tender is marked `failed` with a friendly `error_message` when extraction fails after ownership is confirmed.
 
 ### `GET /api/v1/billing/usage`
 
@@ -169,13 +205,6 @@ Generic rate-limit response:
 ```
 
 ## Future Endpoints
-
-### PDF Extraction
-
-- `POST /api/v1/uploads/{upload_id}/extract`
-- `GET /api/v1/uploads/{upload_id}/extraction`
-
-Purpose: extract text from an uploaded PDF and expose extraction status/results.
 
 ### Gemini Analysis
 

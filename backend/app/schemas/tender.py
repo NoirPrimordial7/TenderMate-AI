@@ -37,5 +37,7 @@ class TenderResponse(BaseModel):
     analysis_json: TenderAnalysisPayload | None = None
     original_file_name: str | None = None
     error_message: str | None = None
+    extracted_text_preview: str | None = None
+    page_count: int | None = None
     created_at: datetime
     updated_at: datetime
