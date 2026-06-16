@@ -144,8 +144,9 @@ def extract_tender_pdf(
             detail=str(exc),
         ) from exc
     except PDFExtractionFailedError as exc:
+        audit_action = getattr(exc, "audit_action", "pdf_extract_failed")
         record_audit_log(
-            action="pdf_extract_failed",
+            action=audit_action,
             user_id=current_user.id,
             resource_type="tender",
             resource_id=id,
@@ -155,7 +156,7 @@ def extract_tender_pdf(
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=PDF_EXTRACT_FAILED_MESSAGE,
+            detail=str(exc) or PDF_EXTRACT_FAILED_MESSAGE,
         ) from exc
     except RuntimeError as exc:
         record_audit_log(
@@ -187,8 +188,25 @@ def extract_tender_pdf(
         metadata={
             "page_count": result.page_count,
             "pages_with_text": result.pages_with_text,
+            "extraction_method": result.extraction_method,
+            "ocr_used": result.ocr_used,
         },
     )
+    if result.ocr_used:
+        record_audit_log(
+            action="gemini_ocr_completed",
+            user_id=current_user.id,
+            resource_type="tender",
+            resource_id=id,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+            metadata={
+                "page_count": result.page_count,
+                "pages_with_text": result.pages_with_text,
+                "extraction_method": result.extraction_method,
+                "model": settings.gemini_ocr_model,
+            },
+        )
 
     return result
 

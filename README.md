@@ -1,6 +1,6 @@
 # TenderMate AI
 
-TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, Supabase Storage, PDF text extraction, and Gemini AI analysis so users can sign up, log in, upload tender PDFs, and view protected tender history.
+TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, Supabase Storage, PDF text extraction, Gemini OCR for scanned PDFs, and Gemini AI analysis so users can sign up, log in, upload tender PDFs, and view protected tender history.
 
 Live URLs:
 
@@ -24,6 +24,7 @@ Live URLs:
 - Real PDF upload to private Supabase Storage bucket `tender-pdfs`
 - User-linked tender and upload records for uploaded PDFs
 - PDF text extraction foundation with page-wise text stored in Supabase
+- Scanned PDF support through Render-compatible Gemini OCR fallback
 - Gemini AI tender analysis from extracted PDF text
 - Free trial foundation with 15 tender AI analyses per new user for demo/testing
 - Profile/account area with plan, credits, billing status, and account actions
@@ -46,7 +47,7 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 - Razorpay payment integration
 - Admin workflows for support and usage review
-- OCR support for scanned PDFs
+- Tender workspace redesign
 
 ## Security Highlights
 

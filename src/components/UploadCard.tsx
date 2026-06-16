@@ -169,6 +169,7 @@ export default function UploadCard() {
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
           Store a tender PDF in your private workspace, then extract text and run AI analysis from the tender detail page.
+          TenderMate supports text PDFs and scanned PDFs. Scanned documents are processed with Gemini OCR when needed.
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           {benefitChips.map((chip) => (

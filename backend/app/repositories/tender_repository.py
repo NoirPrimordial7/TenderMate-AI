@@ -22,6 +22,9 @@ TENDER_COLUMNS = (
     "error_message,"
     "extracted_text_preview,"
     "page_count,"
+    "extraction_method,"
+    "ocr_used,"
+    "ocr_confidence,"
     "created_at,"
     "updated_at"
 )

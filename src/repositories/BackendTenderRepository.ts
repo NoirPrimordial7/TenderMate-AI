@@ -1,5 +1,6 @@
 import {
   GeminiAnalysisResponse,
+  ExtractionMethod,
   HistoryTender,
   PDFExtractionResponse,
   RiskLevel,
@@ -24,6 +25,9 @@ export type BackendTenderRecord = {
   error_message?: string | null;
   extracted_text_preview?: string | null;
   page_count?: number | null;
+  extraction_method?: ExtractionMethod | null;
+  ocr_used?: boolean | null;
+  ocr_confidence?: number | null;
   created_at: string;
   updated_at: string;
 };
@@ -80,7 +84,10 @@ function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
     originalFileName: record.original_file_name,
     errorMessage: record.error_message,
     extractedTextPreview: record.extracted_text_preview,
-    pageCount: record.page_count
+    pageCount: record.page_count,
+    extractionMethod: record.extraction_method,
+    ocrUsed: Boolean(record.ocr_used),
+    ocrConfidence: record.ocr_confidence
   };
 }
 

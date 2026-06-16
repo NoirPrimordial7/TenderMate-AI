@@ -13,6 +13,8 @@ import { ApiError, toFriendlyApiMessage } from "@/services/api";
 
 function getExtractionErrorMessage(error: unknown) {
   if (error instanceof ApiError) {
+    const apiMessage = toFriendlyApiMessage(error, "Could not extract PDF text. Please try again.");
+    if (apiMessage.includes("OCR could not read this scanned PDF")) return apiMessage;
     if (error.status === 401) return "Your session expired. Please log in and try again.";
     if (error.status === 404) return "This tender was not found in your account.";
     if (error.status === 429) return "Too many extraction requests. Please try again later.";
@@ -20,6 +22,12 @@ function getExtractionErrorMessage(error: unknown) {
   }
 
   return toFriendlyApiMessage(error, "Could not extract PDF text. Please try again.");
+}
+
+function getExtractionBadge(tender: TenderRecordView) {
+  if (tender.extractionMethod === "mixed") return "Text + OCR";
+  if (tender.ocrUsed || tender.extractionMethod === "gemini_ocr") return "Gemini OCR used";
+  return "Text extraction";
 }
 
 function getAnalysisErrorMessage(error: unknown) {
@@ -84,7 +92,7 @@ function PendingExtractionCard({
               </p>
             </div>
           </div>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Pages</p>
               <p className="mt-1 text-lg font-semibold text-gray-950">{tender.pageCount ?? 0}</p>
@@ -93,7 +101,18 @@ function PendingExtractionCard({
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</p>
               <p className="mt-1 text-lg font-semibold capitalize text-gray-950">{tender.status}</p>
             </div>
+            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Extraction</p>
+              <p className="mt-2 inline-flex rounded-full border border-gray-200 bg-white px-2.5 py-1 text-xs font-semibold text-gray-800">
+                {getExtractionBadge(tender)}
+              </p>
+            </div>
           </div>
+          {tender.ocrUsed ? (
+            <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
+              This PDF looked scanned/image-based, so TenderMate used Gemini OCR to read it.
+            </div>
+          ) : null}
           {tender.extractedTextPreview ? (
             <div className="mt-5 rounded-lg border border-gray-200 bg-white p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Text preview</p>
@@ -101,7 +120,7 @@ function PendingExtractionCard({
             </div>
           ) : (
             <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-6 text-amber-900">
-              No selectable text was found. The PDF may be scanned, and OCR can be added in a later phase.
+              No text preview is available for this PDF.
             </div>
           )}
 

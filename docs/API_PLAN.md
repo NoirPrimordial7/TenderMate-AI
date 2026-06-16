@@ -63,6 +63,8 @@ The response includes extraction fields used by the frontend pending states:
 - `page_count`
 - `extracted_text_preview`
 - `error_message`
+- `extraction_method`
+- `ocr_used`
 
 ### `POST /api/v1/tenders/upload`
 
@@ -112,7 +114,9 @@ Possible responses:
 
 ### `POST /api/v1/tenders/{id}/extract`
 
-Protected endpoint. Downloads the current user's stored PDF from private Supabase Storage, extracts text page by page with `pypdf`, replaces existing rows in `public.tender_pages`, updates the tender extraction status, records `pdf_extract` usage, and writes an `extract_pdf` audit log.
+Protected endpoint. Downloads the current user's stored PDF from private Supabase Storage, extracts text page by page with `pypdf`, and falls back to Gemini OCR when the extracted text is below the configured threshold. The endpoint replaces existing rows in `public.tender_pages`, updates the tender extraction status, records `pdf_extract` usage, and writes an `extract_pdf` audit log.
+
+When Gemini OCR is used, the backend sends the original PDF bytes to Gemini as `application/pdf`, stores page-wise OCR text in `public.tender_pages`, records a `gemini_ocr` usage event, and writes a `gemini_ocr_completed` audit log. OCR does not consume an AI analysis credit.
 
 Rate limit: 10 requests/hour per user.
 
@@ -124,15 +128,37 @@ Successful response status: `200 OK`.
   "status": "extracted",
   "page_count": 12,
   "pages_with_text": 11,
+  "extraction_method": "text",
+  "ocr_used": false,
   "message": "PDF text extracted successfully."
 }
 ```
 
-If a PDF has no selectable text, the endpoint still returns success with `pages_with_text = 0` and a message explaining that the PDF may be scanned. OCR is not part of this phase.
+For scanned or image-only PDFs:
+
+```json
+{
+  "tender_id": "11111111-1111-1111-1111-111111111111",
+  "status": "extracted",
+  "page_count": 12,
+  "pages_with_text": 12,
+  "extraction_method": "gemini_ocr",
+  "ocr_used": true,
+  "message": "Scanned PDF detected. Gemini OCR extracted text from the document."
+}
+```
+
+If Gemini OCR cannot read the scanned PDF and no usable selectable text exists, the tender is marked `failed` with:
+
+```json
+{
+  "detail": "OCR could not read this scanned PDF. Please upload a clearer PDF."
+}
+```
 
 Possible responses:
 
-- `200 OK`: extraction completed and page rows were stored.
+- `200 OK`: text extraction or Gemini OCR completed and page rows were stored.
 - `400 Bad Request`: no uploaded PDF metadata exists for the tender.
 - `401 Unauthorized`: missing, invalid, or expired JWT.
 - `404 Not Found`: tender does not exist or does not belong to the current user.

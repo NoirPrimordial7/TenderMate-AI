@@ -33,6 +33,9 @@ create table if not exists public.tenders (
   error_message text,
   extracted_text_preview text,
   page_count integer,
+  extraction_method text,
+  ocr_used boolean not null default false,
+  ocr_confidence numeric,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -90,6 +93,7 @@ create table if not exists public.tender_pages (
   user_id uuid references public.app_users(id) on delete cascade,
   page_number integer not null,
   text text,
+  extraction_method text not null default 'text',
   created_at timestamptz not null default now()
 );
 
@@ -134,6 +138,18 @@ add column if not exists extracted_text_preview text;
 
 alter table public.tenders
 add column if not exists page_count integer;
+
+alter table public.tenders
+add column if not exists extraction_method text;
+
+alter table public.tenders
+add column if not exists ocr_used boolean not null default false;
+
+alter table public.tenders
+add column if not exists ocr_confidence numeric;
+
+alter table public.tender_pages
+add column if not exists extraction_method text not null default 'text';
 
 alter table public.uploads
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;

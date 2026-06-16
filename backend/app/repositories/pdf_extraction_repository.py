@@ -49,6 +49,7 @@ class PDFExtractionRepository:
         tender_id: UUID,
         user_id: UUID,
         page_texts: list[str],
+        extraction_methods: list[str] | None = None,
     ) -> None:
         client = self._require_supabase_client()
 
@@ -64,12 +65,20 @@ class PDFExtractionRepository:
         if not page_texts:
             return
 
+        if extraction_methods is None:
+            extraction_methods = ["text"] * len(page_texts)
+
         rows = [
             {
                 "tender_id": str(tender_id),
                 "user_id": str(user_id),
                 "page_number": index + 1,
                 "text": text,
+                "extraction_method": (
+                    extraction_methods[index]
+                    if index < len(extraction_methods)
+                    else "text"
+                ),
             }
             for index, text in enumerate(page_texts)
         ]
@@ -85,6 +94,10 @@ class PDFExtractionRepository:
         user_id: UUID,
         page_count: int,
         extracted_text_preview: str | None,
+        extraction_method: str = "text",
+        ocr_used: bool = False,
+        ocr_confidence: float | None = None,
+        error_message: str | None = None,
     ) -> None:
         client = self._require_supabase_client()
         self._execute_query(
@@ -95,7 +108,10 @@ class PDFExtractionRepository:
                     "status": "extracted",
                     "page_count": page_count,
                     "extracted_text_preview": extracted_text_preview,
-                    "error_message": None,
+                    "error_message": error_message,
+                    "extraction_method": extraction_method,
+                    "ocr_used": ocr_used,
+                    "ocr_confidence": ocr_confidence,
                 }
             )
             .eq("id", str(tender_id))
@@ -108,14 +124,25 @@ class PDFExtractionRepository:
         tender_id: UUID,
         user_id: UUID,
         error_message: str,
+        extraction_method: str | None = None,
+        ocr_used: bool | None = None,
     ) -> None:
         if self._supabase_client is None:
             return
 
+        updates: dict[str, Any] = {
+            "status": "failed",
+            "error_message": error_message,
+        }
+        if extraction_method is not None:
+            updates["extraction_method"] = extraction_method
+        if ocr_used is not None:
+            updates["ocr_used"] = ocr_used
+
         self._execute_query(
             "mark tender extraction failed",
             self._supabase_client.table("tenders")
-            .update({"status": "failed", "error_message": error_message})
+            .update(updates)
             .eq("id", str(tender_id))
             .eq("user_id", str(user_id)),
             table_name="tenders",
