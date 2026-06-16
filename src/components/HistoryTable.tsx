@@ -15,6 +15,13 @@ const statusClass = {
   Analyzed: "bg-emerald-50 text-emerald-800 ring-emerald-200",
 };
 
+const statusDescription = {
+  Uploaded: "PDF uploaded. Extraction pending.",
+  Extracted: "Ready for AI analysis.",
+  Failed: "Needs attention.",
+  Analyzed: "Analysis complete.",
+};
+
 export default function HistoryTable({
   items,
   description = "Previously analyzed tender PDFs using development mock data."
@@ -50,6 +57,7 @@ export default function HistoryTable({
           >
             <div>
               <p className="font-semibold text-gray-950">{item.tenderTitle}</p>
+              <p className="mt-1 text-xs text-gray-500">{statusDescription[item.status]}</p>
               <p className="mt-1 text-xs text-gray-500 lg:hidden">{item.organization}</p>
             </div>
             <p className="hidden text-gray-700 lg:block">{item.organization}</p>

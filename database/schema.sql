@@ -7,7 +7,7 @@ create table if not exists public.app_users (
   password_hash text not null,
   role text not null default 'msme_user',
   is_active boolean not null default true,
-  free_analysis_credits integer not null default 5,
+  free_analysis_credits integer not null default 15,
   plan_name text not null default 'free',
   subscription_status text not null default 'trial',
   failed_login_count integer not null default 0,
@@ -94,7 +94,10 @@ create table if not exists public.tender_pages (
 );
 
 alter table public.app_users
-add column if not exists free_analysis_credits integer not null default 5;
+add column if not exists free_analysis_credits integer not null default 15;
+
+alter table public.app_users
+alter column free_analysis_credits set default 15;
 
 alter table public.app_users
 add column if not exists plan_name text not null default 'free';

@@ -4,18 +4,18 @@ TenderMate AI now has a billing foundation, but live payments are not enabled ye
 
 ## Trial Rule
 
-Each new user receives 5 free AI tender analyses.
+Each new user receives 15 free AI tender analyses for demo/testing.
 
 The defaults live on `public.app_users`:
 
-- `free_analysis_credits = 5`
+- `free_analysis_credits = 15`
 - `plan_name = 'free'`
 - `subscription_status = 'trial'`
 
 ## Credit Deduction Rules
 
 - A user can run AI analysis when `free_analysis_credits > 0` or `subscription_status = 'active'`.
-- The future AI analysis endpoint should call `require_analysis_credit` before starting paid work.
+- The Gemini analysis endpoint checks analysis access before starting paid work.
 - A free credit must be deducted only after analysis succeeds and the result is safely persisted.
 - Failed uploads, failed PDF extraction, failed Gemini calls, and failed persistence must not deduct a credit.
 - Credits must never go below 0.
@@ -31,7 +31,7 @@ No Razorpay checkout, orders, webhooks, or live payment capture are connected in
 
 ## MVP Plans
 
-- Free: 5 AI analyses, ₹0
+- Free: 15 AI analyses, ₹0
 - Starter: 25 analyses/month, ₹199/month, coming soon
 - Pro: 100 analyses/month, ₹499/month, coming soon
 - Business: 300 analyses/month, ₹999/month, coming soon

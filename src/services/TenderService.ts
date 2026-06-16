@@ -85,6 +85,10 @@ export class TenderService {
     return this.backendRepository.extractTenderText(tenderId);
   }
 
+  async analyzeTender(tenderId: string) {
+    return this.backendRepository.analyzeTender(tenderId);
+  }
+
   getTenderDetails(id: string) {
     return this.repository.getTenderById(id);
   }

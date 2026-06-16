@@ -1,6 +1,6 @@
 # TenderMate AI
 
-TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, and Supabase Storage so users can sign up, log in, upload tender PDFs, and view protected tender history.
+TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, Supabase Storage, PDF text extraction, and Gemini AI analysis so users can sign up, log in, upload tender PDFs, and view protected tender history.
 
 Live URLs:
 
@@ -12,7 +12,7 @@ Live URLs:
 ## Tech Stack
 
 - Frontend: Next.js, React, TypeScript, Tailwind CSS
-- Backend: FastAPI, Python, PyJWT, pwdlib Argon2 password hashing
+- Backend: FastAPI, Python, PyJWT, pwdlib Argon2 password hashing, pypdf, Google GenAI SDK
 - Database and storage: Supabase PostgreSQL and private Supabase Storage
 - Deployment: Vercel frontend, Render backend
 
@@ -24,7 +24,8 @@ Live URLs:
 - Real PDF upload to private Supabase Storage bucket `tender-pdfs`
 - User-linked tender and upload records for uploaded PDFs
 - PDF text extraction foundation with page-wise text stored in Supabase
-- Free trial foundation with 5 tender AI analyses per new user
+- Gemini AI tender analysis from extracted PDF text
+- Free trial foundation with 15 tender AI analyses per new user for demo/testing
 - Profile/account area with plan, credits, billing status, and account actions
 - Pricing and billing pages with upgrade-required UI
 - Billing usage/plans/checkout placeholder API
@@ -37,15 +38,15 @@ Live URLs:
 
 ## Trial and Payments
 
-Every new user starts with 5 free tender analyses. The profile, billing, and pricing pages show the current plan, credits left, subscription status, and usage summary. The pricing page shows Free, Starter, Pro, and Business plans.
+Every new user starts with 15 free tender analyses for demo/testing. The profile, billing, and pricing pages show the current plan, credits left, subscription status, and usage summary. The pricing page shows Free, Starter, Pro, and Business plans.
 
 Payments are planned with Razorpay, but live payments are not enabled yet. The current implementation is a foundation only: it tracks trial credits, exposes billing endpoints, and returns a friendly coming-soon checkout response.
 
 ## Planned Next
 
-- Gemini-powered tender analysis
 - Razorpay payment integration
-- Persist generated analysis reports to user history
+- Admin workflows for support and usage review
+- OCR support for scanned PDFs
 
 ## Security Highlights
 
@@ -53,9 +54,10 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 - Tender history and upload metadata are scoped to the logged-in user.
 - PDFs are stored privately in Supabase Storage at `users/{user_id}/tenders/{tender_id}/original.pdf`.
 - The Supabase service role key is used only by the backend and is never exposed to the frontend.
-- Every user receives 5 free analysis credits.
+- Every user receives 15 free analysis credits for demo/testing.
 - Auth, upload, and billing endpoints have MVP in-memory rate limits.
 - PDF uploads are capped at 5 per user per day.
+- Gemini API keys stay backend-only and are never exposed to the frontend.
 - Security-sensitive events are recorded in `audit_logs`.
 
 ## Local Setup
@@ -81,7 +83,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create `backend/.env` from `backend/.env.example` and fill in Supabase and JWT values.
+Create `backend/.env` from `backend/.env.example` and fill in Supabase, JWT, and backend-only Gemini values.
 
 Run the backend:
 
@@ -103,4 +105,4 @@ npm run dev
 - Set frontend `NEXT_PUBLIC_API_BASE_URL` to the deployed backend URL plus `/api/v1`.
 - Set backend `FRONTEND_URL` or `CORS_ORIGINS` to the deployed Vercel URL.
 
-Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY` or `JWT_SECRET_KEY` in frontend environment variables.
+Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET_KEY`, or `GEMINI_API_KEY` in frontend environment variables.

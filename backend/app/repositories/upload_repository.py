@@ -142,5 +142,5 @@ class UploadRepository:
             pdf_url=row.get("pdf_url"),
             created_at=row["created_at"],
             status="uploaded",
-            message="PDF uploaded successfully. PDF extraction and AI analysis are coming next.",
+            message="PDF uploaded successfully. Extract text before running AI analysis.",
         )

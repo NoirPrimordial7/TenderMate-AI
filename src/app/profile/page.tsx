@@ -10,7 +10,7 @@ import { BillingUsage } from "@/domain/billing/types";
 import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
 
-const FREE_TRIAL_CREDITS = 5;
+const FREE_TRIAL_CREDITS = 15;
 
 function titleCase(value?: string | null) {
   if (!value) return "Free";

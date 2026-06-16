@@ -68,6 +68,7 @@ class AuthService:
             full_name=request.full_name.strip(),
             email=email,
             password_hash=hash_password(request.password),
+            free_analysis_credits=self.settings.free_analysis_credits_default,
         )
         record_audit_log(
             action="signup",

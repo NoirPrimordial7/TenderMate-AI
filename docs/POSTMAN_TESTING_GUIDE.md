@@ -1,6 +1,6 @@
 # TenderMate AI Postman Testing Guide
 
-This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, real PDF uploads to Supabase Storage, and PDF text extraction.
+This guide tests the current FastAPI backend with Supabase-backed auth, JWT bearer tokens, user-scoped tender history, real PDF uploads to Supabase Storage, PDF text extraction, and Gemini analysis.
 
 Current scope:
 
@@ -8,7 +8,7 @@ Current scope:
 - Supabase PostgreSQL required for auth.
 - Private Supabase Storage bucket `tender-pdfs` required for PDF upload.
 - Tender APIs are protected and user-specific.
-- No Gemini analysis yet.
+- Gemini analysis requires backend-only `GEMINI_API_KEY`.
 
 ## 1. Backend Setup
 
@@ -38,6 +38,8 @@ SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ANON_KEY=
 FRONTEND_URL=http://localhost:3000
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-3.1-flash-lite
 JWT_SECRET_KEY=
 JWT_ALGORITHM=HS256
 ACCESS_TOKEN_EXPIRE_MINUTES=60
@@ -337,9 +339,10 @@ The `{id}` path parameter must be a valid UUID.
 - Postman `GET /api/v1/tenders/{id}` with bearer token when a user-owned tender exists.
 - Postman `POST /api/v1/tenders/upload` with bearer token.
 - Postman `POST /api/v1/tenders/{id}/extract` with bearer token.
+- Postman `POST /api/v1/tenders/{id}/analyze` with bearer token and backend-only Gemini config.
 
 Recommended submission note:
 
 ```text
-The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, Supabase Storage, JWT authentication, and Postman. Tender history, upload metadata, and extracted page text are scoped to the logged-in user. Gemini AI analysis is a planned future step.
+The backend was tested locally using FastAPI, Uvicorn, Swagger UI, Supabase PostgreSQL, Supabase Storage, JWT authentication, Gemini AI analysis, and Postman. Tender history, upload metadata, extracted page text, and saved analyses are scoped to the logged-in user.
 ```

@@ -97,7 +97,7 @@ Successful response status: `201 Created`.
   "pdf_url": null,
   "created_at": "2026-06-16T09:00:00Z",
   "status": "uploaded",
-  "message": "PDF uploaded successfully. PDF extraction and AI analysis are coming next."
+  "message": "PDF uploaded successfully. Extract text before running AI analysis."
 }
 ```
 
@@ -139,6 +139,34 @@ Possible responses:
 - `429 Too Many Requests`: extraction rate limit exceeded.
 - `500 Internal Server Error`: Supabase configuration, Storage download, PDF parsing, or database write issue. The tender is marked `failed` with a friendly `error_message` when extraction fails after ownership is confirmed.
 
+### `POST /api/v1/tenders/{id}/analyze`
+
+Protected endpoint. Runs Gemini analysis for the current user's tender after PDF text extraction. The backend loads page-wise text from `public.tender_pages`, builds a bounded page-numbered prompt, asks Gemini for strict JSON, validates the frontend-compatible analysis shape, saves it to `tenders.analysis_json`, updates the tender to `status = 'analyzed'`, records `ai_analysis` usage, writes a `run_gemini_analysis` audit log, and deducts one analysis credit only after the analysis is saved.
+
+Gemini credentials are backend-only. `GEMINI_API_KEY` must never be exposed through `NEXT_PUBLIC_*` frontend variables.
+
+Rate limit: 10 requests/hour per user.
+
+Successful response status: `200 OK`.
+
+```json
+{
+  "tender_id": "11111111-1111-1111-1111-111111111111",
+  "status": "analyzed",
+  "message": "Tender analyzed successfully."
+}
+```
+
+Possible responses:
+
+- `200 OK`: analysis completed and `analysis_json` was saved.
+- `400 Bad Request`: PDF text has not been extracted or no extracted text exists.
+- `401 Unauthorized`: missing, invalid, or expired JWT.
+- `402 Payment Required`: no free credits and no active subscription.
+- `404 Not Found`: tender does not exist or does not belong to the current user.
+- `429 Too Many Requests`: endpoint rate limit or daily AI analysis quota exceeded.
+- `500 Internal Server Error`: Gemini is not configured, Gemini is unavailable, or analysis persistence failed.
+
 ### `GET /api/v1/billing/usage`
 
 Protected endpoint. Returns the current user's trial and usage state:
@@ -157,7 +185,7 @@ Rate limit: 120 requests/minute per user.
 
 Protected endpoint. Returns static MVP plan metadata:
 
-- Free: 5 analyses included, ₹0
+- Free: 15 analyses included, ₹0
 - Starter: 25 analyses/month, ₹199/month, coming soon
 - Pro: 100 analyses/month, ₹499/month, coming soon
 - Business: 300 analyses/month, ₹999/month, coming soon
@@ -205,25 +233,6 @@ Generic rate-limit response:
 ```
 
 ## Future Endpoints
-
-### Gemini Analysis
-
-- `POST /api/v1/tenders/{id}/analyze`
-- `GET /api/v1/tenders/{id}/analysis`
-
-Purpose: run AI analysis after extraction and return frontend-compatible `analysis_json`.
-
-The future analyze endpoint should depend on `require_analysis_credit`. When the user has no free credits and no active subscription, it should return:
-
-```json
-{
-  "detail": "Free analysis limit reached. Please upgrade to continue."
-}
-```
-
-with HTTP status `402 Payment Required`.
-
-The endpoint must call `consume_analysis_credit(user_id, tender_id)` only after PDF extraction, Gemini analysis, and persistence have succeeded. Failed analysis attempts must not deduct trial credits.
 
 ### Upload Storage Utilities
 

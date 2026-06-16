@@ -147,3 +147,9 @@ export type PDFExtractionResponse = {
   pages_with_text: number;
   message: string;
 };
+
+export type GeminiAnalysisResponse = {
+  tender_id: string;
+  status: string;
+  message: string;
+};

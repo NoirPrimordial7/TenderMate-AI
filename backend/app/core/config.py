@@ -54,6 +54,11 @@ class Settings:
     rate_limit_enabled: bool
     max_uploads_per_day: int
     max_ai_analyses_per_day: int
+    gemini_api_key: str
+    gemini_model: str
+    free_analysis_credits_default: int
+    max_gemini_input_chars: int
+    gemini_request_timeout_seconds: int
     failed_login_lock_threshold: int
     failed_login_lock_minutes: int
 
@@ -90,6 +95,17 @@ def get_settings() -> Settings:
         rate_limit_enabled=_get_bool_env("RATE_LIMIT_ENABLED", True),
         max_uploads_per_day=_get_int_env("MAX_UPLOADS_PER_DAY", 5),
         max_ai_analyses_per_day=_get_int_env("MAX_AI_ANALYSES_PER_DAY", 3),
+        gemini_api_key=getenv("GEMINI_API_KEY", ""),
+        gemini_model=getenv("GEMINI_MODEL", "gemini-3.1-flash-lite"),
+        free_analysis_credits_default=_get_int_env(
+            "FREE_ANALYSIS_CREDITS_DEFAULT",
+            15,
+        ),
+        max_gemini_input_chars=_get_int_env("MAX_GEMINI_INPUT_CHARS", 100000),
+        gemini_request_timeout_seconds=_get_int_env(
+            "GEMINI_REQUEST_TIMEOUT_SECONDS",
+            60,
+        ),
         failed_login_lock_threshold=_get_int_env("FAILED_LOGIN_LOCK_THRESHOLD", 5),
         failed_login_lock_minutes=_get_int_env("FAILED_LOGIN_LOCK_MINUTES", 15),
     )

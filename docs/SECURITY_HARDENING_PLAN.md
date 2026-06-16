@@ -1,6 +1,6 @@
 # Security Hardening Plan
 
-TenderMate AI now has an MVP security layer for auth, rate limits, quotas, file upload, PDF extraction, and audit logging. The current implementation is intentionally lightweight and can be expanded before Gemini analysis and payments go live.
+TenderMate AI now has an MVP security layer for auth, rate limits, quotas, file upload, PDF extraction, Gemini analysis, and audit logging. The current implementation is intentionally lightweight and can be expanded before payments go live.
 
 ## Auth Protections
 
@@ -19,6 +19,7 @@ Current in-memory limits:
 - `GET /api/v1/auth/me`: 120 requests/minute per user, with IP guarding for invalid token calls.
 - `POST /api/v1/tenders/upload`: 10 requests/hour per user.
 - `POST /api/v1/tenders/{id}/extract`: 10 requests/hour per user.
+- `POST /api/v1/tenders/{id}/analyze`: 10 requests/hour per user.
 - `GET /api/v1/billing/usage`: 120 requests/minute per user.
 - `POST /api/v1/billing/create-checkout`: 5 requests/hour per user.
 
@@ -51,6 +52,8 @@ The `audit_logs` table records operational events:
 - `upload_pdf`
 - `extract_pdf`
 - `pdf_extract_failed`
+- `run_gemini_analysis`
+- `gemini_analysis_failed`
 - `billing_usage_view`
 - `checkout_placeholder`
 
@@ -69,9 +72,7 @@ Audit logging is best-effort so a logging failure does not block user-facing flo
 
 ## Gemini Cost Protection Checklist
 
-Before Gemini analysis:
-
-- Gate analysis with `require_analysis_credit`.
+- Gate analysis with credit checks.
 - Enforce daily and monthly analysis quotas.
 - Deduct free credits only after successful persisted analysis.
 - Record AI analysis usage events.

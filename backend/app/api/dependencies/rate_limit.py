@@ -97,6 +97,11 @@ PDF_EXTRACT_RATE_LIMIT = RateLimitRule(
     max_requests=10,
     window_seconds=60 * 60,
 )
+GEMINI_ANALYSIS_RATE_LIMIT = RateLimitRule(
+    name="gemini_analysis",
+    max_requests=10,
+    window_seconds=60 * 60,
+)
 BILLING_USAGE_RATE_LIMIT = RateLimitRule(
     name="billing_usage",
     max_requests=120,

@@ -17,7 +17,7 @@ export default function DashboardClient() {
   const [hasLoaded, setHasLoaded] = useState(false);
   const hasUsageFields = typeof user?.free_analysis_credits === "number";
   const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
-  const displayCredits = hasUsageFields ? freeCredits : 5;
+  const displayCredits = hasUsageFields ? freeCredits : 15;
   const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
 
   useEffect(() => {
@@ -104,14 +104,14 @@ export default function DashboardClient() {
 
       {hasLoaded && !isLoading && !error && tender && !tender.analysis ? (
         <EmptyState
-          title={tender.status === "extracted" ? "PDF text extracted" : "Tender uploaded"}
+          title={tender.status === "extracted" ? "Ready for AI analysis" : "Tender uploaded"}
           description={
             tender.status === "extracted"
-              ? "PDF text extracted successfully. AI analysis with Gemini is coming next."
-              : "Tender uploaded. PDF extraction and AI analysis are coming next."
+              ? "PDF text extracted successfully. Run AI analysis when ready."
+              : "Tender uploaded. Extract PDF text first, then run AI analysis."
           }
           actionHref={`/tender/${tender.id}`}
-          actionLabel="View upload status"
+          actionLabel={tender.status === "extracted" ? "Run AI analysis" : "View upload status"}
           secondaryActionHref="/history"
           secondaryActionLabel="View history"
         />

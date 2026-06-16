@@ -14,10 +14,10 @@ const fallbackPlans: BillingPlan[] = [
     id: "free",
     name: "Free",
     price_label: "₹0",
-    analyses_included: 5,
+    analyses_included: 15,
     interval: null,
     coming_soon: false,
-    description: "5 AI tender analyses included for every new user."
+    description: "15 AI tender analyses included for every new user."
   },
   {
     id: "starter",
@@ -57,7 +57,7 @@ export default function PricingPage() {
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
 
   const currentPlan = usage?.plan_name ?? user?.plan_name ?? "free";
-  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 5);
+  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 15);
   const subscriptionStatus = usage?.subscription_status ?? user?.subscription_status ?? "trial";
 
   const currentPlanLabel = useMemo(
@@ -121,7 +121,7 @@ export default function PricingPage() {
               Start free, upgrade when tender volume grows
             </h1>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              TenderMate includes 5 free AI analyses for every account. Paid plans and Razorpay checkout are planned,
+              TenderMate includes 15 free AI analyses for every account. Paid plans and Razorpay checkout are planned,
               but live payments are not enabled yet.
             </p>
           </div>
