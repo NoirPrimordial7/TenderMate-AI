@@ -11,7 +11,7 @@ from app.api.dependencies.rate_limit import (
     rate_limit_by_ip,
 )
 from app.core.config import Settings, get_settings
-from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
 from app.services.audit_service import record_audit_log
 from app.services.auth_service import (
     AccountLockedError,
@@ -119,3 +119,21 @@ def me(
         user_agent=get_user_agent(request),
     )
     return current_user
+
+
+@router.patch("/preferences", response_model=UserResponse)
+def update_preferences(
+    request: Request,
+    payload: UserPreferencesUpdate,
+    current_user: UserResponse = Depends(get_current_user),
+    service: AuthService = Depends(get_auth_service),
+) -> UserResponse:
+    updated_user = service.update_preferences(current_user.id, payload)
+    record_audit_log(
+        action="language_preferences_updated",
+        user_id=current_user.id,
+        ip_address=get_client_ip(request),
+        user_agent=get_user_agent(request),
+        metadata=payload.model_dump(exclude_none=True),
+    )
+    return updated_user

@@ -1,24 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import {
-  ChevronDown,
-  CreditCard,
-  FileSearch,
-  History,
-  LayoutDashboard,
-  LogIn,
-  LogOut,
-  ReceiptText,
-  Upload,
-  UserCircle,
-  UserPlus
-} from "lucide-react";
+import { usePathname } from "next/navigation";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, ChevronDown, CreditCard, History, LayoutDashboard, LogOut, Menu, Upload, UserCircle, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTranslations } from "@/contexts/LocaleContext";
+import { LanguageSwitcher } from "@/components/language/LanguageSwitcher";
+
+const primaryLinks = [
+  { href: "/", labelKey: "upload", icon: Upload },
+  { href: "/dashboard", labelKey: "dashboard", icon: LayoutDashboard },
+  { href: "/history", labelKey: "history", icon: History },
+  { href: "/pricing", labelKey: "pricing", icon: CreditCard }
+];
 
 function titleCase(value?: string | null) {
-  if (!value) return "Free";
+  if (!value) return null;
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
@@ -29,186 +28,149 @@ function getInitials(name?: string | null, email?: string | null) {
   return source.slice(0, 2).toUpperCase();
 }
 
+function isActivePath(pathname: string, href: string) {
+  if (href === "/") return pathname === "/" || pathname === "/upload";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
 export default function Header() {
+  const pathname = usePathname();
+  const shouldReduceMotion = useReducedMotion();
   const { isAuthenticated, isLoading, logout, user } = useAuth();
+  const t = useTranslations("navigation");
+  const common = useTranslations("common");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const hasUsageFields = typeof user?.free_analysis_credits === "number";
-  const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
-  const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
-  const displayCredits = hasUsageFields ? freeCredits : 5;
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+  const firstProfileItemRef = useRef<HTMLAnchorElement>(null);
+  const mobileButtonRef = useRef<HTMLButtonElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const firstMobileLinkRef = useRef<HTMLAnchorElement>(null);
+
+  const credits = typeof user?.free_analysis_credits === "number" ? Math.max(0, user.free_analysis_credits) : null;
   const planName = titleCase(user?.plan_name);
-  const usageLabel = hasUsageFields && !hasActiveSubscription && freeCredits === 0
-    ? `${planName} plan · Upgrade required`
-    : `${planName} plan · ${displayCredits} credits left`;
+  const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
+  const usageLabel = credits === null ? t("usageUnavailable") : !hasActiveSubscription && credits === 0 ? t("upgradeRequired") : `${credits} ${credits === 1 ? t("credit") : t("creditPlural")}`;
   const initials = getInitials(user?.full_name, user?.email);
 
+  useEffect(() => {
+    setIsProfileOpen(false);
+    setIsMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (isProfileOpen && !profileMenuRef.current?.contains(target) && !profileButtonRef.current?.contains(target)) setIsProfileOpen(false);
+      if (isMobileOpen && !mobileMenuRef.current?.contains(target) && !mobileButtonRef.current?.contains(target)) setIsMobileOpen(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        if (isProfileOpen) {
+          setIsProfileOpen(false);
+          profileButtonRef.current?.focus();
+        } else if (isMobileOpen) {
+          setIsMobileOpen(false);
+          mobileButtonRef.current?.focus();
+        }
+        return;
+      }
+      if (event.key === "Tab" && isMobileOpen && mobileMenuRef.current) {
+        const focusable = Array.from(mobileMenuRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+        if (!focusable.length) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMobileOpen, isProfileOpen]);
+
+  useEffect(() => {
+    if (isProfileOpen) window.requestAnimationFrame(() => firstProfileItemRef.current?.focus());
+  }, [isProfileOpen]);
+
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.requestAnimationFrame(() => firstMobileLinkRef.current?.focus());
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [isMobileOpen]);
+
+  const menuTransition = { duration: shouldReduceMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] as const };
+
   return (
-    <header className="sticky top-0 z-30 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur">
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" aria-label="TenderMate AI home">
-          <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-950 text-white shadow-sm">
-            <FileSearch className="h-5 w-5" aria-hidden="true" />
-          </span>
-          <span className="hidden text-lg font-semibold tracking-tight text-gray-950 sm:inline">TenderMate AI</span>
-        </Link>
-        <nav className="flex flex-wrap items-center justify-end gap-1" aria-label="Primary navigation">
-          <Link
-            href="/"
-            className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-          >
-            <Upload className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Upload</span>
-          </Link>
-          <Link
-            href="/dashboard"
-            className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-          >
-            <LayoutDashboard className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Dashboard</span>
-          </Link>
-          <Link
-            href="/history"
-            className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-          >
-            <History className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">History</span>
-          </Link>
-          <Link
-            href="/pricing"
-            className="inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-          >
-            <CreditCard className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">Pricing</span>
-          </Link>
-          {!isLoading && isAuthenticated ? (
-            <>
-              <Link
-                href="/billing"
-                className={`ml-2 hidden h-9 items-center rounded-md border px-3 text-xs font-semibold lg:inline-flex ${
-                  hasUsageFields && !hasActiveSubscription && freeCredits === 0
-                    ? "border-amber-300 bg-amber-50 text-amber-800"
-                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                }`}
-              >
-                {usageLabel}
-              </Link>
-              <div className="relative ml-1">
-                <button
-                  type="button"
-                  onClick={() => setIsProfileOpen((current) => !current)}
-                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 text-sm font-semibold text-gray-900 shadow-sm hover:bg-gray-50"
-                  aria-expanded={isProfileOpen}
-                  aria-haspopup="menu"
-                >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-950 text-xs font-semibold text-white">
-                    {initials}
-                  </span>
-                  <span className="hidden max-w-28 truncate md:inline">{user?.full_name || "Account"}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                </button>
+    <motion.header className="te-header" initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.38, delay: shouldReduceMotion ? 0 : 0.72 }}>
+      <div className="te-header-inner te-page-container">
+        <Link href="/" className="te-brand" aria-label={common("brandHome")}><span>TenderMate</span><i>AI</i></Link>
 
-                {isProfileOpen ? (
-                  <div
-                    className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-gray-200 bg-white p-2 text-left shadow-lg ring-1 ring-black/5"
-                    role="menu"
-                  >
-                    <div className="rounded-lg bg-gray-50 px-3 py-3">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-950 text-sm font-semibold text-white">
-                          {initials}
-                        </span>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-semibold text-gray-950">{user?.full_name ?? "Account"}</p>
-                          <p className="truncate text-xs text-gray-500">{user?.email}</p>
-                        </div>
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2">
-                          <p className="text-gray-500">Current plan</p>
-                          <p className="mt-1 font-semibold text-gray-950">{planName}</p>
-                        </div>
-                        <div className="rounded-md border border-gray-200 bg-white px-2.5 py-2">
-                          <p className="text-gray-500">Credits left</p>
-                          <p className="mt-1 font-semibold text-gray-950">{displayCredits}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-2 grid gap-1">
-                      <Link
-                        href="/profile"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        role="menuitem"
-                      >
-                        <UserCircle className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                        Profile
-                      </Link>
-                      <Link
-                        href="/billing"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        role="menuitem"
-                      >
-                        <ReceiptText className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                        Billing & usage
-                      </Link>
-                      <Link
-                        href="/pricing"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        role="menuitem"
-                      >
-                        <CreditCard className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                        Pricing
-                      </Link>
-                      <Link
-                        href="/dashboard"
-                        onClick={() => setIsProfileOpen(false)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        role="menuitem"
-                      >
-                        <LayoutDashboard className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                        Dashboard
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setIsProfileOpen(false);
-                          logout("/login");
-                        }}
-                        className="flex items-center gap-2 rounded-lg px-3 py-2 text-left text-sm font-medium text-gray-700 hover:bg-gray-50"
-                        role="menuitem"
-                      >
-                        <LogOut className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                        Logout
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            </>
-          ) : null}
-          {!isLoading && !isAuthenticated ? (
-            <>
-              <Link
-                href="/login"
-                className="ml-2 inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-semibold text-gray-700 hover:bg-gray-100"
-              >
-                <LogIn className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Login</span>
-              </Link>
-              <Link
-                href="/signup"
-                className="inline-flex h-9 items-center gap-2 rounded-md bg-gray-950 px-3 text-sm font-semibold text-white hover:bg-black"
-              >
-                <UserPlus className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">Sign up</span>
-              </Link>
-            </>
-          ) : null}
+        <nav className="te-desktop-nav" aria-label={t("primaryLabel")}>
+          {primaryLinks.map((item) => {
+            const active = isActivePath(pathname, item.href);
+            return <Link key={item.href} href={item.href} className={active ? "te-nav-active" : ""} aria-current={active ? "page" : undefined}>{t(item.labelKey)}<i aria-hidden="true" /></Link>;
+          })}
         </nav>
+
+        <div className="te-header-actions">
+          {!isLoading && isAuthenticated && user ? (
+            <div className="te-desktop-account">
+              <Link href="/billing" className="te-plan-control"><span>{planName ?? t("planUnavailable")}</span><strong>{usageLabel}</strong></Link>
+              <div className="relative">
+                <button ref={profileButtonRef} type="button" onClick={() => { setIsMobileOpen(false); setIsProfileOpen((current) => !current); }} className="te-account-button" aria-expanded={isProfileOpen} aria-haspopup="menu" aria-controls="profile-menu">
+                  <span className="te-avatar">{initials}</span><span className="te-account-name">{user.full_name || common("account")}</span><ChevronDown className={`h-4 w-4 ${isProfileOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                </button>
+                <AnimatePresence>
+                  {isProfileOpen ? (
+                    <motion.div ref={profileMenuRef} id="profile-menu" className="te-profile-menu" role="menu" aria-label={t("accountMenu")} initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={menuTransition}>
+                      <div className="te-profile-summary"><span className="te-avatar te-avatar-large">{initials}</span><div><p>{user.full_name || common("account")}</p><span>{user.email}</span></div></div>
+                      <dl className="te-profile-usage"><div><dt>{common("plan")}</dt><dd>{planName ?? common("unavailable")}</dd></div><div><dt>{common("credits")}</dt><dd>{credits ?? common("unavailable")}</dd></div></dl>
+                      <LanguageSwitcher compact />
+                      <div className="te-profile-links"><Link ref={firstProfileItemRef} href="/profile" role="menuitem"><UserCircle className="h-4 w-4" /> {t("profile")}</Link><Link href="/billing" role="menuitem"><CreditCard className="h-4 w-4" /> {t("billing")}</Link><Link href="/dashboard" role="menuitem"><LayoutDashboard className="h-4 w-4" /> {t("dashboard")}</Link><button type="button" onClick={() => logout("/login")} role="menuitem"><LogOut className="h-4 w-4" /> {t("signOut")}</button></div>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+            </div>
+          ) : null}
+
+          {!isLoading && !isAuthenticated ? <Link href="/login" className="te-header-enter">{t("enterWorkspace")} <ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link> : null}
+
+          <button ref={mobileButtonRef} type="button" className="te-mobile-trigger" onClick={() => { setIsProfileOpen(false); setIsMobileOpen((current) => !current); }} aria-expanded={isMobileOpen} aria-controls="mobile-navigation" aria-label={isMobileOpen ? t("closeMenu") : t("openMenu")}>{isMobileOpen ? <X className="h-5 w-5" aria-hidden="true" /> : <Menu className="h-5 w-5" aria-hidden="true" />}</button>
+        </div>
       </div>
-    </header>
+
+      <AnimatePresence>
+        {isMobileOpen ? (
+          <motion.div className="te-mobile-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={menuTransition}>
+            <motion.div ref={mobileMenuRef} id="mobile-navigation" className="te-mobile-menu" role="dialog" aria-modal="true" aria-label={t("menuDialog")} initial={{ y: "-100%" }} animate={{ y: 0 }} exit={{ y: "-100%" }} transition={{ duration: shouldReduceMotion ? 0 : 0.42, ease: [0.76, 0, 0.24, 1] }}>
+              <div className="te-mobile-menu-head"><span>{t("explore")}</span><span>{t("closeWithEscape")}</span></div>
+              <nav aria-label={t("mobileLabel")} className="te-mobile-links">
+                {primaryLinks.map((item, index) => {
+                  const Icon = item.icon;
+                  const active = isActivePath(pathname, item.href);
+                  return <Link key={item.href} ref={index === 0 ? firstMobileLinkRef : undefined} href={item.href} className={active ? "te-mobile-link-active" : ""} aria-current={active ? "page" : undefined}><span><Icon className="h-4 w-4" aria-hidden="true" /> {t(item.labelKey)}</span><ArrowUpRight className="h-4 w-4" aria-hidden="true" /></Link>;
+                })}
+              </nav>
+              <LanguageSwitcher onSelect={() => setIsMobileOpen(false)} />
+              {!isLoading && isAuthenticated && user ? <div className="te-mobile-account"><div className="te-profile-summary"><span className="te-avatar te-avatar-large">{initials}</span><div><p>{user.full_name || common("account")}</p><span>{user.email}</span></div></div><p>{planName ?? t("planUnavailable")} · {usageLabel}</p><div><Link href="/profile">{t("profile")}</Link><Link href="/billing">{t("billing")}</Link></div><button type="button" onClick={() => logout("/login")}><LogOut className="h-4 w-4" /> {t("signOut")}</button></div> : null}
+              {!isLoading && !isAuthenticated ? <div className="te-mobile-auth"><Link href="/login">{t("signIn")}</Link><Link href="/signup">{t("createAccount")} <ArrowUpRight className="h-4 w-4" /></Link></div> : null}
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </motion.header>
   );
 }

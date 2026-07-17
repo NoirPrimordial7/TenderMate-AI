@@ -52,6 +52,22 @@ async function readResponseBody(response: Response) {
   return text || null;
 }
 
+function readXhrBody(xhr: XMLHttpRequest) {
+  const text = xhr.responseText;
+  if (!text) return null;
+
+  const contentType = xhr.getResponseHeader("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return text;
+    }
+  }
+
+  return text;
+}
+
 function getErrorMessage(status: number, body: unknown) {
   if (body && typeof body === "object" && "detail" in body) {
     const detail = (body as { detail: unknown }).detail;
@@ -143,4 +159,77 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   }
 
   return responseBody as T;
+}
+
+export type UploadRequestOptions = {
+  onProgress?: (uploadedBytes: number, totalBytes: number) => void;
+  signal?: AbortSignal;
+};
+
+export function apiUploadRequest<T>(
+  path: string,
+  body: FormData,
+  options: UploadRequestOptions = {}
+): Promise<T> {
+  if (typeof XMLHttpRequest === "undefined") {
+    return Promise.reject(new ApiError(0, "Browser upload is unavailable in this environment."));
+  }
+
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    let settled = false;
+
+    const settle = (callback: () => void) => {
+      if (settled) return;
+      settled = true;
+      options.signal?.removeEventListener("abort", handleAbort);
+      callback();
+    };
+
+    const handleAbort = () => xhr.abort();
+
+    xhr.open("POST", buildUrl(path));
+    xhr.setRequestHeader("Accept", "application/json");
+
+    const token = getAccessToken();
+    if (token) xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        options.onProgress?.(event.loaded, event.total);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      const responseBody = readXhrBody(xhr);
+
+      if (xhr.status >= 200 && xhr.status < 300) {
+        settle(() => resolve(responseBody as T));
+        return;
+      }
+
+      if (xhr.status === 401) {
+        clearStoredAuth();
+        dispatchAuthInvalidated();
+      }
+
+      settle(() => reject(new ApiError(xhr.status, getErrorMessage(xhr.status, responseBody), responseBody)));
+    });
+
+    xhr.addEventListener("error", () => {
+      settle(() => reject(new ApiError(0, getErrorMessage(0, null))));
+    });
+
+    xhr.addEventListener("abort", () => {
+      settle(() => reject(new DOMException("Upload cancelled.", "AbortError")));
+    });
+
+    if (options.signal?.aborted) {
+      settle(() => reject(new DOMException("Upload cancelled.", "AbortError")));
+      return;
+    }
+
+    options.signal?.addEventListener("abort", handleAbort, { once: true });
+    xhr.send(body);
+  });
 }

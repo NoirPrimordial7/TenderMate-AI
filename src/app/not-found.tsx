@@ -1,21 +1,11 @@
+"use client";
+
 import Link from "next/link";
-import Header from "@/components/Header";
+import { ArrowLeft } from "lucide-react";
+import { ApplicationShell } from "@/components/shell/ApplicationShell";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 export default function NotFound() {
-  return (
-    <main className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="mx-auto flex min-h-[calc(100vh-4rem)] max-w-3xl flex-col items-center justify-center px-4 text-center">
-        <p className="muted-label">404</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Page not found</h1>
-        <p className="mt-3 text-sm leading-6 text-gray-600">The tender analysis page you requested is not available.</p>
-        <Link
-          href="/"
-          className="mt-6 inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
-        >
-          Go to upload
-        </Link>
-      </div>
-    </main>
-  );
+  const t = useTranslations("errors");
+  return <ApplicationShell protectedPage={false} className="tm-system-shell"><section className="tm-system-state"><span>404</span><p className="tm-eyebrow">{t("notFoundEyebrow")}</p><h1>{t("notFoundTitle")}</h1><p>{t("notFoundDescription")}</p><Link href="/"><ArrowLeft aria-hidden="true"/>{t("backToUpload")}</Link></section></ApplicationShell>;
 }

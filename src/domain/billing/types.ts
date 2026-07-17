@@ -6,6 +6,7 @@ export type UsageCounts = {
 
 export type BillingUsage = {
   free_analysis_credits: number;
+  upload_limit_per_day: number;
   plan_name: string;
   subscription_status: string;
   can_run_ai_analysis: boolean;
@@ -17,6 +18,7 @@ export type BillingPlan = {
   name: string;
   price_label: string;
   analyses_included: number;
+  uploads_per_day?: number | null;
   interval?: string | null;
   coming_soon: boolean;
   description: string;

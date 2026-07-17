@@ -10,12 +10,12 @@ GEMINI_OCR_PROMPT = (
     "Preserve page numbers. Do not summarize. Do not analyze. If a page is "
     "unreadable, return empty text for that page."
 )
-GEMINI_OCR_NOT_CONFIGURED_MESSAGE = "Gemini OCR is not configured on this server."
+GEMINI_OCR_NOT_CONFIGURED_MESSAGE = "TenderMate OCR is not configured on this server."
 GEMINI_OCR_FAILED_MESSAGE = (
     "OCR could not read this scanned PDF. Please upload a clearer PDF."
 )
 GEMINI_OCR_INVALID_RESPONSE_MESSAGE = (
-    "Gemini OCR returned an unreadable response. Please try again with a clearer PDF."
+    "TenderMate OCR returned an unreadable response. Please try again with a clearer PDF."
 )
 
 
@@ -53,7 +53,7 @@ class GeminiOCRService:
             from google.genai import types
         except Exception as exc:
             raise GeminiOCRFailedError(
-                "Gemini OCR is not available on this server."
+                "TenderMate OCR is not available on this server."
             ) from exc
 
         try:

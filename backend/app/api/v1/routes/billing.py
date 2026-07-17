@@ -30,6 +30,7 @@ MVP_PLANS = [
         name="Free",
         price_label="₹0",
         analyses_included=15,
+        uploads_per_day=5,
         interval=None,
         coming_soon=False,
         description="15 AI tender analyses included for every new user.",
@@ -39,6 +40,7 @@ MVP_PLANS = [
         name="Starter",
         price_label="₹199/month",
         analyses_included=25,
+        uploads_per_day=10,
         interval="month",
         coming_soon=True,
         description="25 AI tender analyses per month. Coming soon.",
@@ -48,6 +50,7 @@ MVP_PLANS = [
         name="Pro",
         price_label="₹499/month",
         analyses_included=100,
+        uploads_per_day=25,
         interval="month",
         coming_soon=True,
         description="100 AI tender analyses per month. Coming soon.",
@@ -57,6 +60,7 @@ MVP_PLANS = [
         name="Business",
         price_label="₹999/month",
         analyses_included=300,
+        uploads_per_day=100,
         interval="month",
         coming_soon=True,
         description="300 AI tender analyses per month. Coming soon.",
@@ -81,7 +85,8 @@ def get_usage(
     )
     try:
         response = BillingUsageResponse(
-            **usage_service.get_user_usage_summary(current_user.id)
+            **usage_service.get_user_usage_summary(current_user.id),
+            upload_limit_per_day=settings.max_uploads_per_day,
         )
         record_audit_log(
             action="billing_usage_view",
@@ -98,15 +103,12 @@ def get_usage(
 
 
 @router.get("/plans", response_model=BillingPlansResponse)
-def get_plans(
-    current_user: UserResponse = Depends(get_current_user),
-    settings: Settings = Depends(get_settings),
-) -> BillingPlansResponse:
-    _ = current_user
+def get_plans(settings: Settings = Depends(get_settings)) -> BillingPlansResponse:
     plans = [
         plan.copy(
             update={
                 "analyses_included": settings.free_analysis_credits_default,
+                "uploads_per_day": settings.max_uploads_per_day,
                 "description": (
                     f"{settings.free_analysis_credits_default} AI tender analyses "
                     "included for every new user."

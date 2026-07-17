@@ -11,3 +11,10 @@ class PDFExtractionResponse(BaseModel):
     extraction_method: str
     ocr_used: bool
     message: str
+
+
+class TenderSourceResponse(BaseModel):
+    tender_id: UUID
+    file_name: str
+    signed_url: str
+    expires_in: int

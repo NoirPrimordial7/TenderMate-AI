@@ -91,6 +91,8 @@ class RiskItem(BaseModel):
 
 
 class TenderAnalysisPayload(BaseModel):
+    schemaVersion: str = "1.0"
+    language: str | None = None
     id: str = ""
     snapshot: TenderSnapshot = Field(default_factory=TenderSnapshot)
     decision: DecisionSummary = Field(default_factory=DecisionSummary)
