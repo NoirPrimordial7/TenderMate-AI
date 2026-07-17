@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.rate_limit import (
-    GEMINI_ANALYSIS_RATE_LIMIT,
+    AI_ANALYSIS_RATE_LIMIT,
     PDF_EXTRACT_RATE_LIMIT,
     SOURCE_PDF_RATE_LIMIT,
     check_rate_limit_for_user_or_ip,
@@ -12,23 +12,29 @@ from app.api.dependencies.rate_limit import (
     get_user_agent,
 )
 from app.core.config import Settings, get_settings
-from app.schemas.analysis import GeminiAnalysisResponse
+from app.schemas.ai_feedback import AIOutputFeedbackCreate, AIOutputFeedbackResponse
+from app.schemas.analysis import TenderAnalysisResponse
 from app.schemas.auth import UserResponse
 from app.schemas.extraction import PDFExtractionResponse, TenderSourceResponse
 from app.schemas.tender import TenderResponse
 from app.services.audit_service import record_audit_log
-from app.services.gemini_analysis_service import (
+from app.services.ai_feedback_service import (
+    AIOutputFeedbackService,
+    FeedbackTenderNotFoundError,
+    get_ai_output_feedback_service,
+)
+from app.services.tender_analysis_service import (
     ANALYSIS_FAILED_MESSAGE,
-    GEMINI_NOT_CONFIGURED_MESSAGE,
+    ANALYSIS_NOT_CONFIGURED_MESSAGE,
     AnalysisNotReadyError,
+    AnalysisNotConfiguredError,
     AnalysisQuotaExceededError,
-    GeminiAnalysisFailedError,
-    GeminiAnalysisService,
-    GeminiNotConfiguredError,
     NoExtractedTextError,
     NonTenderDocumentError,
-    TenderNotFoundError as GeminiTenderNotFoundError,
-    get_gemini_analysis_service,
+    TenderAnalysisFailedError,
+    TenderAnalysisService,
+    TenderNotFoundError as AnalysisTenderNotFoundError,
+    get_tender_analysis_service,
 )
 from app.services.pdf_extraction_service import (
     PDFExtractionFailedError,
@@ -60,7 +66,7 @@ def get_pdf_extract_usage_service() -> UsageService:
         ) from exc
 
 
-def get_gemini_usage_service() -> UsageService:
+def get_analysis_usage_service() -> UsageService:
     try:
         return get_usage_service()
     except RuntimeError as exc:
@@ -242,20 +248,20 @@ def extract_tender_pdf(
     return result
 
 
-@router.post("/{id}/analyze", response_model=GeminiAnalysisResponse)
+@router.post("/{id}/analyze", response_model=TenderAnalysisResponse)
 def analyze_tender_pdf(
     id: UUID,
     request: Request,
     current_user: UserResponse = Depends(get_current_user),
-    service: GeminiAnalysisService = Depends(get_gemini_analysis_service),
-    usage_service: UsageService = Depends(get_gemini_usage_service),
+    service: TenderAnalysisService = Depends(get_tender_analysis_service),
+    usage_service: UsageService = Depends(get_analysis_usage_service),
     settings: Settings = Depends(get_settings),
     limiter: RateLimitService = Depends(get_rate_limit_service),
-) -> GeminiAnalysisResponse:
+) -> TenderAnalysisResponse:
     check_rate_limit_for_user_or_ip(
         request=request,
         current_user=current_user,
-        rule=GEMINI_ANALYSIS_RATE_LIMIT,
+        rule=AI_ANALYSIS_RATE_LIMIT,
         settings=settings,
         limiter=limiter,
     )
@@ -266,7 +272,7 @@ def analyze_tender_pdf(
             user_id=current_user.id,
             usage_service=usage_service,
         )
-    except GeminiTenderNotFoundError as exc:
+    except AnalysisTenderNotFoundError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(exc),
@@ -300,23 +306,23 @@ def analyze_tender_pdf(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         ) from exc
-    except GeminiNotConfiguredError as exc:
+    except AnalysisNotConfiguredError as exc:
         record_audit_log(
-            action="gemini_analysis_failed",
+            action="ai_analysis_failed",
             user_id=current_user.id,
             resource_type="tender",
             resource_id=id,
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
-            metadata={"error": "gemini_not_configured"},
+            metadata={"error": "provider_not_configured"},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=GEMINI_NOT_CONFIGURED_MESSAGE,
+            detail=ANALYSIS_NOT_CONFIGURED_MESSAGE,
         ) from exc
-    except GeminiAnalysisFailedError as exc:
+    except TenderAnalysisFailedError as exc:
         record_audit_log(
-            action="gemini_analysis_failed",
+            action="ai_analysis_failed",
             user_id=current_user.id,
             resource_type="tender",
             resource_id=id,
@@ -330,7 +336,7 @@ def analyze_tender_pdf(
         ) from exc
     except RuntimeError as exc:
         record_audit_log(
-            action="gemini_analysis_failed",
+            action="ai_analysis_failed",
             user_id=current_user.id,
             resource_type="tender",
             resource_id=id,
@@ -344,13 +350,37 @@ def analyze_tender_pdf(
         ) from exc
 
     record_audit_log(
-        action="run_gemini_analysis",
+        action="run_ai_analysis",
         user_id=current_user.id,
         resource_type="tender",
         resource_id=id,
         ip_address=get_client_ip(request),
         user_agent=get_user_agent(request),
-        metadata={"model": settings.gemini_model},
+        metadata={"provider": settings.ai_provider},
     )
 
     return result
+
+
+@router.post(
+    "/{id}/feedback",
+    response_model=AIOutputFeedbackResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def record_analysis_feedback(
+    id: UUID,
+    feedback: AIOutputFeedbackCreate,
+    current_user: UserResponse = Depends(get_current_user),
+    service: AIOutputFeedbackService = Depends(get_ai_output_feedback_service),
+) -> AIOutputFeedbackResponse:
+    try:
+        return service.record_field_feedback(
+            tender_id=id,
+            user_id=current_user.id,
+            feedback=feedback,
+        )
+    except FeedbackTenderNotFoundError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(exc),
+        ) from exc

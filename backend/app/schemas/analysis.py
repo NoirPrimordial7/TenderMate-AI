@@ -160,7 +160,11 @@ class TenderAnalysisPayload(BaseModel):
     readiness: ReadinessScores = Field(default_factory=ReadinessScores)
 
 
-class GeminiAnalysisResponse(BaseModel):
+class TenderAnalysisResponse(BaseModel):
     tender_id: UUID
     status: str
     message: str
+
+
+# Backwards-compatible response model name retained for existing imports/OpenAPI shape.
+GeminiAnalysisResponse = TenderAnalysisResponse
