@@ -25,7 +25,7 @@ Live URLs:
 - User-linked tender and upload records for uploaded PDFs
 - PDF text extraction foundation with page-wise text stored in Supabase
 - Scanned PDF support through Render-compatible Gemini OCR fallback
-- Gemini AI tender analysis from extracted PDF text
+- Provider-neutral AI tender analysis from extracted PDF text, with Gemini as the default
 - Free trial foundation with 15 tender AI analyses per new user for demo/testing
 - Profile/account area with plan, credits, billing status, and account actions
 - Pricing and billing pages with upgrade-required UI
@@ -85,7 +85,7 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-Create `backend/.env` from `backend/.env.example` and fill in Supabase, JWT, and backend-only Gemini values.
+Create `backend/.env` from `backend/.env.example` and fill in Supabase, JWT, and backend-only model-provider values. Gemini is the default. A future Modal/vLLM OpenAI-compatible endpoint can be selected with `AI_PROVIDER=openai_compatible`; fallback and disabled-by-default shadow settings are documented in that example file.
 
 Run the backend:
 
@@ -107,7 +107,7 @@ npm run dev
 - Set frontend `NEXT_PUBLIC_API_BASE_URL` to the deployed backend URL plus `/api/v1`.
 - Set backend `FRONTEND_URL` or `CORS_ORIGINS` to the deployed Vercel URL.
 
-Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET_KEY`, or `GEMINI_API_KEY` in frontend environment variables.
+Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET_KEY`, `GEMINI_API_KEY`, or `TENDERMATE_MODEL_API_KEY` in frontend environment variables. Apply `database/migrations/20260717_add_ai_model_foundation.sql` before enabling self-hosted fallback or shadow traffic; model runs store metadata and a deterministic input hash, not raw prompts.
 
 ## Production API Testing
 

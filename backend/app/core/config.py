@@ -3,6 +3,9 @@ from functools import lru_cache
 from os import getenv
 
 
+SUPPORTED_AI_PROVIDERS = {"gemini", "openai_compatible"}
+
+
 def _load_dotenv_if_available() -> None:
     try:
         from dotenv import load_dotenv
@@ -29,6 +32,16 @@ def _get_bool_env(name: str, default: bool) -> bool:
         return default
 
     return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _get_float_env(name: str, default: float) -> float:
+    value = getenv(name)
+    if value is None or not value.strip():
+        return default
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be a number.") from exc
 
 
 def _split_csv_env(value: str) -> list[str]:
@@ -63,10 +76,51 @@ class Settings:
     ocr_max_pages: int
     gemini_ocr_timeout_seconds: int
     free_analysis_credits_default: int
-    max_gemini_input_chars: int
+    max_model_input_chars: int
     gemini_request_timeout_seconds: int
+    ai_provider: str
+    ai_fallback_provider: str
+    ai_shadow_provider: str
+    ai_shadow_sample_rate: float
+    tendermate_model_base_url: str
+    tendermate_model_api_key: str
+    tendermate_analysis_model: str
+    tendermate_assistant_model: str
+    tendermate_model_timeout_seconds: int
     failed_login_lock_threshold: int
     failed_login_lock_minutes: int
+
+    def __post_init__(self) -> None:
+        selected = {
+            "AI_PROVIDER": self.ai_provider,
+            "AI_FALLBACK_PROVIDER": self.ai_fallback_provider,
+        }
+        if self.ai_shadow_provider:
+            selected["AI_SHADOW_PROVIDER"] = self.ai_shadow_provider
+        for setting_name, provider_name in selected.items():
+            if provider_name not in SUPPORTED_AI_PROVIDERS:
+                supported = ", ".join(sorted(SUPPORTED_AI_PROVIDERS))
+                raise ValueError(
+                    f"{setting_name} must be one of: {supported}."
+                )
+        if not 0 <= self.ai_shadow_sample_rate <= 1:
+            raise ValueError("AI_SHADOW_SAMPLE_RATE must be between 0 and 1.")
+        if "openai_compatible" in selected.values():
+            required = {
+                "TENDERMATE_MODEL_BASE_URL": self.tendermate_model_base_url,
+                "TENDERMATE_MODEL_API_KEY": self.tendermate_model_api_key,
+                "TENDERMATE_ANALYSIS_MODEL": self.tendermate_analysis_model,
+                "TENDERMATE_ASSISTANT_MODEL": self.tendermate_assistant_model,
+            }
+            missing = [name for name, value in required.items() if not value]
+            if missing:
+                raise ValueError(
+                    "Self-hosted provider settings are incomplete: "
+                    + ", ".join(missing)
+                    + "."
+                )
+        if self.tendermate_model_timeout_seconds < 1:
+            raise ValueError("TENDERMATE_MODEL_TIMEOUT_SECONDS must be at least 1.")
 
     @property
     def cors_origins(self) -> list[str]:
@@ -120,10 +174,25 @@ def get_settings() -> Settings:
             "FREE_ANALYSIS_CREDITS_DEFAULT",
             15,
         ),
-        max_gemini_input_chars=_get_int_env("MAX_GEMINI_INPUT_CHARS", 100000),
+        max_model_input_chars=_get_int_env(
+            "MAX_MODEL_INPUT_CHARS",
+            _get_int_env("MAX_GEMINI_INPUT_CHARS", 100000),
+        ),
         gemini_request_timeout_seconds=_get_int_env(
             "GEMINI_REQUEST_TIMEOUT_SECONDS",
             60,
+        ),
+        ai_provider=getenv("AI_PROVIDER", "gemini").strip().lower(),
+        ai_fallback_provider=getenv("AI_FALLBACK_PROVIDER", "gemini").strip().lower(),
+        ai_shadow_provider=getenv("AI_SHADOW_PROVIDER", "").strip().lower(),
+        ai_shadow_sample_rate=_get_float_env("AI_SHADOW_SAMPLE_RATE", 0),
+        tendermate_model_base_url=getenv("TENDERMATE_MODEL_BASE_URL", "").strip(),
+        tendermate_model_api_key=getenv("TENDERMATE_MODEL_API_KEY", "").strip(),
+        tendermate_analysis_model=getenv("TENDERMATE_ANALYSIS_MODEL", "").strip(),
+        tendermate_assistant_model=getenv("TENDERMATE_ASSISTANT_MODEL", "").strip(),
+        tendermate_model_timeout_seconds=_get_int_env(
+            "TENDERMATE_MODEL_TIMEOUT_SECONDS",
+            120,
         ),
         failed_login_lock_threshold=_get_int_env("FAILED_LOGIN_LOCK_THRESHOLD", 5),
         failed_login_lock_minutes=_get_int_env("FAILED_LOGIN_LOCK_MINUTES", 15),

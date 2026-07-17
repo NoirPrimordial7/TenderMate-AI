@@ -58,7 +58,7 @@ class GeminiAnalysisRepository:
             values["risk_level"] = risk_level
 
         self._execute_query(
-            "save Gemini analysis",
+            "save AI analysis",
             client.table("tenders")
             .update(values)
             .eq("id", str(tender_id))
@@ -84,7 +84,7 @@ class GeminiAnalysisRepository:
 
     def _require_supabase_client(self) -> Any:
         if self._supabase_client is None:
-            raise RuntimeError("Supabase configuration is required for Gemini analysis.")
+            raise RuntimeError("Supabase configuration is required for AI analysis.")
 
         return self._supabase_client
 

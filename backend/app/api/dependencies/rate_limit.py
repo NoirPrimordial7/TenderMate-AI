@@ -102,11 +102,13 @@ SOURCE_PDF_RATE_LIMIT = RateLimitRule(
     max_requests=60,
     window_seconds=60 * 60,
 )
-GEMINI_ANALYSIS_RATE_LIMIT = RateLimitRule(
-    name="gemini_analysis",
+AI_ANALYSIS_RATE_LIMIT = RateLimitRule(
+    name="ai_analysis",
     max_requests=10,
     window_seconds=60 * 60,
 )
+# Compatibility alias for integrations importing the previous constant.
+GEMINI_ANALYSIS_RATE_LIMIT = AI_ANALYSIS_RATE_LIMIT
 BILLING_USAGE_RATE_LIMIT = RateLimitRule(
     name="billing_usage",
     max_requests=120,
