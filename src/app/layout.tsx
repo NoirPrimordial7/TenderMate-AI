@@ -4,7 +4,7 @@ import Providers from "@/app/providers";
 
 export const metadata: Metadata = {
   title: "TenderMate AI",
-  description: "Tender analysis dashboard for Indian MSMEs"
+  description: "Tender intelligence workspace for Indian MSMEs"
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

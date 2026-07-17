@@ -7,7 +7,7 @@ import {
   TenderRecordView,
   UploadTenderResponse
 } from "@/domain/tender/types";
-import { apiRequest, ApiError } from "@/services/api";
+import { apiRequest, apiUploadRequest, ApiError, UploadRequestOptions } from "@/services/api";
 
 export type BackendTenderRecord = {
   id: string;
@@ -116,14 +116,11 @@ export class BackendTenderRepository {
     }
   }
 
-  async uploadTenderPdf(file: File) {
+  async uploadTenderPdf(file: File, options: UploadRequestOptions = {}) {
     const formData = new FormData();
     formData.append("file", file);
 
-    return apiRequest<UploadTenderResponse>("/tenders/upload", {
-      method: "POST",
-      body: formData
-    });
+    return apiUploadRequest<UploadTenderResponse>("/tenders/upload", formData, options);
   }
 
   async extractTenderText(tenderId: string) {

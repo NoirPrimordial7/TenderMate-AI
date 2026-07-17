@@ -9,6 +9,7 @@ import {
   calculateRiskBadge,
   toHistoryTender
 } from "@/services/tenderTransforms";
+import { UploadRequestOptions } from "@/services/api";
 
 const historyMeta: Pick<HistoryTender, "uploadDate" | "status">[] = [
   { uploadDate: "12 June 2026", status: "Analyzed" },
@@ -77,8 +78,8 @@ export class TenderService {
     }
   }
 
-  async uploadTenderPdf(file: File) {
-    return this.backendRepository.uploadTenderPdf(file);
+  async uploadTenderPdf(file: File, options: UploadRequestOptions = {}) {
+    return this.backendRepository.uploadTenderPdf(file, options);
   }
 
   async extractTenderText(tenderId: string) {
