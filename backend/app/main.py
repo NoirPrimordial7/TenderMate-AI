@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.routes import auth, billing, health, tenders, uploads
+from app.api.v1.routes import auth, billing, health, tender_questions, tenders, uploads
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -46,3 +46,4 @@ app.include_router(auth.router, prefix=settings.api_v1_prefix)
 app.include_router(billing.router, prefix=settings.api_v1_prefix)
 app.include_router(uploads.router, prefix=settings.api_v1_prefix)
 app.include_router(tenders.router, prefix=settings.api_v1_prefix)
+app.include_router(tender_questions.router, prefix=settings.api_v1_prefix)

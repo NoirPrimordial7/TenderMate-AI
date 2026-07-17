@@ -41,7 +41,7 @@ export function TenderWorkspace({ tender }: { tender: TenderRecordView }) {
           {activeTab === "dates" ? <DatesReport analysis={analysis} onSource={openSource}/> : null}
           {activeTab === "risks" ? <RisksReport analysis={analysis} onSource={openSource}/> : null}
           {activeTab === "source" ? <SourceReport tenderId={tender.id} pageCount={tender.pageCount} source={source}/> : null}
-          {activeTab === "ask" ? <AskTenderMateReport/> : null}
+          {activeTab === "ask" ? <AskTenderMateReport tender={tender} onSource={openSource}/> : null}
         </motion.main>
       </AnimatePresence>
       <SourceEvidenceDrawer tenderId={tender.id} pageCount={tender.pageCount} source={source} open={drawerOpen} onClose={closeDrawer} onOpenFull={openFullSource}/>

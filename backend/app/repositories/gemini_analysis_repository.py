@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
 
-PAGE_COLUMNS = "id,tender_id,user_id,page_number,text,created_at"
+PAGE_COLUMNS = "id,tender_id,user_id,page_number,text,extraction_method,created_at"
 
 
 class GeminiAnalysisRepository:
