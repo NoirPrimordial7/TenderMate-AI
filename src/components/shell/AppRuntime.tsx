@@ -34,7 +34,7 @@ export function AppRuntime() {
   useEffect(() => {
     if (isLoading || !shouldPrefetch()) return;
     const routes = isAuthenticated
-      ? ["/dashboard", "/history", "/profile", "/pricing"]
+      ? ["/dashboard", "/history", "/profile", "/billing", "/pricing"]
       : ["/login", "/signup", "/pricing"];
     const idleWindow = window as IdleWindow;
     const prefetch = () => routes.forEach((route) => router.prefetch(route));

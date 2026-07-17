@@ -9,6 +9,7 @@ class UsageCounts(BaseModel):
 
 class BillingUsageResponse(BaseModel):
     free_analysis_credits: int
+    upload_limit_per_day: int
     plan_name: str
     subscription_status: str
     can_run_ai_analysis: bool
@@ -20,6 +21,7 @@ class BillingPlan(BaseModel):
     name: str
     price_label: str
     analyses_included: int
+    uploads_per_day: int | None = None
     interval: str | None = None
     coming_soon: bool
     description: str

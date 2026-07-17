@@ -3,7 +3,7 @@ from uuid import UUID
 
 from app.repositories.pdf_extraction_repository import PDFExtractionRepository
 from app.repositories.tender_repository import TenderRepository
-from app.schemas.extraction import PDFExtractionResponse
+from app.schemas.extraction import PDFExtractionResponse, TenderSourceResponse
 from app.services.usage_service import UsageService
 
 PDF_EXTRACT_EVENT = "pdf_extract"
@@ -109,6 +109,38 @@ class PDFExtractionService:
             page_count=page_count,
             pages_with_text=pages_with_text,
             message=message,
+        )
+
+    def get_tender_source(
+        self,
+        tender_id: UUID,
+        user_id: UUID,
+        expires_in: int = 300,
+    ) -> TenderSourceResponse:
+        tender = self._tender_repository.get_tender_by_id(
+            tender_id=tender_id,
+            user_id=user_id,
+        )
+        if tender is None:
+            raise TenderNotFoundError(
+                f"Tender {tender_id} was not found or does not belong to the current user."
+            )
+        upload = self._extraction_repository.get_latest_upload_for_tender(
+            tender_id=tender_id,
+            user_id=user_id,
+        )
+        if not upload or not upload.get("storage_bucket") or not upload.get("storage_path"):
+            raise PDFUploadMissingError("No uploaded PDF was found for this tender.")
+        signed_url = self._extraction_repository.create_signed_pdf_url(
+            storage_bucket=str(upload["storage_bucket"]),
+            storage_path=str(upload["storage_path"]),
+            expires_in=expires_in,
+        )
+        return TenderSourceResponse(
+            tender_id=tender_id,
+            file_name=str(upload.get("file_name") or tender.original_file_name or "tender.pdf"),
+            signed_url=signed_url,
+            expires_in=expires_in,
         )
 
     @staticmethod

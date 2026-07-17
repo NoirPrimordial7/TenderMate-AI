@@ -6,6 +6,7 @@ from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.rate_limit import (
     GEMINI_ANALYSIS_RATE_LIMIT,
     PDF_EXTRACT_RATE_LIMIT,
+    SOURCE_PDF_RATE_LIMIT,
     check_rate_limit_for_user_or_ip,
     get_client_ip,
     get_user_agent,
@@ -13,7 +14,7 @@ from app.api.dependencies.rate_limit import (
 from app.core.config import Settings, get_settings
 from app.schemas.analysis import GeminiAnalysisResponse
 from app.schemas.auth import UserResponse
-from app.schemas.extraction import PDFExtractionResponse
+from app.schemas.extraction import PDFExtractionResponse, TenderSourceResponse
 from app.schemas.tender import TenderResponse
 from app.services.audit_service import record_audit_log
 from app.services.gemini_analysis_service import (
@@ -107,6 +108,35 @@ def get_tender_by_id(
         )
 
     return tender
+
+
+@router.get("/{id}/source", response_model=TenderSourceResponse)
+def get_tender_source(
+    id: UUID,
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user),
+    service: PDFExtractionService = Depends(get_pdf_extraction_service),
+    settings: Settings = Depends(get_settings),
+    limiter: RateLimitService = Depends(get_rate_limit_service),
+) -> TenderSourceResponse:
+    check_rate_limit_for_user_or_ip(
+        request=request,
+        current_user=current_user,
+        rule=SOURCE_PDF_RATE_LIMIT,
+        settings=settings,
+        limiter=limiter,
+    )
+    try:
+        return service.get_tender_source(id, current_user.id)
+    except PDFTenderNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except PDFUploadMissingError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Private PDF access is temporarily unavailable.",
+        ) from exc
 
 
 @router.post("/{id}/extract", response_model=PDFExtractionResponse)

@@ -44,6 +44,29 @@ class PDFExtractionRepository:
                 "Could not download the uploaded PDF from Supabase Storage."
             ) from exc
 
+    def create_signed_pdf_url(
+        self,
+        storage_bucket: str,
+        storage_path: str,
+        expires_in: int,
+    ) -> str:
+        client = self._require_supabase_client()
+        try:
+            response = client.storage.from_(storage_bucket).create_signed_url(
+                storage_path,
+                expires_in,
+            )
+            if not isinstance(response, dict):
+                raise RuntimeError("Storage returned an invalid signed URL response.")
+            signed_url = response.get("signedURL") or response.get("signedUrl") or response.get("signed_url")
+            if not isinstance(signed_url, str) or not signed_url:
+                raise RuntimeError("Storage did not return a signed PDF URL.")
+            return signed_url
+        except RuntimeError:
+            raise
+        except Exception as exc:
+            raise RuntimeError("Could not create a private PDF access URL.") from exc
+
     def replace_tender_pages(
         self,
         tender_id: UUID,

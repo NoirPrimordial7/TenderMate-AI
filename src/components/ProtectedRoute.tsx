@@ -20,9 +20,9 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
 
   if (isLoading) {
     return (
-      <section className="card p-6" role="status" aria-live="polite">
-        <p className="text-sm font-semibold text-gray-950">{processing("session")}</p>
-        <p className="mt-1 text-sm text-gray-600">{processing("protectedLoading")}</p>
+      <section className="tm-protected-loading" role="status" aria-live="polite">
+        <span />
+        <div><strong>{processing("session")}</strong><p>{processing("protectedLoading")}</p></div>
       </section>
     );
   }

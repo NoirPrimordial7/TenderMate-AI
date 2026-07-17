@@ -9,3 +9,10 @@ class PDFExtractionResponse(BaseModel):
     page_count: int
     pages_with_text: int
     message: str
+
+
+class TenderSourceResponse(BaseModel):
+    tender_id: UUID
+    file_name: str
+    signed_url: str
+    expires_in: int

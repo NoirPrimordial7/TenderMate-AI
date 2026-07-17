@@ -85,6 +85,8 @@ export type BeforeApplyItem = {
 
 export type TenderAnalysis = {
   id: string;
+  schemaVersion?: string;
+  language?: string;
   snapshot: TenderSnapshot;
   decision: DecisionSummary;
   scores: ScoreItem[];
@@ -105,11 +107,17 @@ export type HistoryTender = {
   tenderTitle: string;
   organization: string;
   uploadDate: string;
+  uploadDateRaw: string;
+  updatedDate: string;
+  updatedAt: string;
   deadline: string;
+  deadlineRaw?: string | null;
   status: "Uploaded" | "Extracted" | "Failed" | "Analyzed";
   riskLevel: RiskLevel;
   fitScore: number;
   category: string;
+  recommendation?: string | null;
+  missingDocuments?: number | null;
 };
 
 export type TenderRecordView = {
@@ -123,6 +131,7 @@ export type TenderRecordView = {
   errorMessage?: string | null;
   extractedTextPreview?: string | null;
   pageCount?: number | null;
+  schemaVersion?: string;
 };
 
 export type UploadTenderResponse = {
@@ -145,7 +154,16 @@ export type PDFExtractionResponse = {
   status: string;
   page_count: number;
   pages_with_text: number;
+  extraction_method?: "selectable_text" | "mixed" | "ocr" | "none";
+  ocr_used?: boolean;
   message: string;
+};
+
+export type TenderSourceResponse = {
+  tender_id: string;
+  file_name: string;
+  signed_url: string;
+  expires_in: number;
 };
 
 export type GeminiAnalysisResponse = {

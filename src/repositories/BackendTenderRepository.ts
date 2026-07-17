@@ -5,6 +5,7 @@ import {
   RiskLevel,
   TenderAnalysis,
   TenderRecordView,
+  TenderSourceResponse,
   UploadTenderResponse
 } from "@/domain/tender/types";
 import { apiRequest, apiUploadRequest, ApiError, UploadRequestOptions } from "@/services/api";
@@ -59,11 +60,17 @@ function toHistoryTender(record: BackendTenderRecord): HistoryTender {
     tenderTitle: analysis?.snapshot.title ?? record.title,
     organization: analysis?.snapshot.organization ?? record.organization ?? "Not available",
     uploadDate: formatDate(record.created_at),
+    uploadDateRaw: record.created_at,
+    updatedDate: formatDate(record.updated_at),
+    updatedAt: record.updated_at,
     deadline: analysis?.snapshot.submissionDeadline ?? record.deadline ?? "Not available",
+    deadlineRaw: record.deadline,
     status: toHistoryStatus(record),
     riskLevel: analysis?.decision.riskLevel ?? record.risk_level ?? "Low",
     fitScore: analysis?.decision.overallFitScore ?? record.fit_score ?? 0,
-    category: analysis?.snapshot.category ?? record.category ?? "Not available"
+    category: analysis?.snapshot.category ?? record.category ?? "Not available",
+    recommendation: analysis?.decision.recommendation ?? null,
+    missingDocuments: analysis ? analysis.documents.filter((document) => document.status === "Missing").length : null
   };
 }
 
@@ -80,7 +87,8 @@ function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
     originalFileName: record.original_file_name,
     errorMessage: record.error_message,
     extractedTextPreview: record.extracted_text_preview,
-    pageCount: record.page_count
+    pageCount: record.page_count,
+    schemaVersion: analysis?.schemaVersion ?? "1.0"
   };
 }
 
@@ -135,6 +143,10 @@ export class BackendTenderRepository {
       method: "POST",
       body: {}
     });
+  }
+
+  async getTenderSource(tenderId: string) {
+    return apiRequest<TenderSourceResponse>(`/tenders/${tenderId}/source`);
   }
 }
 

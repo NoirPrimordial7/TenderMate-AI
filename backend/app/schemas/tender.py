@@ -8,6 +8,8 @@ RiskLevel = Literal["Low", "Medium", "High"]
 
 
 class TenderAnalysisPayload(BaseModel):
+    schemaVersion: str = "1.0"
+    language: str | None = None
     id: str
     snapshot: dict[str, Any]
     decision: dict[str, Any]
