@@ -38,6 +38,10 @@ create table if not exists public.tenders (
   extraction_method text,
   ocr_used boolean not null default false,
   ocr_confidence numeric,
+  document_type text,
+  document_validation_status text not null default 'pending',
+  document_validation_confidence numeric,
+  document_validation_reason text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -169,6 +173,18 @@ add column if not exists ocr_used boolean not null default false;
 
 alter table public.tenders
 add column if not exists ocr_confidence numeric;
+
+alter table public.tenders
+add column if not exists document_type text;
+
+alter table public.tenders
+add column if not exists document_validation_status text not null default 'pending';
+
+alter table public.tenders
+add column if not exists document_validation_confidence numeric;
+
+alter table public.tenders
+add column if not exists document_validation_reason text;
 
 alter table public.tender_pages
 add column if not exists extraction_method text not null default 'text';

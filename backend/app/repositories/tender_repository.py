@@ -25,6 +25,10 @@ TENDER_COLUMNS = (
     "extraction_method,"
     "ocr_used,"
     "ocr_confidence,"
+    "document_type,"
+    "document_validation_status,"
+    "document_validation_confidence,"
+    "document_validation_reason,"
     "created_at,"
     "updated_at"
 )

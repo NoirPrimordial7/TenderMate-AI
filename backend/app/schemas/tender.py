@@ -1,30 +1,12 @@
 from datetime import datetime
-from typing import Any, Literal
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.analysis import TenderAnalysisPayload
+
 RiskLevel = Literal["Low", "Medium", "High"]
-
-
-class TenderAnalysisPayload(BaseModel):
-    schemaVersion: str = "1.0"
-    language: str | None = None
-    id: str
-    snapshot: dict[str, Any]
-    decision: dict[str, Any]
-    scores: list[dict[str, Any]]
-    beforeApply: list[dict[str, Any]]
-    documents: list[dict[str, Any]]
-    eligibility: list[dict[str, Any]]
-    financials: list[dict[str, Any]]
-    technical: list[dict[str, Any]]
-    dates: list[dict[str, Any]]
-    risks: list[dict[str, Any]]
-    missingInformation: list[str]
-    departmentQuestions: list[str]
-    proposalDraft: str
-
 
 class TenderResponse(BaseModel):
     id: UUID
@@ -44,5 +26,9 @@ class TenderResponse(BaseModel):
     extraction_method: str | None = None
     ocr_used: bool = False
     ocr_confidence: float | None = None
+    document_type: Literal["tender", "non_tender", "uncertain"] | None = None
+    document_validation_status: Literal["valid", "invalid", "review", "pending"] | None = None
+    document_validation_confidence: float | None = Field(default=None, ge=0, le=1)
+    document_validation_reason: str | None = None
     created_at: datetime
     updated_at: datetime

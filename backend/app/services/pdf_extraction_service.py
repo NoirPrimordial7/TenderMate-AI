@@ -6,6 +6,7 @@ from app.repositories.pdf_extraction_repository import PDFExtractionRepository
 from app.repositories.tender_repository import TenderRepository
 from app.schemas.extraction import PDFExtractionResponse, TenderSourceResponse
 from app.services.audit_service import record_audit_log
+from app.services.document_validation_service import DocumentValidationService
 from app.services.gemini_ocr_service import (
     GEMINI_OCR_FAILED_MESSAGE,
     GeminiOCRFailedError,
@@ -55,6 +56,7 @@ class PDFExtractionService:
         extraction_repository: PDFExtractionRepository | None = None,
         gemini_ocr_service: GeminiOCRService | None = None,
         settings: Settings | None = None,
+        document_validation_service: DocumentValidationService | None = None,
     ) -> None:
         self._tender_repository = tender_repository or TenderRepository()
         self._extraction_repository = (
@@ -62,6 +64,7 @@ class PDFExtractionService:
         )
         self._gemini_ocr_service = gemini_ocr_service or GeminiOCRService()
         self._settings = settings
+        self._document_validation_service = document_validation_service or DocumentValidationService()
 
     @property
     def settings(self) -> Settings:
@@ -255,6 +258,7 @@ class PDFExtractionService:
         page_count = len(page_texts)
         pages_with_text = sum(1 for text in page_texts if text.strip())
         preview = self._build_preview(page_texts)
+        validation = self._document_validation_service.classify("\n".join(page_texts))
 
         self._extraction_repository.replace_tender_pages(
             tender_id=tender_id,
@@ -270,6 +274,10 @@ class PDFExtractionService:
             extraction_method=extraction_method,
             ocr_used=ocr_used,
             error_message=error_message,
+            document_type=validation.document_type,
+            document_validation_status=validation.status,
+            document_validation_confidence=validation.confidence,
+            document_validation_reason=validation.reason,
         )
         usage_metadata = {
             "upload_id": upload_id,
@@ -277,6 +285,8 @@ class PDFExtractionService:
             "pages_with_text": pages_with_text,
             "extraction_method": extraction_method,
             "ocr_used": ocr_used,
+            "document_type": validation.document_type,
+            "document_validation_status": validation.status,
         }
         if metadata:
             usage_metadata.update(metadata)
