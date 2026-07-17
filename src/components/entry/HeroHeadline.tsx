@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-
-const loggedOutLines = ["KNOW", "BEFORE", "YOU BID."];
-const loggedInLines = ["DROP THE PDF.", "SEE THE", "DECISION."];
+import { useTranslations } from "@/contexts/LocaleContext";
 
 export function HeroHeadline({ isActive }: { isActive: boolean }) {
   const shouldReduceMotion = useReducedMotion();
-  const headlineLines = isActive ? loggedInLines : loggedOutLines;
+  const t = useTranslations("hero");
+  const headlineLines = isActive
+    ? [t("uploadLine1"), t("uploadLine2"), t("uploadLine3")]
+    : [t("entryLine1"), t("entryLine2"), t("entryLine3")];
 
   return (
     <motion.section
@@ -23,14 +24,14 @@ export function HeroHeadline({ isActive }: { isActive: boolean }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.32, delay: shouldReduceMotion ? 0 : 0.16 }}
       >
-        Tender intelligence for Indian MSMEs
+        {t("productLabel")}
       </motion.p>
 
       <motion.h1
         key={isActive ? "upload-headline" : "entry-headline"}
         id="te-entry-title"
         className={`te-headline ${isActive ? "te-headline-upload" : ""}`}
-        aria-label={isActive ? "Drop the PDF. See the decision." : "Know before you bid."}
+        aria-label={isActive ? t("uploadAria") : t("entryAria")}
       >
         {headlineLines.map((line, index) => (
           <span key={line} className={`te-headline-mask te-headline-line-${index + 1}`} aria-hidden="true">
@@ -56,11 +57,9 @@ export function HeroHeadline({ isActive }: { isActive: boolean }) {
         transition={{ duration: shouldReduceMotion ? 0 : 0.45, delay: shouldReduceMotion ? 0 : 0.58 }}
       >
         <p>
-          {isActive
-            ? "Upload the tender once. TenderMate organises eligibility, documents, risks and deadlines before you commit the team."
-            : "Understand eligibility, missing documents, risks and deadlines before your team spends days preparing a bid."}
+          {isActive ? t("uploadSupport") : t("entrySupport")}
         </p>
-        <p className="te-support-note">Private by default <span aria-hidden="true">•</span> PDF up to 20 MB</p>
+        <p className="te-support-note">{t("supportNote")}</p>
       </motion.div>
     </motion.section>
   );

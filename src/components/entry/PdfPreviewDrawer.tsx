@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { formatFileSize } from "@/components/entry/FileSelection";
 import { PdfPageCanvas } from "@/components/entry/PdfPageCanvas";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type PdfPreviewDrawerProps = {
   file: File;
@@ -19,6 +20,8 @@ type PdfPreviewDrawerProps = {
 
 export function PdfPreviewDrawer({ file, pdfDocument, isOpen, isUploadActive = false, onClose, onReplace }: PdfPreviewDrawerProps) {
   const shouldReduceMotion = useReducedMotion();
+  const t = useTranslations("pdfViewer");
+  const common = useTranslations("common");
   const drawerRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -103,24 +106,24 @@ export function PdfPreviewDrawer({ file, pdfDocument, isOpen, isUploadActive = f
           >
             <header className="te-preview-header">
               <div className="te-preview-title-block">
-                <span>Local PDF preview</span>
+                <span>{t("localPreview")}</span>
                 <h2 id="te-preview-title" title={file.name}>{file.name}</h2>
-                <p>{formatFileSize(file.size)} · {pageCount} {pageCount === 1 ? "page" : "pages"} · stays on this device</p>
+                <p>{formatFileSize(file.size)} · {pageCount} {pageCount === 1 ? common("page") : common("pages")} · {t("staysDevice")}</p>
               </div>
-              <button type="button" className="te-preview-close" onClick={closeDrawer} disabled={isUploadActive} aria-label="Close PDF preview"><X aria-hidden="true" /></button>
+              <button type="button" className="te-preview-close" onClick={closeDrawer} disabled={isUploadActive} aria-label={t("close")}><X aria-hidden="true" /></button>
             </header>
 
-            <div className="te-preview-toolbar" aria-label="PDF preview controls">
+            <div className="te-preview-toolbar" aria-label={t("controls")}>
               <div className="te-preview-page-controls">
-                <button type="button" onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} aria-label="Previous page"><ChevronLeft aria-hidden="true" /></button>
+                <button type="button" onClick={() => goToPage(pageNumber - 1)} disabled={pageNumber <= 1} aria-label={t("previous")}><ChevronLeft aria-hidden="true" /></button>
                 <span aria-live="polite">{pageNumber} / {pageCount}</span>
-                <button type="button" onClick={() => goToPage(pageNumber + 1)} disabled={pageNumber >= pageCount} aria-label="Next page"><ChevronRight aria-hidden="true" /></button>
+                <button type="button" onClick={() => goToPage(pageNumber + 1)} disabled={pageNumber >= pageCount} aria-label={t("next")}><ChevronRight aria-hidden="true" /></button>
               </div>
               <div className="te-preview-zoom-controls">
-                <button type="button" onClick={() => setZoom((current) => Math.max(0.6, Number((current - 0.2).toFixed(1))))} disabled={zoom <= 0.6} aria-label="Zoom out"><Minus aria-hidden="true" /></button>
+                <button type="button" onClick={() => setZoom((current) => Math.max(0.6, Number((current - 0.2).toFixed(1))))} disabled={zoom <= 0.6} aria-label={t("zoomOut")}><Minus aria-hidden="true" /></button>
                 <span>{Math.round(zoom * 100)}%</span>
-                <button type="button" onClick={() => setZoom((current) => Math.min(2.4, Number((current + 0.2).toFixed(1))))} disabled={zoom >= 2.4} aria-label="Zoom in"><Plus aria-hidden="true" /></button>
-                <button type="button" className="te-preview-fit" onClick={() => setZoom(1)}><Maximize2 aria-hidden="true" /> Fit width</button>
+                <button type="button" onClick={() => setZoom((current) => Math.min(2.4, Number((current + 0.2).toFixed(1))))} disabled={zoom >= 2.4} aria-label={t("zoomIn")}><Plus aria-hidden="true" /></button>
+                <button type="button" className="te-preview-fit" onClick={() => setZoom(1)}><Maximize2 aria-hidden="true" /> {t("fitWidth")}</button>
               </div>
             </div>
 
@@ -130,8 +133,8 @@ export function PdfPreviewDrawer({ file, pdfDocument, isOpen, isUploadActive = f
             </motion.div>
 
             <footer className="te-preview-footer">
-              <p>Previewed locally. The file is not uploaded until you choose Upload & open workspace.</p>
-              <button type="button" onClick={() => { onReplace(); onClose(); }} disabled={isUploadActive}><RefreshCw aria-hidden="true" /> Replace PDF</button>
+              <p>{t("privacy")}</p>
+              <button type="button" onClick={() => { onReplace(); onClose(); }} disabled={isUploadActive}><RefreshCw aria-hidden="true" /> {t("replace")}</button>
             </footer>
           </motion.section>
         </motion.div>

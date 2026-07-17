@@ -14,6 +14,8 @@ USER_COLUMNS = (
     "free_analysis_credits,"
     "plan_name,"
     "subscription_status,"
+    "preferred_language,"
+    "preferred_analysis_language,"
     "failed_login_count,"
     "locked_until,"
     "last_login_at,"
@@ -56,6 +58,8 @@ class AuthRepository:
         email: str,
         password_hash: str,
         free_analysis_credits: int,
+        preferred_language: str = "en",
+        preferred_analysis_language: str = "en",
     ) -> dict[str, Any]:
         rows = self._query_users(
             f"create user {email}",
@@ -67,6 +71,8 @@ class AuthRepository:
                     "free_analysis_credits": free_analysis_credits,
                     "plan_name": "free",
                     "subscription_status": "trial",
+                    "preferred_language": preferred_language,
+                    "preferred_analysis_language": preferred_analysis_language,
                 }
             ),
         )
@@ -74,6 +80,28 @@ class AuthRepository:
             raise RuntimeError("Supabase did not return the created app_users row.")
 
         return rows[0]
+
+    def update_language_preferences(
+        self,
+        user_id: UUID,
+        preferred_language: str | None = None,
+        preferred_analysis_language: str | None = None,
+    ) -> dict[str, Any]:
+        values: dict[str, Any] = {}
+        if preferred_language is not None:
+            values["preferred_language"] = preferred_language
+        if preferred_analysis_language is not None:
+            values["preferred_analysis_language"] = preferred_analysis_language
+        if not values:
+            user = self.find_user_by_id(user_id)
+            if user is None:
+                raise RuntimeError("Supabase did not return the app_users row.")
+            return user
+        return self._update_user(
+            user_id=user_id,
+            values=values,
+            action="update language preferences",
+        )
 
     def record_failed_login(
         self,

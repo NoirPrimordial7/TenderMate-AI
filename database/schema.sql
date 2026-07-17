@@ -10,6 +10,8 @@ create table if not exists public.app_users (
   free_analysis_credits integer not null default 15,
   plan_name text not null default 'free',
   subscription_status text not null default 'trial',
+  preferred_language text not null default 'en' check (preferred_language in ('en', 'hi', 'mr')),
+  preferred_analysis_language text not null default 'en' check (preferred_analysis_language in ('en', 'hi', 'mr')),
   failed_login_count integer not null default 0,
   locked_until timestamptz,
   last_login_at timestamptz,
@@ -113,6 +115,26 @@ add column if not exists locked_until timestamptz;
 
 alter table public.app_users
 add column if not exists last_login_at timestamptz;
+
+alter table public.app_users
+add column if not exists preferred_language text not null default 'en';
+
+alter table public.app_users
+add column if not exists preferred_analysis_language text not null default 'en';
+
+alter table public.app_users
+drop constraint if exists app_users_preferred_language_check;
+
+alter table public.app_users
+add constraint app_users_preferred_language_check
+check (preferred_language in ('en', 'hi', 'mr'));
+
+alter table public.app_users
+drop constraint if exists app_users_preferred_analysis_language_check;
+
+alter table public.app_users
+add constraint app_users_preferred_analysis_language_check
+check (preferred_analysis_language in ('en', 'hi', 'mr'));
 
 alter table public.tenders
 add column if not exists user_id uuid references public.app_users(id) on delete cascade;

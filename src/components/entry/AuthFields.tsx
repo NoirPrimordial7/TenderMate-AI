@@ -2,6 +2,7 @@
 
 import { Eye, EyeOff } from "lucide-react";
 import { InputHTMLAttributes, useId, useState } from "react";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type FieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "className" | "id"> & {
   label: string;
@@ -22,6 +23,7 @@ export function TextField({ label, hint, ...props }: FieldProps) {
 }
 
 export function PasswordField({ label, hint, ...props }: FieldProps) {
+  const t = useTranslations("auth");
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
   const [isVisible, setIsVisible] = useState(false);
@@ -41,7 +43,7 @@ export function PasswordField({ label, hint, ...props }: FieldProps) {
           type="button"
           className="te-password-toggle"
           onClick={() => setIsVisible((current) => !current)}
-          aria-label={isVisible ? "Hide password" : "Show password"}
+          aria-label={isVisible ? t("hidePassword") : t("showPassword")}
           aria-pressed={isVisible}
         >
           {isVisible ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}

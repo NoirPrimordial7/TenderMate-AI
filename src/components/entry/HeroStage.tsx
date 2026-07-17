@@ -9,6 +9,7 @@ import { ControlDock } from "@/components/entry/ControlDock";
 import { HeroHeadline } from "@/components/entry/HeroHeadline";
 import { TenderEngineVisual } from "@/components/entry/TenderEngineVisual";
 import { UploadDock } from "@/components/entry/UploadDock";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type HeroStageProps = {
   isAuthenticated: boolean;
@@ -28,6 +29,7 @@ export function HeroStage({
   onAuthenticated
 }: HeroStageProps) {
   const shouldReduceMotion = useReducedMotion();
+  const t = useTranslations("hero");
   const [isAuthOpen, setIsAuthOpen] = useState(openAuthOnLoad);
   const [hasSelectedFile, setHasSelectedFile] = useState(false);
   const isActive = isAuthenticated && Boolean(user);
@@ -68,7 +70,7 @@ export function HeroStage({
               <div className="te-document-slot">
                 <TenderEngineVisual isActive={isActive} hasSelectedFile={hasSelectedFile} />
                 <p className="sr-only">
-                  A layered procurement document showing eligibility, document requirements, financial value and deadline intelligence.
+                  {t("visualDescription")}
                 </p>
               </div>
             </div>
@@ -84,15 +86,15 @@ export function HeroStage({
                   transition={{ duration: shouldReduceMotion ? 0 : 0.4, delay: shouldReduceMotion ? 0 : 0.72 }}
                 >
                   <button type="button" className="te-enter-button" onClick={() => setIsAuthOpen(true)}>
-                    <span>Enter workspace</span><ArrowUpRight aria-hidden="true" />
+                    <span>{t("enter")}</span><ArrowUpRight aria-hidden="true" />
                   </button>
-                  <p>Secure by design · built for Indian tender teams</p>
+                  <p>{t("secureLine")}</p>
                 </motion.div>
               ) : null}
 
               {isLoading ? (
                 <motion.div key="session-loading" className="te-session-pill" role="status" aria-live="polite" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  Checking your session…
+                  {t("checkingSession")}
                 </motion.div>
               ) : null}
             </AnimatePresence>

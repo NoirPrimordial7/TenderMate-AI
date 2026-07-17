@@ -10,7 +10,7 @@ from app.core.security import (
     verify_password,
 )
 from app.repositories.auth_repository import AuthRepository
-from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserResponse
+from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
 from app.services.audit_service import record_audit_log
 
 
@@ -69,6 +69,8 @@ class AuthService:
             email=email,
             password_hash=hash_password(request.password),
             free_analysis_credits=self.settings.free_analysis_credits_default,
+            preferred_language=request.preferred_language,
+            preferred_analysis_language=request.preferred_analysis_language,
         )
         record_audit_log(
             action="signup",
@@ -149,6 +151,18 @@ class AuthService:
         )
 
         return self._token_response(logged_in_user)
+
+    def update_preferences(
+        self,
+        user_id: UUID,
+        preferences: UserPreferencesUpdate,
+    ) -> UserResponse:
+        user = self.repository.update_language_preferences(
+            user_id=user_id,
+            preferred_language=preferences.preferred_language,
+            preferred_analysis_language=preferences.preferred_analysis_language,
+        )
+        return self._user_response(user)
 
     def get_current_user_from_token(self, token: str) -> UserResponse:
         try:

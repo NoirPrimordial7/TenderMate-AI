@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import { CreditCard, Loader2, ReceiptText, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BillingUsage } from "@/domain/billing/types";
 import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 function titleCase(value?: string | null) {
   if (!value) return "Free";
@@ -18,44 +19,17 @@ function titleCase(value?: string | null) {
 
 export default function BillingPage() {
   const { isAuthenticated, user } = useAuth();
-  const [usage, setUsage] = useState<BillingUsage | null>(null);
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setUsage(null);
-      setError("");
-      return;
-    }
-
-    let isMounted = true;
-    setIsLoading(true);
-    setError("");
-
-    billingService
-      .getUsage()
-      .then((response) => {
-        if (!isMounted) return;
-        setUsage(response);
-      })
-      .catch((loadError) => {
-        if (!isMounted) return;
-        setError(toFriendlyApiMessage(loadError, "Could not refresh billing usage."));
-      })
-      .finally(() => {
-        if (!isMounted) return;
-        setIsLoading(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated]);
+  const t = useTranslations("billing");
+  const { data: usage, error: loadError, isLoading } = useSWR<BillingUsage>(
+    isAuthenticated && user ? ["private", user.id, "billing-usage"] : null,
+    billingService.getUsage
+  );
+  const error = loadError ? toFriendlyApiMessage(loadError, "Could not refresh billing usage.") : "";
 
   const planName = titleCase(usage?.plan_name ?? user?.plan_name);
   const subscriptionStatus = usage?.subscription_status ?? user?.subscription_status ?? "trial";
-  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 15);
+  const creditValue = usage?.free_analysis_credits ?? user?.free_analysis_credits;
+  const creditsLeft = typeof creditValue === "number" ? Math.max(0, creditValue) : null;
   const isUpgradeRequired = creditsLeft === 0 && subscriptionStatus.toLowerCase() !== "active";
 
   return (
@@ -64,17 +38,17 @@ export default function BillingPage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <ProtectedRoute>
           <div className="mb-8 max-w-3xl">
-            <p className="muted-label">Billing & usage</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Plan and trial credits</h1>
+            <p className="muted-label">{t("eyebrow")}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">{t("title")}</h1>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Track your current plan, credit balance, and usage while payments remain in coming-soon mode.
+              {t("support")}
             </p>
           </div>
 
           {isLoading ? (
             <section className="card mb-5 flex items-center gap-3 p-5" role="status" aria-live="polite">
               <Loader2 className="h-4 w-4 animate-spin text-gray-600" aria-hidden="true" />
-              <p className="text-sm font-semibold text-gray-950">Refreshing billing usage...</p>
+              <p className="text-sm font-semibold text-gray-950">{t("refreshing")}</p>
             </section>
           ) : null}
 
@@ -91,7 +65,7 @@ export default function BillingPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-950 text-white">
                 <CreditCard className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="muted-label mt-5">Current plan</p>
+              <p className="muted-label mt-5">{t("currentPlan")}</p>
               <h2 id="billing-plan-title" className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
                 {planName}
               </h2>
@@ -102,18 +76,18 @@ export default function BillingPage() {
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
                 <Sparkles className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="muted-label mt-5">Free credits</p>
+              <p className="muted-label mt-5">{t("freeCredits")}</p>
               <h2 id="billing-credits-title" className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
-                {creditsLeft} remaining
+                {creditsLeft === null ? "—" : t("remaining", { count: creditsLeft })}
               </h2>
-              <p className="mt-2 text-sm text-gray-600">15 free AI analyses are included in the trial.</p>
+              <p className="mt-2 text-sm text-gray-600">{t("support")}</p>
             </section>
 
             <section className="card p-6" aria-labelledby="billing-usage-title">
               <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-gray-100 text-gray-700">
                 <ReceiptText className="h-5 w-5" aria-hidden="true" />
               </div>
-              <p className="muted-label mt-5">Usage summary</p>
+              <p className="muted-label mt-5">{t("usageSummary")}</p>
               <h2 id="billing-usage-title" className="mt-1 text-2xl font-semibold tracking-tight text-gray-950">
                 {usage?.usage_counts.analysis_completed ?? 0} analyses
               </h2>
@@ -127,15 +101,15 @@ export default function BillingPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 id="billing-note-title" className="text-lg font-semibold tracking-tight text-gray-950">
-                  Live payments are coming soon
+                  {t("paymentsSoon")}
                 </h2>
-                <p className="mt-2 text-sm text-gray-600">Live payments are coming soon. Your free trial is active.</p>
+                <p className="mt-2 text-sm text-gray-600">{t("trialActive")}</p>
               </div>
               <Link
                 href="/pricing"
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
               >
-                View plans
+                {t("viewPlans")}
               </Link>
             </div>
           </section>

@@ -1,4 +1,4 @@
-import { AuthSession, AuthUser, LoginInput, SignupInput } from "@/domain/auth/types";
+import { AuthSession, AuthUser, LoginInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
 import { apiRequest } from "@/services/api";
 
 export function signupUser(input: SignupInput) {
@@ -19,4 +19,11 @@ export function loginUser(input: LoginInput) {
 
 export function fetchCurrentUser() {
   return apiRequest<AuthUser>("/auth/me");
+}
+
+export function updateUserPreferences(input: UserPreferencesInput) {
+  return apiRequest<AuthUser>("/auth/preferences", {
+    method: "PATCH",
+    body: input
+  });
 }

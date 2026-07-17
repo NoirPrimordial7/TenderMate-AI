@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import { CreditCard, FileText, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import Header from "@/components/Header";
@@ -9,51 +9,28 @@ import { useAuth } from "@/contexts/AuthContext";
 import { BillingUsage } from "@/domain/billing/types";
 import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
-
-const FREE_TRIAL_CREDITS = 15;
+import { useTranslations } from "@/contexts/LocaleContext";
+import { LanguageSwitcher } from "@/components/language/LanguageSwitcher";
 
 function titleCase(value?: string | null) {
   if (!value) return "Free";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function progressPercent(creditsLeft: number) {
-  return Math.max(0, Math.min(100, (creditsLeft / FREE_TRIAL_CREDITS) * 100));
-}
-
 export default function ProfilePage() {
   const { isAuthenticated, logout, user } = useAuth();
-  const [usage, setUsage] = useState<BillingUsage | null>(null);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setUsage(null);
-      setError("");
-      return;
-    }
-
-    let isMounted = true;
-    billingService
-      .getUsage()
-      .then((response) => {
-        if (!isMounted) return;
-        setUsage(response);
-      })
-      .catch((loadError) => {
-        if (!isMounted) return;
-        setError(toFriendlyApiMessage(loadError, "Could not refresh billing usage."));
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated]);
+  const t = useTranslations("profile");
+  const common = useTranslations("common");
+  const { data: usage, error: loadError } = useSWR<BillingUsage>(
+    isAuthenticated && user ? ["private", user.id, "billing-usage"] : null,
+    billingService.getUsage
+  );
+  const error = loadError ? toFriendlyApiMessage(loadError, "Could not refresh billing usage.") : "";
 
   const planName = titleCase(usage?.plan_name ?? user?.plan_name);
   const subscriptionStatus = usage?.subscription_status ?? user?.subscription_status ?? "trial";
-  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? FREE_TRIAL_CREDITS);
-  const creditsUsed = Math.max(0, FREE_TRIAL_CREDITS - creditsLeft);
+  const creditValue = usage?.free_analysis_credits ?? user?.free_analysis_credits;
+  const creditsLeft = typeof creditValue === "number" ? Math.max(0, creditValue) : null;
   const usageCounts = usage?.usage_counts;
 
   return (
@@ -62,10 +39,10 @@ export default function ProfilePage() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <ProtectedRoute>
           <div className="mb-8 max-w-3xl">
-            <p className="muted-label">Account</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">Profile</h1>
+            <p className="muted-label">{t("eyebrow")}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950">{t("title")}</h1>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              Manage your TenderMate account, trial credits, billing status, and security actions.
+              {t("support")}
             </p>
           </div>
 
@@ -82,7 +59,7 @@ export default function ProfilePage() {
                   <UserCircle className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="muted-label">Account overview</p>
+                  <p className="muted-label">{t("overview")}</p>
                   <h2 id="account-overview-title" className="mt-1 text-xl font-semibold tracking-tight text-gray-950">
                     {user?.full_name || "TenderMate user"}
                   </h2>
@@ -90,20 +67,20 @@ export default function ProfilePage() {
               </div>
               <dl className="mt-6 grid gap-4 text-sm sm:grid-cols-2">
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                  <dt className="text-gray-500">Full name</dt>
-                  <dd className="mt-1 font-semibold text-gray-950">{user?.full_name || "Not provided"}</dd>
+                  <dt className="text-gray-500">{t("fullName")}</dt>
+                  <dd className="mt-1 font-semibold text-gray-950">{user?.full_name || common("notProvided")}</dd>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                  <dt className="text-gray-500">Email</dt>
+                  <dt className="text-gray-500">{t("email")}</dt>
                   <dd className="mt-1 break-words font-semibold text-gray-950">{user?.email}</dd>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                  <dt className="text-gray-500">Role</dt>
+                  <dt className="text-gray-500">{t("role")}</dt>
                   <dd className="mt-1 font-semibold capitalize text-gray-950">{user?.role?.replace("_", " ")}</dd>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
-                  <dt className="text-gray-500">Account status</dt>
-                  <dd className="mt-1 font-semibold text-gray-950">{user?.is_active ? "Active" : "Inactive"}</dd>
+                  <dt className="text-gray-500">{t("status")}</dt>
+                  <dd className="mt-1 font-semibold text-gray-950">{user?.is_active ? common("active") : common("inactive")}</dd>
                 </div>
               </dl>
             </section>
@@ -111,24 +88,15 @@ export default function ProfilePage() {
             <section className="card p-6" aria-labelledby="current-plan-title">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="muted-label">Current plan</p>
+                  <p className="muted-label">{t("currentPlan")}</p>
                   <h2 id="current-plan-title" className="mt-1 text-xl font-semibold tracking-tight text-gray-950">
                     {planName}
                   </h2>
                   <p className="mt-1 text-sm capitalize text-gray-500">{subscriptionStatus}</p>
                 </div>
                 <span className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-800">
-                  {creditsLeft} credits left
+                  {creditsLeft === null ? "Usage unavailable" : `${creditsLeft} credits left`}
                 </span>
-              </div>
-              <div className="mt-6">
-                <div className="flex items-center justify-between text-xs font-medium text-gray-500">
-                  <span>{creditsUsed} used</span>
-                  <span>{FREE_TRIAL_CREDITS} included</span>
-                </div>
-                <div className="mt-2 h-2 rounded-full bg-gray-100">
-                  <div className="h-2 rounded-full bg-gray-950" style={{ width: `${progressPercent(creditsLeft)}%` }} />
-                </div>
               </div>
               <Link
                 href="/pricing"
@@ -144,7 +112,7 @@ export default function ProfilePage() {
                   <FileText className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="muted-label">Usage summary</p>
+                  <p className="muted-label">{t("usage")}</p>
                   <h2 id="usage-summary-title" className="mt-1 text-xl font-semibold tracking-tight text-gray-950">
                     Trial activity
                   </h2>
@@ -172,9 +140,9 @@ export default function ProfilePage() {
                   <ShieldCheck className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="muted-label">Security</p>
+                  <p className="muted-label">{t("security")}</p>
                   <h2 id="security-title" className="mt-1 text-xl font-semibold tracking-tight text-gray-950">
-                    Account protection
+                    {t("protection")}
                   </h2>
                 </div>
               </div>
@@ -188,10 +156,14 @@ export default function ProfilePage() {
                 className="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-gray-950 hover:bg-gray-50"
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" />
-                Logout
+                {t("logout")}
               </button>
             </section>
           </div>
+
+          <section className="card mt-5 p-6" aria-label="Language preferences">
+            <LanguageSwitcher />
+          </section>
 
           <section className="card mt-5 p-6" aria-labelledby="recent-activity-title">
             <div className="flex items-start gap-3">

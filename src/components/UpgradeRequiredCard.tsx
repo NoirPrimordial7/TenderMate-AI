@@ -11,7 +11,7 @@ export default function UpgradeRequiredCard({ className = "" }: { className?: st
         Upgrade required
       </h2>
       <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-gray-600">
-        You have used all 15 free AI analyses. Upgrade to continue analyzing tenders.
+        No analysis credits remain on this account. Upgrade to continue analysing tenders.
       </p>
       <Link
         href="/pricing"

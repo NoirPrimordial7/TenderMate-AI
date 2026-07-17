@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, DragEvent, KeyboardEvent, MouseEvent, RefObject } from "react";
 import { FileUp } from "lucide-react";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type UploadDropzoneProps = {
   disabled?: boolean;
@@ -12,6 +13,7 @@ type UploadDropzoneProps = {
 };
 
 export function UploadDropzone({ disabled, inputRef, isDragging, onDraggingChange, onFile }: UploadDropzoneProps) {
+  const t = useTranslations("upload");
   const openPicker = () => {
     if (!disabled) inputRef.current?.click();
   };
@@ -45,7 +47,7 @@ export function UploadDropzone({ disabled, inputRef, isDragging, onDraggingChang
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-disabled={disabled}
-      aria-label="Choose or drop a tender PDF"
+      aria-label={t("dropAria")}
       aria-describedby="te-upload-guidance"
       onClick={openPicker}
       onKeyDown={handleKeyDown}
@@ -57,10 +59,10 @@ export function UploadDropzone({ disabled, inputRef, isDragging, onDraggingChang
       <input ref={inputRef} type="file" accept="application/pdf,.pdf" onChange={handleChange} className="sr-only" tabIndex={-1} disabled={disabled} />
       <span className="te-dropzone-icon"><FileUp className="h-5 w-5" aria-hidden="true" /></span>
       <div className="te-dropzone-text">
-        <p className="te-dropzone-title">Drop your tender PDF here</p>
-        <p id="te-upload-guidance" className="te-dropzone-copy">or choose it from your device</p>
+        <p className="te-dropzone-title">{t("dropTitle")}</p>
+        <p id="te-upload-guidance" className="te-dropzone-copy">{t("dropSupport")}</p>
       </div>
-      <button type="button" className="te-secondary-button" onClick={handleBrowse} disabled={disabled}>Browse PDF</button>
+      <button type="button" className="te-secondary-button" onClick={handleBrowse} disabled={disabled}>{t("browse")}</button>
     </div>
   );
 }

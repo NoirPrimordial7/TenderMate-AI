@@ -10,13 +10,19 @@ import { DockStatus } from "@/components/entry/DockStatus";
 import type { PdfInspection } from "@/components/entry/SelectedPdfExperience";
 import type { AuthUser } from "@/domain/auth/types";
 import { tenderService } from "@/services/TenderService";
-import { ApiError, toFriendlyApiMessage } from "@/services/api";
+import { ApiError } from "@/services/api";
+import { useTranslations } from "@/contexts/LocaleContext";
+
+function PreviewLoading() {
+  const t = useTranslations("upload");
+  return <div className="te-file-selection-loading" role="status"><span />{t("preparingPreview")}</div>;
+}
 
 const SelectedPdfExperience = dynamic(
   () => import("@/components/entry/SelectedPdfExperience").then((module) => module.SelectedPdfExperience),
   {
     ssr: false,
-    loading: () => <div className="te-file-selection-loading" role="status"><span />Preparing local PDF preview…</div>
+    loading: PreviewLoading
   }
 );
 
@@ -31,21 +37,24 @@ function titleCase(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function getUploadErrorMessage(error: unknown) {
+function getUploadErrorMessage(error: unknown, t: (key: string) => string) {
   if (error instanceof ApiError) {
-    if (error.status === 401) return "Your session expired. Sign in again, then reselect the PDF.";
-    if (error.status === 413) return "This PDF is larger than 20 MB. Choose a smaller file.";
-    if (error.status === 429) return "Your daily upload limit has been reached. Please try again tomorrow.";
-    if (error.status === 0) return "The upload service could not be reached. Check your connection and try again.";
-    if (error.status >= 500) return "Secure PDF storage is temporarily unavailable. Please try again in a moment.";
+    if (error.status === 401) return t("sessionExpired");
+    if (error.status === 413) return t("tooLarge");
+    if (error.status === 429) return t("dailyLimit");
+    if (error.status === 0) return t("serviceUnreachable");
+    if (error.status >= 500) return t("storageUnavailable");
   }
-  return toFriendlyApiMessage(error, "The PDF could not be uploaded. Please try again.");
+  return t("failed");
 }
 
 type UploadDockProps = { user: AuthUser; onFileStateChange?: (hasFile: boolean) => void };
 
 export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
   const router = useRouter();
+  const t = useTranslations("upload");
+  const common = useTranslations("common");
+  const navigation = useTranslations("navigation");
   const inputRef = useRef<HTMLInputElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -77,7 +86,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
   const planName = user.plan_name ? titleCase(user.plan_name) : null;
   const hasActiveSubscription = user.subscription_status?.toLowerCase() === "active";
   const isOutOfAnalysisCredits = credits === 0 && !hasActiveSubscription;
-  const firstName = user.full_name?.trim().split(/\s+/)[0] || "there";
+  const firstName = user.full_name?.trim().split(/\s+/)[0] || t("greetingFallback");
   const hasValidPdf = Boolean(selectedFile) && !fileError && inspection.status === "ready";
 
   const selectFile = (file?: File) => {
@@ -90,17 +99,17 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
     if (!file) return;
     if (!isPdfFile(file)) {
       setSelectedFile(null);
-      setFileError("Only PDF files can be uploaded.");
+      setFileError(t("onlyPdf"));
       return;
     }
     if (file.size === 0) {
       setSelectedFile(null);
-      setFileError("This PDF is empty. Choose a document with content.");
+      setFileError(t("emptyPdf"));
       return;
     }
     if (file.size > MAX_PDF_UPLOAD_BYTES) {
       setSelectedFile(null);
-      setFileError("PDF files must be 20 MB or smaller.");
+      setFileError(t("tooLarge"));
       return;
     }
     setSelectedFile(file);
@@ -130,14 +139,14 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
         onProgress: (uploaded, total) => setProgress({ uploaded, total })
       });
       setProgress((current) => current ? { ...current, uploaded: current.total } : null);
-      setSuccessMessage(response.message || "PDF uploaded successfully.");
+      setSuccessMessage(t("success"));
       redirectTimerRef.current = setTimeout(() => router.push(`/tender/${response.tender_id}`), 700);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {
-        setNotice("Upload cancelled. Your PDF remains selected so you can try again.");
+        setNotice(t("cancelled"));
         setProgress(null);
       } else {
-        setUploadError(getUploadErrorMessage(error));
+        setUploadError(getUploadErrorMessage(error, t));
       }
     } finally {
       abortControllerRef.current = null;
@@ -148,11 +157,11 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
   return (
     <section className="te-upload-dock" aria-labelledby="te-upload-title">
       <div className="te-upload-intro">
-        <p>Ready, {firstName}.</p>
-        <h2 id="te-upload-title">Add the tender.</h2>
-        <dl className="te-account-telemetry" aria-label="Current plan and usage">
-          <div><dt>Plan</dt><dd>{planName ?? "Unavailable"}</dd></div>
-          <div><dt>Credits</dt><dd>{credits ?? "Unavailable"}</dd></div>
+        <p>{t("ready", { name: firstName })}</p>
+        <h2 id="te-upload-title">{t("title")}</h2>
+        <dl className="te-account-telemetry" aria-label={t("planUsage")}>
+          <div><dt>{common("plan")}</dt><dd>{planName ?? common("unavailable")}</dd></div>
+          <div><dt>{common("credits")}</dt><dd>{credits ?? common("unavailable")}</dd></div>
         </dl>
       </div>
 
@@ -174,15 +183,15 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
         )}
 
         <div className="te-upload-messages" aria-live="polite">
-          {isOutOfAnalysisCredits ? <DockStatus tone="warning">Analysis needs an active plan or available credit.</DockStatus> : null}
+          {isOutOfAnalysisCredits ? <DockStatus tone="warning">{t("creditWarning")}</DockStatus> : null}
           {fileError ? <DockStatus tone="danger" live="assertive">{fileError}</DockStatus> : null}
           {inspection.status === "error" ? <DockStatus tone="danger" live="assertive">{inspection.error}</DockStatus> : null}
           {uploadError ? <DockStatus tone="danger" live="assertive">{uploadError}</DockStatus> : null}
           {notice ? <DockStatus>{notice}</DockStatus> : null}
-          {successMessage ? <DockStatus tone="success" title="Upload complete">{successMessage} Opening the tender…</DockStatus> : null}
+          {successMessage ? <DockStatus tone="success" title={t("complete")}>{successMessage} {t("opening")}</DockStatus> : null}
           {isUploading ? (
             <div className="te-progress" role="status" aria-live="polite">
-              <div className="te-progress-row"><span><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> {progressPercent === null ? "Starting secure upload…" : `Uploading PDF · ${progressPercent}%`}</span><button type="button" onClick={() => abortControllerRef.current?.abort()}><Ban className="h-3.5 w-3.5" aria-hidden="true" /> Cancel</button></div>
+              <div className="te-progress-row"><span><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> {progressPercent === null ? t("starting") : t("progress", { percent: progressPercent })}</span><button type="button" onClick={() => abortControllerRef.current?.abort()}><Ban className="h-3.5 w-3.5" aria-hidden="true" /> {common("cancel")}</button></div>
               {progressPercent !== null ? <div className="te-progress-track" aria-hidden="true"><span style={{ width: `${progressPercent}%` }} /></div> : null}
             </div>
           ) : null}
@@ -190,13 +199,13 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
       </div>
 
       <div className="te-upload-action-column">
-        <p>PDF only · maximum 20 MB</p>
+        <p>{t("pdfOnly")}</p>
         <button type="button" onClick={uploadTender} disabled={!hasValidPdf || Boolean(successMessage) || isUploading} className="te-primary-button te-upload-button">
           <UploadCloud className="h-4 w-4" aria-hidden="true" />
-          <span>{successMessage ? "Upload complete" : isUploading ? "Uploading…" : inspection.status === "loading" && selectedFile ? "Checking PDF…" : "Upload & open workspace"}</span>
+          <span>{successMessage ? t("complete") : isUploading ? t("uploading") : inspection.status === "loading" && selectedFile ? t("checking") : t("uploadOpen")}</span>
           {!isUploading && !successMessage ? <ArrowUpRight className="h-4 w-4" aria-hidden="true" /> : null}
         </button>
-        <div className="te-upload-links"><Link href="/history">History</Link><Link href="/dashboard">Dashboard <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /></Link></div>
+        <div className="te-upload-links"><Link href="/history">{navigation("history")}</Link><Link href="/dashboard">{navigation("dashboard")} <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /></Link></div>
       </div>
     </section>
   );

@@ -50,7 +50,7 @@ function PendingExtractionCard({
   analysisError: string;
   isExtracting: boolean;
   isAnalyzing: boolean;
-  creditsLeft: number;
+  creditsLeft: number | null;
   hasAnalysisAccess: boolean;
   onExtract: () => void;
   onAnalyze: () => void;
@@ -128,7 +128,7 @@ function PendingExtractionCard({
               )}
               {isAnalyzing ? "Analyzing tender with Gemini..." : isAnalysisFailure ? "Retry AI analysis" : "Analyze with AI"}
             </button>
-            <p className="text-sm text-gray-500">Free analyses left: {creditsLeft}</p>
+            <p className="text-sm text-gray-500">{creditsLeft === null ? "Usage unavailable" : `Free analyses left: ${creditsLeft}`}</p>
           </div>
         </section>
         {!hasAnalysisAccess ? <UpgradeRequiredCard className="mt-5" /> : null}
@@ -195,7 +195,7 @@ export default function TenderDetailClient({ id }: { id: string }) {
   const [hasLoaded, setHasLoaded] = useState(false);
   const hasUsageFields = typeof user?.free_analysis_credits === "number";
   const freeCredits = Math.max(0, user?.free_analysis_credits ?? 0);
-  const creditsLeft = hasUsageFields ? freeCredits : 15;
+  const creditsLeft = hasUsageFields ? freeCredits : null;
   const hasActiveSubscription = user?.subscription_status?.toLowerCase() === "active";
   const hasAnalysisAccess = hasActiveSubscription || !hasUsageFields || freeCredits > 0;
 

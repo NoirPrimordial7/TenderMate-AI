@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type PdfPageCanvasProps = {
   document: PDFDocumentProxy;
@@ -23,6 +24,7 @@ export function PdfPageCanvas({
   const [availableWidth, setAvailableWidth] = useState(0);
   const [isRendering, setIsRendering] = useState(true);
   const [renderError, setRenderError] = useState("");
+  const t = useTranslations("pdfViewer");
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -65,7 +67,7 @@ export function PdfPageCanvas({
         if (!cancelled) setIsRendering(false);
       } catch (error) {
         if (cancelled || (error instanceof Error && error.name === "RenderingCancelledException")) return;
-        const message = "This PDF page could not be rendered.";
+        const message = t("pageError");
         setRenderError(message);
         setIsRendering(false);
         onRenderError?.(message);
@@ -77,13 +79,13 @@ export function PdfPageCanvas({
       cancelled = true;
       renderTask?.cancel();
     };
-  }, [availableWidth, document, onRenderError, pageNumber, zoom]);
+  }, [availableWidth, document, onRenderError, pageNumber, t, zoom]);
 
   return (
     <div ref={frameRef} className={`te-pdf-canvas-frame te-pdf-canvas-${variant}`}>
-      {isRendering ? <div className="te-pdf-canvas-loading" role="status"><span />Loading page…</div> : null}
+      {isRendering ? <div className="te-pdf-canvas-loading" role="status"><span />{t("pageLoading")}</div> : null}
       {renderError ? <div className="te-pdf-canvas-error" role="alert">{renderError}</div> : null}
-      <canvas ref={canvasRef} aria-label={`PDF page ${pageNumber}`} />
+      <canvas ref={canvasRef} aria-label={t("canvasLabel", { page: pageNumber })} />
     </div>
   );
 }

@@ -1,63 +1,32 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import { CheckCircle2, Loader2, Sparkles } from "lucide-react";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-import { BillingPlan, BillingUsage } from "@/domain/billing/types";
+import { BillingUsage } from "@/domain/billing/types";
 import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
-
-const fallbackPlans: BillingPlan[] = [
-  {
-    id: "free",
-    name: "Free",
-    price_label: "₹0",
-    analyses_included: 15,
-    interval: null,
-    coming_soon: false,
-    description: "15 AI tender analyses included for every new user."
-  },
-  {
-    id: "starter",
-    name: "Starter",
-    price_label: "₹199/month",
-    analyses_included: 25,
-    interval: "month",
-    coming_soon: true,
-    description: "25 AI tender analyses per month. Coming soon."
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price_label: "₹499/month",
-    analyses_included: 100,
-    interval: "month",
-    coming_soon: true,
-    description: "100 AI tender analyses per month. Coming soon."
-  },
-  {
-    id: "business",
-    name: "Business",
-    price_label: "₹999/month",
-    analyses_included: 300,
-    interval: "month",
-    coming_soon: true,
-    description: "300 AI tender analyses per month. Coming soon."
-  }
-];
+import { useTranslations } from "@/contexts/LocaleContext";
 
 export default function PricingPage() {
   const { isAuthenticated, isLoading: isAuthLoading, user } = useAuth();
-  const [plans, setPlans] = useState<BillingPlan[]>(fallbackPlans);
-  const [usage, setUsage] = useState<BillingUsage | null>(null);
+  const t = useTranslations("pricing");
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState("");
   const [checkoutPlanId, setCheckoutPlanId] = useState<string | null>(null);
+  const { data: plansResponse, error: plansError } = useSWR(["public", "billing-plans"], billingService.getPlans);
+  const { data: usage, error: usageError } = useSWR<BillingUsage>(
+    isAuthenticated && user ? ["private", user.id, "billing-usage"] : null,
+    billingService.getUsage
+  );
+  const plans = plansResponse?.plans ?? [];
 
   const currentPlan = usage?.plan_name ?? user?.plan_name ?? "free";
-  const creditsLeft = Math.max(0, usage?.free_analysis_credits ?? user?.free_analysis_credits ?? 15);
+  const creditValue = usage?.free_analysis_credits ?? user?.free_analysis_credits;
+  const creditsLeft = typeof creditValue === "number" ? Math.max(0, creditValue) : null;
   const subscriptionStatus = usage?.subscription_status ?? user?.subscription_status ?? "trial";
 
   const currentPlanLabel = useMemo(
@@ -65,33 +34,8 @@ export default function PricingPage() {
     [currentPlan, plans]
   );
 
-  useEffect(() => {
-    if (!isAuthenticated) {
-      setPlans(fallbackPlans);
-      setUsage(null);
-      setError("");
-      return;
-    }
-
-    let isMounted = true;
-    setError("");
-
-    Promise.all([billingService.getPlans(), billingService.getUsage()])
-      .then(([plansResponse, usageResponse]) => {
-        if (!isMounted) return;
-        setPlans(plansResponse.plans);
-        setUsage(usageResponse);
-      })
-      .catch((loadError) => {
-        if (!isMounted) return;
-        setPlans(fallbackPlans);
-        setError(toFriendlyApiMessage(loadError, "Could not refresh billing details."));
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [isAuthenticated]);
+  const loadError = plansError ?? usageError;
+  const visibleError = error || (loadError ? toFriendlyApiMessage(loadError, "Could not refresh billing details.") : "");
 
   const handleUpgrade = async (planId: string) => {
     if (!isAuthenticated) return;
@@ -116,13 +60,12 @@ export default function PricingPage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_24rem] lg:items-end">
           <div className="max-w-3xl">
-            <p className="muted-label">Pricing</p>
+            <p className="muted-label">{t("eyebrow")}</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-gray-950 sm:text-4xl">
-              Start free, upgrade when tender volume grows
+              {t("title")}
             </h1>
             <p className="mt-3 text-sm leading-6 text-gray-600">
-              TenderMate includes 15 free AI analyses for every account. Paid plans and Razorpay checkout are planned,
-              but live payments are not enabled yet.
+              {t("support")}
             </p>
           </div>
 
@@ -133,17 +76,17 @@ export default function PricingPage() {
                   <Sparkles className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Your plan</p>
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{t("yourPlan")}</p>
                   <p className="mt-1 text-lg font-semibold capitalize text-gray-950">{currentPlanLabel}</p>
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                  <p className="text-gray-500">Credits left</p>
-                  <p className="mt-1 font-semibold text-gray-950">{creditsLeft}</p>
+                  <p className="text-gray-500">{t("creditsLeft")}</p>
+                  <p className="mt-1 font-semibold text-gray-950">{creditsLeft ?? "Unavailable"}</p>
                 </div>
                 <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2">
-                  <p className="text-gray-500">Status</p>
+                  <p className="text-gray-500">{t("status")}</p>
                   <p className="mt-1 font-semibold capitalize text-gray-950">{subscriptionStatus}</p>
                 </div>
               </div>
@@ -157,9 +100,9 @@ export default function PricingPage() {
           </p>
         ) : null}
 
-        {error ? (
+        {visibleError ? (
           <p className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800">
-            {error}
+            {visibleError}
           </p>
         ) : null}
 
@@ -183,12 +126,12 @@ export default function PricingPage() {
                   <div className="flex flex-col items-end gap-2">
                     {isCurrentPlan ? (
                       <span className="rounded-md bg-gray-950 px-2 py-1 text-xs font-semibold text-white">
-                        Current plan
+                        {t("current")}
                       </span>
                     ) : null}
                     {plan.coming_soon ? (
                       <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-1 text-xs font-semibold text-gray-600">
-                        Coming soon
+                        {t("comingSoon")}
                       </span>
                     ) : null}
                   </div>
@@ -206,7 +149,7 @@ export default function PricingPage() {
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 flex-none text-emerald-600" aria-hidden="true" />
-                    <span>Protected tender history</span>
+                    <span>{t("protectedHistory")}</span>
                   </li>
                 </ul>
 
@@ -219,14 +162,14 @@ export default function PricingPage() {
                       className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black disabled:cursor-not-allowed disabled:bg-gray-300"
                     >
                       {isCheckingOut ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}
-                      {isCurrentPlan ? "Current plan" : "Upgrade"}
+                      {isCurrentPlan ? t("current") : t("upgrade")}
                     </button>
                   ) : (
                     <Link
                       href="/signup"
                       className="inline-flex h-11 w-full items-center justify-center rounded-lg bg-gray-950 px-4 text-sm font-semibold text-white hover:bg-black"
                     >
-                      Sign up to start free
+                      {t("signup")}
                     </Link>
                   )}
                 </div>

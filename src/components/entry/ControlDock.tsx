@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, X } from "lucide-react";
 import { AuthDock, type AuthMode } from "@/components/entry/AuthDock";
+import { useTranslations } from "@/contexts/LocaleContext";
 
 type ControlDockProps = {
   isOpen: boolean;
@@ -15,6 +16,7 @@ type ControlDockProps = {
 
 export function ControlDock({ isOpen, isLoading, initialAuthMode, onClose, onAuthenticated }: ControlDockProps) {
   const shouldReduceMotion = useReducedMotion();
+  const t = useTranslations("auth");
   const sheetRef = useRef<HTMLDivElement>(null);
   const returnFocusRef = useRef<HTMLElement | null>(null);
   const [sceneMode, setSceneMode] = useState<AuthMode>(initialAuthMode ?? "signin");
@@ -79,25 +81,25 @@ export function ControlDock({ isOpen, isLoading, initialAuthMode, onClose, onAut
             className={`te-auth-sheet te-auth-sheet-${sceneMode}`}
             role="dialog"
             aria-modal="true"
-            aria-label="TenderMate account access"
+            aria-label={t("accountAccess")}
             initial={{ x: "100%" }}
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ duration: shouldReduceMotion ? 0 : 0.52, ease: [0.76, 0, 0.24, 1] }}
           >
-            <div className="te-auth-colour-field" aria-hidden="true"><span>Make the bid<br />with clarity.</span></div>
+            <div className="te-auth-colour-field" aria-hidden="true"><span>{t("startTitle")}</span></div>
             <div className="te-auth-sheet-content">
               <div className="te-auth-content-container">
                 <header className="te-auth-sheet-head">
-                  <button type="button" onClick={onClose} className="te-sheet-back"><ArrowLeft aria-hidden="true" /> Back to the tender</button>
-                  <button type="button" onClick={onClose} className="te-sheet-close" aria-label="Close account panel"><X aria-hidden="true" /></button>
+                  <button type="button" onClick={onClose} className="te-sheet-back"><ArrowLeft aria-hidden="true" /> {t("back")}</button>
+                  <button type="button" onClick={onClose} className="te-sheet-close" aria-label={t("closePanel")}><X aria-hidden="true" /></button>
                 </header>
 
                 <div className="te-auth-content-body">
                   {isLoading ? (
                     <section className="te-sheet-loading" role="status" aria-live="polite">
                       <span />
-                      <h2>Checking your session…</h2>
+                      <h2>{t("checkingSession")}</h2>
                     </section>
                   ) : (
                     <AuthDock initialMode={initialAuthMode} onAuthenticated={onAuthenticated} onModeChange={setSceneMode} />

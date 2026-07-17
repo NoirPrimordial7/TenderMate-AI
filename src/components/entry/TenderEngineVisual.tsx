@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
+import { useTranslations } from "@/contexts/LocaleContext";
 import type { PointerEvent } from "react";
 
 type TenderEngineVisualProps = {
@@ -10,6 +11,7 @@ type TenderEngineVisualProps = {
 
 export function TenderEngineVisual({ isActive, hasSelectedFile = false }: TenderEngineVisualProps) {
   const shouldReduceMotion = useReducedMotion();
+  const t = useTranslations("hero");
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
   const smoothX = useSpring(pointerX, { stiffness: 86, damping: 24, mass: 0.65 });
@@ -68,17 +70,17 @@ export function TenderEngineVisual({ isActive, hasSelectedFile = false }: Tender
           </header>
 
           <div className="te-paper-summary">
-            <div><span>Department</span><strong>Public Works Division</strong></div>
-            <div><span>Estimated value</span><strong>₹ 18,40,000</strong></div>
-            <div><span>Bid closes</span><strong>28 Aug · 17:00</strong></div>
+            <div><span>{t("department")}</span><strong>Public Works Division</strong></div>
+            <div><span>{t("estimatedValue")}</span><strong>₹ 18,40,000</strong></div>
+            <div><span>{t("bidCloses")}</span><strong>28 Aug · 17:00</strong></div>
           </div>
 
           <div className="te-paper-table" role="presentation">
-            <div className="te-paper-table-head"><span>Clause</span><span>Requirement</span><span>Finding</span></div>
-            <div className="te-clause-row te-clause-eligibility"><span>3.2</span><p>Average annual turnover · मागील ३ वर्षे</p><b>Eligible</b></div>
-            <div className="te-clause-row te-clause-document"><span>6.1</span><p>EMD / bid security instrument</p><b>Document</b></div>
-            <div className="te-clause-row te-clause-source"><span>7.4</span><p>OEM authorisation and GST certificate</p><b>Source 14</b></div>
-            <div className="te-clause-row te-clause-risk"><span>8.4</span><p>Submission deadline · अंतिम मुदत</p><b>2 days</b></div>
+            <div className="te-paper-table-head"><span>{t("clause")}</span><span>{t("requirement")}</span><span>{t("finding")}</span></div>
+            <div className="te-clause-row te-clause-eligibility"><span>3.2</span><p>Average annual turnover · मागील ३ वर्षे</p><b>{t("eligible")}</b></div>
+            <div className="te-clause-row te-clause-document"><span>6.1</span><p>EMD / bid security instrument</p><b>{t("document")}</b></div>
+            <div className="te-clause-row te-clause-source"><span>7.4</span><p>OEM authorisation and GST certificate</p><b>{t("source")} 14</b></div>
+            <div className="te-clause-row te-clause-risk"><span>8.4</span><p>Submission deadline · अंतिम मुदत</p><b>2 {t("days")}</b></div>
           </div>
 
           <footer className="te-paper-footer">
@@ -93,10 +95,10 @@ export function TenderEngineVisual({ isActive, hasSelectedFile = false }: Tender
           animate={hasSelectedFile && !shouldReduceMotion ? { y: [0, -4, 0] } : undefined}
           transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         >
-          <span>Eligibility</span><strong>Confirmed</strong>
+          <span>{t("eligibility")}</span><strong>{t("confirmed")}</strong>
         </motion.div>
-        <div className="te-document-callout te-callout-value"><span>Estimated value</span><strong>₹18.4 lakh</strong></div>
-        <div className="te-document-callout te-callout-deadline"><span>Deadline</span><strong>28 Aug</strong></div>
+        <div className="te-document-callout te-callout-value"><span>{t("estimatedValue")}</span><strong>₹18.4 lakh</strong></div>
+        <div className="te-document-callout te-callout-deadline"><span>{t("deadline")}</span><strong>28 Aug</strong></div>
       </motion.div>
     </motion.div>
   );

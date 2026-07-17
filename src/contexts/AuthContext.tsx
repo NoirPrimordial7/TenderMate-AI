@@ -2,9 +2,10 @@
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AuthSession, AuthUser, LoginInput, SignupInput } from "@/domain/auth/types";
+import useSWR, { useSWRConfig } from "swr";
+import { AuthSession, AuthUser, LoginInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
 import { AUTH_INVALIDATED_EVENT, isApiError } from "@/services/api";
-import { fetchCurrentUser, loginUser, signupUser } from "@/services/AuthService";
+import { fetchCurrentUser, loginUser, signupUser, updateUserPreferences } from "@/services/AuthService";
 import {
   clearStoredAuth,
   getAccessToken,
@@ -12,6 +13,7 @@ import {
   saveAccessToken,
   saveCurrentUser
 } from "@/services/authStorage";
+import { useLocale } from "@/contexts/LocaleContext";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -22,6 +24,7 @@ type AuthContextValue = {
   login(input: LoginInput): Promise<void>;
   logout(redirectTo?: string): void;
   refreshUser(): Promise<AuthUser | null>;
+  updateLanguagePreferences(input: UserPreferencesInput): Promise<AuthUser | null>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -32,9 +35,22 @@ function readNextRedirect(redirectTo?: string) {
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+  const { mutate: mutateCache } = useSWRConfig();
+  const { activeLocale, analysisLocale, setAnalysisLocale, setLocale } = useLocale();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  const sessionKey = hasInitialized && token ? ["private", "auth", "me"] : null;
+  const { data: revalidatedUser, error: revalidationError, isLoading: isRevalidating } = useSWR(
+    sessionKey,
+    fetchCurrentUser,
+    {
+      fallbackData: user ?? undefined,
+      keepPreviousData: false,
+      revalidateOnFocus: true
+    }
+  );
 
   const clearSession = useCallback(() => {
     clearStoredAuth();
@@ -73,6 +89,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [clearSession]);
 
+  const updateLanguagePreferences = useCallback(async (input: UserPreferencesInput) => {
+    if (!token || !user) return null;
+    const optimisticUser = { ...user, ...input };
+    setUser(optimisticUser);
+    saveCurrentUser(optimisticUser);
+
+    try {
+      const updatedUser = await updateUserPreferences(input);
+      setUser(updatedUser);
+      saveCurrentUser(updatedUser);
+      await mutateCache(sessionKey, updatedUser, { revalidate: false });
+      return updatedUser;
+    } catch {
+      setUser(user);
+      saveCurrentUser(user);
+      await mutateCache(sessionKey, user, { revalidate: false });
+      return null;
+    }
+  }, [mutateCache, sessionKey, token, user]);
+
   const signup = useCallback(
     async (input: SignupInput) => {
       const session = await signupUser(input);
@@ -92,9 +128,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(
     (redirectTo?: string) => {
       clearSession();
+      void mutateCache(
+        (key) => Array.isArray(key) && key[0] === "private",
+        undefined,
+        { revalidate: false }
+      );
       router.push(readNextRedirect(redirectTo));
     },
-    [clearSession, router]
+    [clearSession, mutateCache, router]
   );
 
   useEffect(() => {
@@ -102,38 +143,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = getCurrentUser();
 
     if (!storedToken) {
-      setIsLoading(false);
+      setHasInitialized(true);
       return;
     }
 
     setToken(storedToken);
     setUser(storedUser);
 
-    refreshUser().finally(() => setIsLoading(false));
-  }, [refreshUser]);
+    setHasInitialized(true);
+  }, []);
+
+  useEffect(() => {
+    if (!revalidatedUser) return;
+    setUser(revalidatedUser);
+    saveCurrentUser(revalidatedUser);
+  }, [revalidatedUser]);
+
+  useEffect(() => {
+    if (!revalidationError || !isApiError(revalidationError) || revalidationError.status !== 401) return;
+    clearSession();
+  }, [clearSession, revalidationError]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (user.preferred_language && user.preferred_language !== activeLocale) {
+      setLocale(user.preferred_language);
+    }
+    if (user.preferred_analysis_language && user.preferred_analysis_language !== analysisLocale) {
+      setAnalysisLocale(user.preferred_analysis_language);
+    }
+  }, [activeLocale, analysisLocale, setAnalysisLocale, setLocale, user]);
 
   useEffect(() => {
     const handleAuthInvalidated = () => {
-      setToken(null);
-      setUser(null);
+      clearSession();
+      void mutateCache(
+        (key) => Array.isArray(key) && key[0] === "private",
+        undefined,
+        { revalidate: false }
+      );
     };
 
     window.addEventListener(AUTH_INVALIDATED_EVENT, handleAuthInvalidated);
     return () => window.removeEventListener(AUTH_INVALIDATED_EVENT, handleAuthInvalidated);
-  }, []);
+  }, [clearSession, mutateCache]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
       token,
       isAuthenticated: Boolean(token),
-      isLoading,
+      isLoading: !hasInitialized || Boolean(token && !user && isRevalidating),
       signup,
       login,
       logout,
-      refreshUser
+      refreshUser,
+      updateLanguagePreferences
     }),
-    [isLoading, login, logout, refreshUser, signup, token, user]
+    [hasInitialized, isRevalidating, login, logout, refreshUser, signup, token, updateLanguagePreferences, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
