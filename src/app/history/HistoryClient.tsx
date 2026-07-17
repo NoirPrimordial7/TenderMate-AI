@@ -23,6 +23,7 @@ function statusTone(status: HistoryTender["status"]) {
   if (status === "Analyzed") return "lime" as const;
   if (status === "Extracted") return "violet" as const;
   if (status === "Failed") return "danger" as const;
+  if (status === "Invalid") return "danger" as const;
   return "blue" as const;
 }
 
@@ -82,7 +83,7 @@ export default function HistoryClient() {
           <div className="tm-library-controls">
             <label className="tm-search-field"><Search aria-hidden="true"/><span className="sr-only">{t("searchLabel")}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPlaceholder")} /></label>
             <div className="tm-filter-group"><SlidersHorizontal aria-hidden="true" />
-              <label><span className="sr-only">{t("statusFilter")}</span><select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)}><option value="all">{t("allStatuses")}</option>{(["Uploaded", "Extracted", "Analyzed", "Failed"] as const).map((value) => <option key={value} value={value}>{t(`status${value}`)}</option>)}</select></label>
+              <label><span className="sr-only">{t("statusFilter")}</span><select value={status} onChange={(event) => setStatus(event.target.value as StatusFilter)}><option value="all">{t("allStatuses")}</option>{(["Uploaded", "Validating", "Extracted", "Analyzed", "Failed", "Invalid"] as const).map((value) => <option key={value} value={value}>{t(`status${value}`)}</option>)}</select></label>
               <label><span className="sr-only">{t("riskFilter")}</span><select value={risk} onChange={(event) => setRisk(event.target.value as RiskFilter)}><option value="all">{t("allRisks")}</option>{(["High", "Medium", "Low"] as const).map((value) => <option key={value} value={value}>{t(`risk${value}`)}</option>)}</select></label>
               <label><span className="sr-only">{t("deadlineFilter")}</span><select value={deadline} onChange={(event) => setDeadline(event.target.value as DeadlineFilter)}><option value="all">{t("allDeadlines")}</option><option value="overdue">{t("deadlineOverdue")}</option><option value="sevenDays">{t("deadlineSevenDays")}</option><option value="thirtyDays">{t("deadlineThirtyDays")}</option></select></label>
               <label><span className="sr-only">{t("sortLabel")}</span><select value={sort} onChange={(event) => setSort(event.target.value as SortOption)}><option value="updated">{t("sortUpdated")}</option><option value="deadline">{t("sortDeadline")}</option><option value="fit">{t("sortFit")}</option></select></label>

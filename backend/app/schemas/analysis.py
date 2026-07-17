@@ -8,6 +8,7 @@ RequirementStatus = Literal["Ready", "Missing", "Not Verified"]
 RequirementPriority = Literal["Required", "Optional"]
 BeforeApplyStatus = Literal["ready", "warning", "missing"]
 DateStatus = Literal["done", "upcoming", "unknown"]
+ExtractionMethod = Literal["text", "ocr", "mixed"]
 
 
 class SourceReference(BaseModel):
@@ -15,6 +16,9 @@ class SourceReference(BaseModel):
     clause: str = "Not specified"
     title: str = "Not specified"
     text: str = "Not specified"
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    extractionMethod: ExtractionMethod | None = None
+    blockId: str | None = None
 
 
 class TenderSnapshot(BaseModel):
@@ -36,12 +40,19 @@ class DecisionSummary(BaseModel):
     riskLevel: RiskLevel = "Medium"
     deadlineUrgency: RiskLevel = "Medium"
     missingCriticalRequirements: int = Field(default=0, ge=0)
+    positiveFactors: list[str] = Field(default_factory=list)
+    blockers: list[str] = Field(default_factory=list)
+    uncertainties: list[str] = Field(default_factory=list)
+    explanation: str = ""
 
 
 class ScoreItem(BaseModel):
+    key: str | None = None
     label: str
     value: int = Field(ge=0, le=100)
     display: str
+    explanation: str = ""
+    sourceCount: int = Field(default=0, ge=0)
 
 
 class BeforeApplyItem(BaseModel):
@@ -54,6 +65,9 @@ class DocumentRequirement(BaseModel):
     priority: RequirementPriority = "Required"
     status: RequirementStatus = "Not Verified"
     source: SourceReference
+    reason: str = ""
+    preparationAction: str = ""
+    userVerified: bool | None = None
 
 
 class EligibilityRequirement(BaseModel):
@@ -62,6 +76,9 @@ class EligibilityRequirement(BaseModel):
     impact: RiskLevel = "Medium"
     userStatus: RequirementStatus = "Not Verified"
     source: SourceReference
+    mandatory: bool | None = None
+    verificationReason: str = ""
+    confidence: float | None = Field(default=None, ge=0, le=1)
 
 
 class FinancialItem(BaseModel):
@@ -70,17 +87,30 @@ class FinancialItem(BaseModel):
     note: str | None = None
     chartAmount: int | None = None
     source: SourceReference
+    type: str = "Not specified"
+    currency: str = "INR"
+    normalizedAmount: float | None = Field(default=None, ge=0)
+    refundable: bool | None = None
+    mandatory: bool | None = None
 
 
 class TechnicalRequirement(BaseModel):
     requirement: str
     source: SourceReference
+    category: str = "Other"
+    mandatory: bool | None = None
+    acceptanceCriteria: str = ""
+    explanation: str = ""
+    userStatus: RequirementStatus = "Not Verified"
 
 
 class DateItem(BaseModel):
     label: str
     date: str
     status: DateStatus = "unknown"
+    isoDate: str | None = None
+    source: SourceReference | None = None
+    urgency: Literal["Low", "Medium", "High", "Unknown"] = "Unknown"
 
 
 class RiskItem(BaseModel):
@@ -88,10 +118,29 @@ class RiskItem(BaseModel):
     level: RiskLevel = "Medium"
     explanation: str
     source: SourceReference
+    likelihood: RiskLevel | None = None
+    consequence: str = ""
+    mitigation: str = ""
+    confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class AnalysisSummary(BaseModel):
+    executiveSummary: str = ""
+    strongestReasonToApply: str = ""
+    strongestReasonNotToApply: str = ""
+    nextBestAction: str = ""
+
+
+class ReadinessScores(BaseModel):
+    eligibilityScore: int | None = Field(default=None, ge=0, le=100)
+    documentsScore: int | None = Field(default=None, ge=0, le=100)
+    financialScore: int | None = Field(default=None, ge=0, le=100)
+    technicalScore: int | None = Field(default=None, ge=0, le=100)
+    timelineScore: int | None = Field(default=None, ge=0, le=100)
 
 
 class TenderAnalysisPayload(BaseModel):
-    schemaVersion: str = "1.0"
+    schemaVersion: str = "2.0"
     language: str | None = None
     id: str = ""
     snapshot: TenderSnapshot = Field(default_factory=TenderSnapshot)
@@ -107,6 +156,8 @@ class TenderAnalysisPayload(BaseModel):
     missingInformation: list[str] = Field(default_factory=list)
     departmentQuestions: list[str] = Field(default_factory=list)
     proposalDraft: str = ""
+    analysisSummary: AnalysisSummary = Field(default_factory=AnalysisSummary)
+    readiness: ReadinessScores = Field(default_factory=ReadinessScores)
 
 
 class GeminiAnalysisResponse(BaseModel):

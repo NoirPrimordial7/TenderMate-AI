@@ -1,5 +1,7 @@
 import {
   GeminiAnalysisResponse,
+  DocumentType,
+  DocumentValidationStatus,
   ExtractionMethod,
   HistoryTender,
   PDFExtractionResponse,
@@ -29,6 +31,10 @@ export type BackendTenderRecord = {
   extraction_method?: ExtractionMethod | null;
   ocr_used?: boolean | null;
   ocr_confidence?: number | null;
+  document_type?: DocumentType | null;
+  document_validation_status?: DocumentValidationStatus | null;
+  document_validation_confidence?: number | null;
+  document_validation_reason?: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -45,7 +51,9 @@ function formatDate(value: string) {
 }
 
 function toHistoryStatus(record: BackendTenderRecord): HistoryTender["status"] {
+  if (record.document_type === "non_tender" || record.document_validation_status === "invalid") return "Invalid";
   if (record.status === "failed" || record.status === "upload_failed") return "Failed";
+  if (record.document_validation_status === "pending" && record.status === "extracted") return "Validating";
   if (record.status === "extracted") return "Extracted";
   if (record.analysis_json || record.status === "analyzed") return "Analyzed";
   return "Uploaded";
@@ -74,7 +82,11 @@ function toHistoryTender(record: BackendTenderRecord): HistoryTender {
     fitScore: analysis?.decision.overallFitScore ?? record.fit_score ?? 0,
     category: analysis?.snapshot.category ?? record.category ?? "Not available",
     recommendation: analysis?.decision.recommendation ?? null,
-    missingDocuments: analysis ? analysis.documents.filter((document) => document.status === "Missing").length : null
+    missingDocuments: analysis ? analysis.documents.filter((document) => document.status === "Missing").length : null,
+    documentType: record.document_type,
+    documentValidationStatus: record.document_validation_status,
+    documentValidationConfidence: record.document_validation_confidence,
+    documentValidationReason: record.document_validation_reason
   };
 }
 
@@ -95,7 +107,11 @@ function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
     schemaVersion: analysis?.schemaVersion ?? "1.0",
     extractionMethod: record.extraction_method,
     ocrUsed: Boolean(record.ocr_used),
-    ocrConfidence: record.ocr_confidence
+    ocrConfidence: record.ocr_confidence,
+    documentType: record.document_type,
+    documentValidationStatus: record.document_validation_status,
+    documentValidationConfidence: record.document_validation_confidence,
+    documentValidationReason: record.document_validation_reason
   };
 }
 

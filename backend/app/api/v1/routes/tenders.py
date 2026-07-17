@@ -26,6 +26,7 @@ from app.services.gemini_analysis_service import (
     GeminiAnalysisService,
     GeminiNotConfiguredError,
     NoExtractedTextError,
+    NonTenderDocumentError,
     TenderNotFoundError as GeminiTenderNotFoundError,
     get_gemini_analysis_service,
 )
@@ -273,6 +274,20 @@ def analyze_tender_pdf(
     except AnalysisLimitReachedError as exc:
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail=str(exc),
+        ) from exc
+    except NonTenderDocumentError as exc:
+        record_audit_log(
+            action="non_tender_analysis_blocked",
+            user_id=current_user.id,
+            resource_type="tender",
+            resource_id=id,
+            ip_address=get_client_ip(request),
+            user_agent=get_user_agent(request),
+            metadata={"credit_consumed": False},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(exc),
         ) from exc
     except AnalysisQuotaExceededError as exc:

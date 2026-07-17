@@ -3,6 +3,9 @@ export type RequirementStatus = "Ready" | "Missing" | "Not Verified";
 export type RequirementPriority = "Required" | "Optional";
 export type BeforeApplyStatus = "ready" | "warning" | "missing";
 export type ExtractionMethod = "text" | "gemini_ocr" | "mixed";
+export type DocumentType = "tender" | "non_tender" | "uncertain";
+export type DocumentValidationStatus = "valid" | "invalid" | "review" | "pending";
+export type TechnicalCategory = "Scope of work" | "Specifications" | "Experience" | "Personnel" | "Equipment" | "Certifications" | "Delivery and installation" | "Quality and acceptance" | "Other";
 
 export type TenderSnapshot = {
   title: string;
@@ -23,6 +26,10 @@ export type DecisionSummary = {
   riskLevel: RiskLevel;
   deadlineUrgency: RiskLevel;
   missingCriticalRequirements: number;
+  positiveFactors?: string[];
+  blockers?: string[];
+  uncertainties?: string[];
+  explanation?: string;
 };
 
 export type SourceReference = {
@@ -30,6 +37,9 @@ export type SourceReference = {
   clause: string;
   title: string;
   text: string;
+  confidence?: number | null;
+  extractionMethod?: "text" | "ocr" | "mixed" | null;
+  blockId?: string | null;
 };
 
 export type DocumentRequirement = {
@@ -37,6 +47,9 @@ export type DocumentRequirement = {
   priority: RequirementPriority;
   status: RequirementStatus;
   source: SourceReference;
+  reason?: string;
+  preparationAction?: string;
+  userVerified?: boolean | null;
 };
 
 export type EligibilityRequirement = {
@@ -45,6 +58,9 @@ export type EligibilityRequirement = {
   impact: RiskLevel;
   userStatus: RequirementStatus;
   source: SourceReference;
+  mandatory?: boolean | null;
+  verificationReason?: string;
+  confidence?: number | null;
 };
 
 export type RiskItem = {
@@ -52,17 +68,29 @@ export type RiskItem = {
   level: RiskLevel;
   explanation: string;
   source: SourceReference;
+  likelihood?: RiskLevel | null;
+  consequence?: string;
+  mitigation?: string;
+  confidence?: number | null;
 };
 
 export type TechnicalRequirement = {
   requirement: string;
   source: SourceReference;
+  category?: TechnicalCategory | string;
+  mandatory?: boolean | null;
+  acceptanceCriteria?: string;
+  explanation?: string;
+  userStatus?: RequirementStatus;
 };
 
 export type DateItem = {
   label: string;
   date: string;
   status?: "done" | "upcoming" | "unknown";
+  isoDate?: string | null;
+  source?: SourceReference | null;
+  urgency?: RiskLevel | "Unknown";
 };
 
 export type FinancialItem = {
@@ -71,12 +99,35 @@ export type FinancialItem = {
   note?: string;
   chartAmount?: number;
   source: SourceReference;
+  type?: string;
+  currency?: string;
+  normalizedAmount?: number | null;
+  refundable?: boolean | null;
+  mandatory?: boolean | null;
 };
 
 export type ScoreItem = {
+  key?: string;
   label: string;
   value: number;
   display: string;
+  explanation?: string;
+  sourceCount?: number;
+};
+
+export type AnalysisSummary = {
+  executiveSummary?: string;
+  strongestReasonToApply?: string;
+  strongestReasonNotToApply?: string;
+  nextBestAction?: string;
+};
+
+export type ReadinessScores = {
+  eligibilityScore?: number | null;
+  documentsScore?: number | null;
+  financialScore?: number | null;
+  technicalScore?: number | null;
+  timelineScore?: number | null;
 };
 
 export type BeforeApplyItem = {
@@ -101,6 +152,8 @@ export type TenderAnalysis = {
   missingInformation: string[];
   departmentQuestions: string[];
   proposalDraft: string;
+  analysisSummary?: AnalysisSummary;
+  readiness?: ReadinessScores;
 };
 
 export type HistoryTender = {
@@ -113,12 +166,16 @@ export type HistoryTender = {
   updatedAt: string;
   deadline: string;
   deadlineRaw?: string | null;
-  status: "Uploaded" | "Extracted" | "Failed" | "Analyzed";
+  status: "Uploaded" | "Extracted" | "Failed" | "Analyzed" | "Invalid" | "Validating";
   riskLevel: RiskLevel;
   fitScore: number;
   category: string;
   recommendation?: string | null;
   missingDocuments?: number | null;
+  documentType?: DocumentType | null;
+  documentValidationStatus?: DocumentValidationStatus | null;
+  documentValidationConfidence?: number | null;
+  documentValidationReason?: string | null;
 };
 
 export type TenderRecordView = {
@@ -136,6 +193,10 @@ export type TenderRecordView = {
   extractionMethod?: ExtractionMethod | null;
   ocrUsed?: boolean;
   ocrConfidence?: number | null;
+  documentType?: DocumentType | null;
+  documentValidationStatus?: DocumentValidationStatus | null;
+  documentValidationConfidence?: number | null;
+  documentValidationReason?: string | null;
 };
 
 export type UploadTenderResponse = {

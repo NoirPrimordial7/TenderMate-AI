@@ -4,7 +4,7 @@ import useSWR from "swr";
 import EmptyState from "@/components/EmptyState";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { TenderProcessor } from "@/components/tender/TenderProcessor";
-import { TenderWorkspace } from "@/components/tender/TenderWorkspace";
+import { TenderWorkspace } from "@/components/tender/workspace/TenderWorkspace";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import type { TenderRecordView } from "@/domain/tender/types";

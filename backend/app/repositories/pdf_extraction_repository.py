@@ -121,6 +121,10 @@ class PDFExtractionRepository:
         ocr_used: bool = False,
         ocr_confidence: float | None = None,
         error_message: str | None = None,
+        document_type: str = "uncertain",
+        document_validation_status: str = "review",
+        document_validation_confidence: float | None = None,
+        document_validation_reason: str | None = None,
     ) -> None:
         client = self._require_supabase_client()
         self._execute_query(
@@ -135,6 +139,10 @@ class PDFExtractionRepository:
                     "extraction_method": extraction_method,
                     "ocr_used": ocr_used,
                     "ocr_confidence": ocr_confidence,
+                    "document_type": document_type,
+                    "document_validation_status": document_validation_status,
+                    "document_validation_confidence": document_validation_confidence,
+                    "document_validation_reason": document_validation_reason,
                 }
             )
             .eq("id", str(tender_id))

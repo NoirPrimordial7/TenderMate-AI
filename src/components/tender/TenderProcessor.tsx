@@ -19,6 +19,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
   const common = useTranslations("common");
   const [active, setActive] = useState<"extracting" | "analyzing" | null>(null);
   const [error, setError] = useState("");
+  const [reviewRequired, setReviewRequired] = useState(false);
   const credits = typeof user?.free_analysis_credits === "number" ? Math.max(0, user.free_analysis_credits) : null;
   const activeSubscription = user?.subscription_status?.toLowerCase() === "active";
   const canAnalyze = activeSubscription || credits === null || credits > 0;
@@ -38,14 +39,27 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
   const processTender = async () => {
     if (active) return;
     setError("");
+    setReviewRequired(false);
     try {
       let current = tender;
+      if (current.documentType === "non_tender" || current.documentValidationStatus === "invalid") {
+        setError(t("notTender"));
+        return;
+      }
       if (!extractionComplete || !hasExtractedText) {
         setActive("extracting");
         const extraction = await tenderService.extractTenderText(tender.id);
         current = (await onRefresh()) ?? current;
         if (extraction.pages_with_text === 0) {
           setError(t("ocrUnreadable"));
+          return;
+        }
+        if (current.documentType === "non_tender" || current.documentValidationStatus === "invalid") {
+          setError(t("notTender"));
+          return;
+        }
+        if (current.documentType === "uncertain" || current.documentValidationStatus === "review") {
+          setReviewRequired(true);
           return;
         }
       }
@@ -64,6 +78,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
         else if (cause.status === 402) setError(t("errors.payment"));
         else if (cause.status === 413) setError(t("errors.tooLarge"));
         else if (cause.status === 429) setError(t("errors.rateLimited"));
+        else if (cause.status === 422) setError(t("notTender"));
         else if (cause.status >= 500) setError(t("errors.server"));
         else setError(toFriendlyApiMessage(cause, t("errors.failed")));
       } else setError(toFriendlyApiMessage(cause, t("errors.network")));
@@ -82,6 +97,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
         <h1 id="process-tender-title">{t("title")}</h1>
         <p>{t("support")}</p>
         <dl><div><dt>{t("file")}</dt><dd>{tender.originalFileName ?? tender.title}</dd></div><div><dt>{common("pages")}</dt><dd>{tender.pageCount ?? common("pending")}</dd></div><div><dt>{t("method")}</dt><dd>{extractionMethod}</dd></div><div><dt>{common("credits")}</dt><dd>{credits ?? common("unavailable")}</dd></div></dl>
+        {reviewRequired || tender.documentValidationStatus === "review" ? <div className="tm-processing-warning" role="status"><CircleAlert aria-hidden="true"/><p>{t("uncertainDocument")}</p></div> : null}
         {error || tender.errorMessage ? <div className="tm-processing-error" role="alert"><CircleAlert aria-hidden="true"/><p>{error || tender.errorMessage}</p></div> : null}
         <button type="button" className="tm-process-button" onClick={processTender} disabled={Boolean(active)}>{active ? t(active) : tender.status === "failed" ? t("retry") : t("process")}<ArrowRight aria-hidden="true"/></button>
         <small>{t("truthNote")}</small>

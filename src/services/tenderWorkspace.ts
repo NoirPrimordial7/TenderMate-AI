@@ -34,16 +34,18 @@ export function getProcessingStages(tender: TenderRecordView, active?: "extracti
   const ocrUsed = Boolean(tender.ocrUsed || tender.extractionMethod === "gemini_ocr" || tender.extractionMethod === "mixed");
   const extracted = state === "extracted" || state === "analyzing" || state === "analyzed" || (state === "failed" && (tender.pageCount ?? 0) > 0);
   const analyzed = state === "analyzed";
+  const validationComplete = tender.documentValidationStatus === "valid";
+  const validationNeedsReview = tender.documentValidationStatus === "review" || tender.documentValidationStatus === "invalid";
   const extractionFailed = state === "failed" && !extracted;
   const analysisFailed = state === "failed" && extracted;
 
   return [
     { id: "uploaded", state: "complete" },
-    { id: "validated", state: "complete" },
     { id: "extracting", state: extractionFailed ? "failed" : active === "extracting" ? "active" : extracted ? "complete" : "pending" },
     { id: "text-detected", state: extracted ? (hasText ? "complete" : "warning") : "pending" },
     { id: "ocr-required", state: extracted && !hasText && !ocrUsed ? "warning" : extracted ? "complete" : "pending" },
     { id: "content-ready", state: extracted && hasText ? "complete" : "pending" },
+    { id: "validated", state: validationComplete ? "complete" : validationNeedsReview ? "warning" : extracted ? "warning" : "pending" },
     { id: "analyzing", state: analysisFailed ? "failed" : active === "analyzing" ? "active" : analyzed ? "complete" : "pending" },
     { id: "verifying", state: analyzed ? "complete" : "pending" },
     { id: "ready", state: analyzed ? "complete" : "pending" }
@@ -56,15 +58,37 @@ export function getMissingDocumentCount(analysis?: TenderAnalysis | null) {
 }
 
 export function getPriorityTender(items: HistoryTender[]) {
-  const available = items.filter((item) => item.status !== "Failed");
-  return [...available].sort((left, right) => {
+  const valid = items.filter((item) =>
+    item.status !== "Failed" && item.status !== "Invalid" && item.documentType !== "non_tender" && item.documentValidationStatus !== "invalid"
+  );
+  const now = Date.now();
+  const activeDeadlineItems = valid.filter((item) => {
+    const time = Date.parse(item.deadlineRaw ?? item.deadline);
+    return Number.isFinite(time) && time >= now;
+  });
+  const candidates = activeDeadlineItems.length ? valid.filter((item) => {
+    const time = Date.parse(item.deadlineRaw ?? item.deadline);
+    return !Number.isFinite(time) || time >= now;
+  }) : valid;
+  const rank = (item: HistoryTender) => {
+    const deadline = Date.parse(item.deadlineRaw ?? item.deadline);
+    if (Number.isFinite(deadline) && deadline >= now) return 0;
+    if (item.riskLevel === "High") return 1;
+    if (["Uploaded", "Extracted", "Validating"].includes(item.status)) return 2;
+    return 3;
+  };
+  return [...candidates].sort((left, right) => {
+    const rankDelta = rank(left) - rank(right);
+    if (rankDelta) return rankDelta;
     const leftTime = Date.parse(left.deadlineRaw ?? left.deadline);
     const rightTime = Date.parse(right.deadlineRaw ?? right.deadline);
-    if (Number.isNaN(leftTime) && Number.isNaN(rightTime)) return right.updatedAt.localeCompare(left.updatedAt);
-    if (Number.isNaN(leftTime)) return 1;
-    if (Number.isNaN(rightTime)) return -1;
-    return leftTime - rightTime;
-  })[0] ?? items[0] ?? null;
+    if (Number.isFinite(leftTime) && Number.isFinite(rightTime)) return leftTime - rightTime;
+    return right.updatedAt.localeCompare(left.updatedAt);
+  })[0] ?? null;
+}
+
+export function getInvalidDocuments(items: HistoryTender[]) {
+  return items.filter((item) => item.status === "Invalid" || item.documentType === "non_tender" || item.documentValidationStatus === "invalid");
 }
 
 export function formatIndiaDate(value: string | null | undefined, locale = "en-IN") {

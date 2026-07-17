@@ -16,6 +16,7 @@ AI_ANALYSIS_EVENT = "ai_analysis"
 GEMINI_NOT_CONFIGURED_MESSAGE = "AI analysis is not configured on this server."
 ANALYSIS_NOT_READY_MESSAGE = "Extract PDF text before running AI analysis."
 NO_EXTRACTED_TEXT_MESSAGE = "No extracted PDF text was found for this tender."
+NON_TENDER_DOCUMENT_MESSAGE = "This file does not appear to be a tender. Upload a tender document to continue."
 ANALYSIS_FAILED_MESSAGE = "AI analysis failed. Please try again in a moment."
 DAILY_QUOTA_EXCEEDED_MESSAGE = "Daily AI analysis quota exceeded. Please try again tomorrow."
 
@@ -44,6 +45,10 @@ class AnalysisQuotaExceededError(ValueError):
     pass
 
 
+class NonTenderDocumentError(ValueError):
+    pass
+
+
 class GeminiAnalysisService:
     def __init__(
         self,
@@ -68,9 +73,6 @@ class GeminiAnalysisService:
         user_id: UUID,
         usage_service: UsageService,
     ) -> GeminiAnalysisResponse:
-        if not self.settings.gemini_api_key:
-            raise GeminiNotConfiguredError(GEMINI_NOT_CONFIGURED_MESSAGE)
-
         tender = self._tender_repository.get_tender_by_id(
             tender_id=tender_id,
             user_id=user_id,
@@ -79,6 +81,14 @@ class GeminiAnalysisService:
             raise TenderNotFoundError(
                 f"Tender {tender_id} was not found or does not belong to the current user."
             )
+
+        if tender.document_type == "non_tender" or tender.document_validation_status == "invalid":
+            raise NonTenderDocumentError(
+                tender.document_validation_reason or NON_TENDER_DOCUMENT_MESSAGE
+            )
+
+        if not self.settings.gemini_api_key:
+            raise GeminiNotConfiguredError(GEMINI_NOT_CONFIGURED_MESSAGE)
 
         pages = self._analysis_repository.list_tender_pages(
             tender_id=tender_id,

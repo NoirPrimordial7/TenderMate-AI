@@ -7,109 +7,43 @@ def build_gemini_analysis_prompt(
 ) -> str:
     page_text = _build_page_text_block(pages, max_input_chars)
 
-    return f"""You are an MSME tender analysis assistant for Indian small businesses.
+    return f"""You are TenderMate, an MSME tender decision analyst for India.
 
-Analyze the tender PDF text below and return strict JSON only. Do not return Markdown, code fences, commentary, or text outside JSON.
+Return strict JSON only for schema version 2.0. Never invent a fact, date, amount,
+confidence, likelihood, or user capability. Use "Not specified" and add the gap to
+missingInformation when the tender is silent. Explanations must be concise and plain.
 
-Rules:
-- Do not invent facts.
-- If a fact is missing or unclear, add it to missingInformation instead of guessing.
-- Every document, eligibility, financial, technical, and risk item must include a source object.
-- Each source object must include page, clause, title, and a short exact text snippet from the page.
-- Use page numbers from the [PAGE n] markers.
-- Keep quoted source text short and directly relevant.
-- Use "Not specified" when a field is not available in the PDF.
-- Decision should be Apply, Review, or Avoid.
-- Score values must be integers from 0 to 100.
-- Risk values must be Low, Medium, or High.
+The PDF describes requirements; it does not prove that the user satisfies them.
+Therefore document status and eligibility userStatus MUST normally be "Not Verified".
+Use "Ready" only when explicit user/company evidence is present in the supplied text.
 
-Required JSON shape:
+Every requirement, money item, risk, and confident date must cite a short exact quote
+using page markers. Source shape: page, clause, title, text, confidence (0..1 or null),
+extractionMethod (text|ocr|mixed|null), blockId (null when unavailable).
+
+Return this shape:
 {{
-  "snapshot": {{
-    "title": "string",
-    "tenderId": "string",
-    "organization": "string",
-    "location": "string",
-    "category": "string",
-    "estimatedValue": "string",
-    "emdAmount": "string",
-    "submissionDeadline": "string",
-    "contractDuration": "string"
-  }},
-  "decision": {{
-    "shouldApply": "Apply|Review|Avoid",
-    "recommendation": "string",
-    "overallFitScore": 0,
-    "riskLevel": "Low|Medium|High",
-    "deadlineUrgency": "Low|Medium|High",
-    "missingCriticalRequirements": 0
-  }},
-  "scores": [
-    {{"label": "Overall Fit", "value": 0, "display": "0%"}}
-  ],
-  "beforeApply": [
-    {{"label": "string", "status": "ready|warning|missing"}}
-  ],
-  "documents": [
-    {{
-      "name": "string",
-      "priority": "Required|Optional",
-      "status": "Ready|Missing|Not Verified",
-      "source": {{"page": 1, "clause": "string", "title": "string", "text": "string"}}
-    }}
-  ],
-  "eligibility": [
-    {{
-      "title": "string",
-      "text": "string",
-      "impact": "Low|Medium|High",
-      "userStatus": "Ready|Missing|Not Verified",
-      "source": {{"page": 1, "clause": "string", "title": "string", "text": "string"}}
-    }}
-  ],
-  "financials": [
-    {{
-      "label": "string",
-      "value": "string",
-      "note": "string",
-      "chartAmount": 0,
-      "source": {{"page": 1, "clause": "string", "title": "string", "text": "string"}}
-    }}
-  ],
-  "technical": [
-    {{
-      "requirement": "string",
-      "source": {{"page": 1, "clause": "string", "title": "string", "text": "string"}}
-    }}
-  ],
-  "dates": [
-    {{"label": "string", "date": "string", "status": "done|upcoming|unknown"}}
-  ],
-  "risks": [
-    {{
-      "title": "string",
-      "level": "Low|Medium|High",
-      "explanation": "string",
-      "source": {{"page": 1, "clause": "string", "title": "string", "text": "string"}}
-    }}
-  ],
-  "missingInformation": ["string"],
-  "departmentQuestions": ["string"],
-  "proposalDraft": "string"
+  "schemaVersion":"2.0",
+  "snapshot":{{"title":"string","tenderId":"string","organization":"string","location":"string","category":"string","estimatedValue":"string","emdAmount":"string","submissionDeadline":"string","contractDuration":"string"}},
+  "decision":{{"shouldApply":"Apply|Review|Avoid","recommendation":"one sentence","overallFitScore":0,"riskLevel":"Low|Medium|High","deadlineUrgency":"Low|Medium|High","missingCriticalRequirements":0,"positiveFactors":["string"],"blockers":["string"],"uncertainties":["string"],"explanation":"string"}},
+  "analysisSummary":{{"executiveSummary":"string","strongestReasonToApply":"string","strongestReasonNotToApply":"string","nextBestAction":"string"}},
+  "readiness":{{"eligibilityScore":null,"documentsScore":null,"financialScore":null,"technicalScore":null,"timelineScore":null}},
+  "scores":[{{"key":"eligibility|documents|financial|technical|timeline","label":"string","value":0,"display":"0%","explanation":"string","sourceCount":0}}],
+  "beforeApply":[{{"label":"string","status":"ready|warning|missing"}}],
+  "documents":[{{"name":"string","priority":"Required|Optional","status":"Not Verified","reason":"string","preparationAction":"string","userVerified":null,"source":{{"page":1,"clause":"string","title":"string","text":"string","confidence":null,"extractionMethod":null,"blockId":null}}}}],
+  "eligibility":[{{"title":"string","text":"string","impact":"Low|Medium|High","userStatus":"Not Verified","mandatory":null,"verificationReason":"string","confidence":null,"source":{{"page":1,"clause":"string","title":"string","text":"string","confidence":null,"extractionMethod":null,"blockId":null}}}}],
+  "financials":[{{"label":"string","value":"string","note":"string","chartAmount":null,"type":"EMD|Tender fee|Performance security|Turnover|Other","currency":"INR","normalizedAmount":null,"refundable":null,"mandatory":null,"source":{{"page":1,"clause":"string","title":"string","text":"string","confidence":null,"extractionMethod":null,"blockId":null}}}}],
+  "technical":[{{"requirement":"string","category":"Scope of work|Specifications|Experience|Personnel|Equipment|Certifications|Delivery and installation|Quality and acceptance|Other","mandatory":null,"acceptanceCriteria":"string","explanation":"string","userStatus":"Not Verified","source":{{"page":1,"clause":"string","title":"string","text":"string","confidence":null,"extractionMethod":null,"blockId":null}}}}],
+  "dates":[{{"label":"string","date":"original tender text","status":"done|upcoming|unknown","isoDate":null,"urgency":"Low|Medium|High|Unknown","source":null}}],
+  "risks":[{{"title":"string","level":"Low|Medium|High","likelihood":null,"explanation":"string","consequence":"string","mitigation":"string","confidence":null,"source":{{"page":1,"clause":"string","title":"string","text":"string","confidence":null,"extractionMethod":null,"blockId":null}}}}],
+  "missingInformation":["string"],"departmentQuestions":["string"],"proposalDraft":"string"
 }}
 
-Analyze for:
-- Should this MSME apply?
-- Required documents.
-- Eligibility criteria.
-- EMD, tender fees, turnover, security deposit, and other financial commitments.
-- Important dates.
-- Technical requirements.
-- Risks and red flags.
-- Missing information.
-- Questions to ask the department.
-- A simple proposal draft.
-- Fit scores.
+Readiness values may be null. Only provide a 0-100 score when supported by enough
+source-backed evidence; explain it and include sourceCount. Normalize INR amounts to
+numeric rupees only when unambiguous. Use ISO 8601 dates only when confident. Do not
+infer risk likelihood from severity. Categorise technical requirements and provide
+consequence and mitigation for risks without claiming facts beyond the source.
 
 PDF text:
 {page_text}
