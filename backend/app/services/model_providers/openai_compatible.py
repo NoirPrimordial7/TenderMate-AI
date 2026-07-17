@@ -12,7 +12,9 @@ from app.services.model_provider import (
     ProviderRateLimited,
     ProviderTimeout,
     ProviderUnavailable,
+    TenderQuestionGenerationRequest,
 )
+from app.services.tender_question_prompt_builder import build_tender_question_prompt
 
 
 class OpenAICompatibleTenderProvider:
@@ -39,18 +41,31 @@ class OpenAICompatibleTenderProvider:
         return self._generate(request, self.settings.tendermate_analysis_model)
 
     def answer_question(
-        self, request: ModelGenerationRequest
+        self, request: TenderQuestionGenerationRequest
     ) -> ModelGenerationResult:
-        return self._generate(request, self.settings.tendermate_assistant_model)
+        generation_request = build_tender_question_prompt(
+            request,
+            max_context_chars=self.settings.max_tender_question_context_chars,
+            max_output_tokens=self.settings.max_tender_question_output_tokens,
+        )
+        return self._generate(
+            generation_request, self.settings.tendermate_assistant_model
+        )
 
     def healthcheck(self) -> ProviderHealth:
-        configured = all(
-            (
-                self.settings.tendermate_model_base_url,
-                self.settings.tendermate_model_api_key,
-                self.settings.tendermate_analysis_model,
-                self.settings.tendermate_assistant_model,
+        auth_configured = (
+            bool(self.settings.tendermate_model_api_key)
+            if self.settings.tendermate_model_auth_mode == "bearer"
+            else bool(
+                self.settings.tendermate_model_modal_key
+                and self.settings.tendermate_model_modal_secret
             )
+        )
+        configured = bool(
+            self.settings.tendermate_model_base_url
+            and self.settings.tendermate_analysis_model
+            and self.settings.tendermate_assistant_model
+            and auth_configured
         )
         return ProviderHealth(
             provider=self.name,
@@ -59,11 +74,18 @@ class OpenAICompatibleTenderProvider:
             detail=None if configured else "Self-hosted model settings are incomplete.",
         )
 
+    def model_name_for(self, task: str) -> str:
+        return (
+            self.settings.tendermate_assistant_model
+            if task == "tender_question"
+            else self.settings.tendermate_analysis_model
+        )
+
     def _generate(
         self, request: ModelGenerationRequest, model_name: str
     ) -> ModelGenerationResult:
         if not self.healthcheck().configured:
-            raise ProviderNotConfigured("AI analysis is not configured on this server.")
+            raise ProviderNotConfigured("The AI provider is not configured on this server.")
 
         client = self._build_client()
         payload: dict[str, Any] = {
@@ -73,13 +95,15 @@ class OpenAICompatibleTenderProvider:
         }
         if request.require_json:
             payload["response_format"] = {"type": "json_object"}
+        if request.max_output_tokens is not None:
+            payload["max_tokens"] = request.max_output_tokens
 
         started = monotonic()
         try:
-            response = client.post("chat/completions", json=payload)
+            response = client.post("chat/completions", json=dict(payload))
             if request.require_json and response.status_code in {400, 404, 422}:
                 payload.pop("response_format", None)
-                response = client.post("chat/completions", json=payload)
+                response = client.post("chat/completions", json=dict(payload))
             self._raise_for_status(response)
             body = response.json()
             raw_text, finish_reason = self._extract_choice(body)
@@ -116,10 +140,7 @@ class OpenAICompatibleTenderProvider:
             factory = self._client_factory
             self._client = factory(
                 base_url=self.settings.tendermate_model_base_url.rstrip("/"),
-                headers={
-                    "Authorization": f"Bearer {self.settings.tendermate_model_api_key}",
-                    "Content-Type": "application/json",
-                },
+                headers=self._authentication_headers(),
                 timeout=max(1, self.settings.tendermate_model_timeout_seconds),
             )
             return self._client
@@ -132,13 +153,21 @@ class OpenAICompatibleTenderProvider:
 
         self._client = httpx.Client(
             base_url=self.settings.tendermate_model_base_url.rstrip("/"),
-            headers={
-                "Authorization": f"Bearer {self.settings.tendermate_model_api_key}",
-                "Content-Type": "application/json",
-            },
+            headers=self._authentication_headers(),
             timeout=max(1, self.settings.tendermate_model_timeout_seconds),
         )
         return self._client
+
+    def _authentication_headers(self) -> dict[str, str]:
+        headers = {"Content-Type": "application/json"}
+        if self.settings.tendermate_model_auth_mode == "modal_proxy":
+            headers["Modal-Key"] = self.settings.tendermate_model_modal_key
+            headers["Modal-Secret"] = self.settings.tendermate_model_modal_secret
+        else:
+            headers["Authorization"] = (
+                f"Bearer {self.settings.tendermate_model_api_key}"
+            )
+        return headers
 
     @staticmethod
     def _raise_for_status(response: Any) -> None:

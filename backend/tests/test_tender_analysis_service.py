@@ -131,20 +131,39 @@ class TenderAnalysisServiceTests(unittest.TestCase):
         self.assertEqual(usage.consumed, 1)
         self.assertEqual([run["status"] for run in runs.runs], ["error", "success"])
 
+    def test_primary_and_fallback_failure_do_not_persist_or_deduct_credit(self) -> None:
+        primary = SequenceProvider("gemini", [ProviderUnavailable("primary down")])
+        fallback = SequenceProvider(
+            "openai_compatible", [ProviderUnavailable("fallback down")]
+        )
+        service, analysis_repo, usage, runs = self._service(
+            primary,
+            fallback=fallback,
+            fallback_name="openai_compatible",
+        )
+        with self.assertRaises(TenderAnalysisFailedError):
+            service.analyze_tender(uuid4(), uuid4(), usage)
+        self.assertIsNone(analysis_repo.saved)
+        self.assertEqual(usage.consumed, 0)
+        self.assertEqual([run["status"] for run in runs.runs], ["error", "error"])
+
     def test_shadow_execution_records_without_extra_credit(self) -> None:
+        user_id = uuid4()
         primary = SequenceProvider("gemini", ["{}"])
         shadow = SequenceProvider("openai_compatible", ["{}"])
         service, _analysis_repo, usage, runs = self._service(
             primary,
             shadow=shadow,
             shadow_rate=1,
+            shadow_user=user_id,
         )
-        service.analyze_tender(uuid4(), uuid4(), usage)
+        service.analyze_tender(uuid4(), user_id, usage)
         self.assertEqual(shadow.calls, 1)
         self.assertEqual(usage.consumed, 1)
         self.assertEqual([run["is_shadow"] for run in runs.runs], [False, True])
 
     def test_shadow_failure_is_isolated(self) -> None:
+        user_id = uuid4()
         primary = SequenceProvider("gemini", ["{}"])
         shadow = SequenceProvider(
             "openai_compatible", [ProviderUnavailable("shadow down")]
@@ -153,8 +172,9 @@ class TenderAnalysisServiceTests(unittest.TestCase):
             primary,
             shadow=shadow,
             shadow_rate=1,
+            shadow_user=user_id,
         )
-        service.analyze_tender(uuid4(), uuid4(), usage)
+        service.analyze_tender(uuid4(), user_id, usage)
         self.assertIsNotNone(analysis_repo.saved)
         self.assertEqual(usage.consumed, 1)
         self.assertEqual(runs.runs[-1]["status"], "error")
@@ -185,6 +205,7 @@ class TenderAnalysisServiceTests(unittest.TestCase):
         fallback_name="gemini",
         shadow=None,
         shadow_rate=0,
+        shadow_user=None,
         analysis_repo=None,
         usage=None,
     ):
@@ -201,6 +222,9 @@ class TenderAnalysisServiceTests(unittest.TestCase):
             ai_fallback_provider=fallback_name,
             ai_shadow_provider="openai_compatible" if shadow else "",
             ai_shadow_sample_rate=shadow_rate,
+            ai_shadow_user_allowlist=(
+                frozenset({shadow_user}) if shadow_user else frozenset()
+            ),
             max_model_input_chars=100000,
             max_ai_analyses_per_day=3,
         )
