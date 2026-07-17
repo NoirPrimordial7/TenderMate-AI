@@ -28,15 +28,19 @@
 - Added protected `POST /api/v1/tenders/{id}/extract`, extraction status fields, and extraction pending UI.
 - Gemini AI tender analysis completed using extracted `tender_pages`.
 - Added protected `POST /api/v1/tenders/{id}/analyze`, strict JSON validation, source references, credit deduction after successful persistence, and analysis UI.
+- Gemini OCR scanned PDF support completed for Render-compatible scanned/image-only tender PDFs.
+- Added low-text `pypdf` detection, Gemini PDF-byte OCR fallback, page-wise OCR storage, extraction method metadata, OCR usage events, and OCR audit logs.
+- Production Postman Collection completed for testing all deployed Render FastAPI APIs.
+- Added clean Postman collection, production environment variables, JWT auto-save scripts, PDF upload workflow, and usage README under `postman/`.
 
 ## In Progress
 
-- No active blocker; Gemini analysis is ready for deployment validation.
+- No active blocker; Production Postman Collection is ready for deployment testing.
 
 ## Next
 
-- Razorpay payments or admin panel.
-- Optional OCR for scanned PDFs.
+- OCR scanned PDF support refinements or Tender Workspace Redesign.
+- Razorpay payments.
 
 ## Blocked
 
@@ -61,6 +65,7 @@
 - Store original PDFs in the private Supabase Storage bucket `tender-pdfs` at `users/{user_id}/tenders/{tender_id}/original.pdf`.
 - Store extracted text page by page in `public.tender_pages` so Gemini analysis can cite source pages.
 - Use backend-only Gemini credentials to create frontend-compatible `analysis_json` from extracted page text.
+- Avoid Tesseract on Render; use Gemini document understanding for scanned PDF OCR without system packages.
 
 ## Commit Log
 
@@ -73,3 +78,5 @@
 - 2026-06-16: Add real PDF upload to Supabase Storage.
 - 2026-06-16: Add PDF text extraction foundation.
 - 2026-06-16: Add Gemini AI tender analysis.
+- 2026-06-16: Add Render-compatible Gemini OCR fallback.
+- 2026-06-16: Add production Postman API collection.

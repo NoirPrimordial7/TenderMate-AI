@@ -2,6 +2,7 @@ export type RiskLevel = "Low" | "Medium" | "High";
 export type RequirementStatus = "Ready" | "Missing" | "Not Verified";
 export type RequirementPriority = "Required" | "Optional";
 export type BeforeApplyStatus = "ready" | "warning" | "missing";
+export type ExtractionMethod = "text" | "gemini_ocr" | "mixed";
 
 export type TenderSnapshot = {
   title: string;
@@ -132,6 +133,9 @@ export type TenderRecordView = {
   extractedTextPreview?: string | null;
   pageCount?: number | null;
   schemaVersion?: string;
+  extractionMethod?: ExtractionMethod | null;
+  ocrUsed?: boolean;
+  ocrConfidence?: number | null;
 };
 
 export type UploadTenderResponse = {
@@ -154,8 +158,8 @@ export type PDFExtractionResponse = {
   status: string;
   page_count: number;
   pages_with_text: number;
-  extraction_method?: "selectable_text" | "mixed" | "ocr" | "none";
-  ocr_used?: boolean;
+  extraction_method: ExtractionMethod;
+  ocr_used: boolean;
   message: string;
 };
 

@@ -25,6 +25,15 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
   const hasExtractedText = Boolean(tender.extractedTextPreview);
   const extractionComplete = tender.status === "extracted" || Boolean((tender.pageCount ?? 0) > 0);
   const stages = getProcessingStages(tender, active);
+  const extractionMethod = !extractionComplete
+    ? common("pending")
+    : tender.extractionMethod === "mixed"
+      ? t("mixedExtraction")
+      : tender.ocrUsed || tender.extractionMethod === "gemini_ocr"
+        ? t("tenderMateOcr")
+        : hasExtractedText
+          ? t("selectableText")
+          : t("ocrRequired");
 
   const processTender = async () => {
     if (active) return;
@@ -36,7 +45,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
         const extraction = await tenderService.extractTenderText(tender.id);
         current = (await onRefresh()) ?? current;
         if (extraction.pages_with_text === 0) {
-          setError(t("ocrRequiredUnavailable"));
+          setError(t("ocrUnreadable"));
           return;
         }
       }
@@ -72,7 +81,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
         <p className="tm-eyebrow">{t("eyebrow")}</p>
         <h1 id="process-tender-title">{t("title")}</h1>
         <p>{t("support")}</p>
-        <dl><div><dt>{t("file")}</dt><dd>{tender.originalFileName ?? tender.title}</dd></div><div><dt>{common("pages")}</dt><dd>{tender.pageCount ?? common("pending")}</dd></div><div><dt>{t("method")}</dt><dd>{extractionComplete ? hasExtractedText ? t("selectableText") : t("ocrRequired") : common("pending")}</dd></div><div><dt>{common("credits")}</dt><dd>{credits ?? common("unavailable")}</dd></div></dl>
+        <dl><div><dt>{t("file")}</dt><dd>{tender.originalFileName ?? tender.title}</dd></div><div><dt>{common("pages")}</dt><dd>{tender.pageCount ?? common("pending")}</dd></div><div><dt>{t("method")}</dt><dd>{extractionMethod}</dd></div><div><dt>{common("credits")}</dt><dd>{credits ?? common("unavailable")}</dd></div></dl>
         {error || tender.errorMessage ? <div className="tm-processing-error" role="alert"><CircleAlert aria-hidden="true"/><p>{error || tender.errorMessage}</p></div> : null}
         <button type="button" className="tm-process-button" onClick={processTender} disabled={Boolean(active)}>{active ? t(active) : tender.status === "failed" ? t("retry") : t("process")}<ArrowRight aria-hidden="true"/></button>
         <small>{t("truthNote")}</small>

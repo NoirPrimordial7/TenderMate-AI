@@ -8,6 +8,8 @@ class PDFExtractionResponse(BaseModel):
     status: str
     page_count: int
     pages_with_text: int
+    extraction_method: str
+    ocr_used: bool
     message: str
 
 

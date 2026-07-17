@@ -31,6 +31,7 @@ export function getProcessState(tender: TenderRecordView, active?: "extracting" 
 export function getProcessingStages(tender: TenderRecordView, active?: "extracting" | "analyzing" | null): ProcessingStage[] {
   const state = getProcessState(tender, active);
   const hasText = Boolean(tender.extractedTextPreview);
+  const ocrUsed = Boolean(tender.ocrUsed || tender.extractionMethod === "gemini_ocr" || tender.extractionMethod === "mixed");
   const extracted = state === "extracted" || state === "analyzing" || state === "analyzed" || (state === "failed" && (tender.pageCount ?? 0) > 0);
   const analyzed = state === "analyzed";
   const extractionFailed = state === "failed" && !extracted;
@@ -41,7 +42,7 @@ export function getProcessingStages(tender: TenderRecordView, active?: "extracti
     { id: "validated", state: "complete" },
     { id: "extracting", state: extractionFailed ? "failed" : active === "extracting" ? "active" : extracted ? "complete" : "pending" },
     { id: "text-detected", state: extracted ? (hasText ? "complete" : "warning") : "pending" },
-    { id: "ocr-required", state: extracted && !hasText ? "warning" : extracted ? "complete" : "pending" },
+    { id: "ocr-required", state: extracted && !hasText && !ocrUsed ? "warning" : extracted ? "complete" : "pending" },
     { id: "content-ready", state: extracted && hasText ? "complete" : "pending" },
     { id: "analyzing", state: analysisFailed ? "failed" : active === "analyzing" ? "active" : analyzed ? "complete" : "pending" },
     { id: "verifying", state: analyzed ? "complete" : "pending" },

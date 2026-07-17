@@ -1,6 +1,6 @@
 # TenderMate AI
 
-TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, Supabase Storage, PDF text extraction, and Gemini AI analysis so users can sign up, log in, upload tender PDFs, and view protected tender history.
+TenderMate AI is a production MVP for MSMEs to manage tender readiness. It combines a Next.js frontend, FastAPI backend, JWT authentication, Supabase PostgreSQL, Supabase Storage, PDF text extraction, Gemini OCR for scanned PDFs, and Gemini AI analysis so users can sign up, log in, upload tender PDFs, and view protected tender history.
 
 Live URLs:
 
@@ -24,6 +24,7 @@ Live URLs:
 - Real PDF upload to private Supabase Storage bucket `tender-pdfs`
 - User-linked tender and upload records for uploaded PDFs
 - PDF text extraction foundation with page-wise text stored in Supabase
+- Scanned PDF support through Render-compatible Gemini OCR fallback
 - Gemini AI tender analysis from extracted PDF text
 - Free trial foundation with 15 tender AI analyses per new user for demo/testing
 - Profile/account area with plan, credits, billing status, and account actions
@@ -35,6 +36,7 @@ Live URLs:
 - Audit logs for auth, upload, and billing events
 - Production CORS configuration through `FRONTEND_URL` and `CORS_ORIGINS`
 - Deployment guide and production testing checklist
+- Production Postman collection and environment under `postman/`
 
 ## Trial and Payments
 
@@ -46,7 +48,7 @@ Payments are planned with Razorpay, but live payments are not enabled yet. The c
 
 - Razorpay payment integration
 - Admin workflows for support and usage review
-- OCR support for scanned PDFs
+- Tender workspace redesign
 
 ## Security Highlights
 
@@ -106,3 +108,7 @@ npm run dev
 - Set backend `FRONTEND_URL` or `CORS_ORIGINS` to the deployed Vercel URL.
 
 Backend secrets are not exposed to the frontend. Never put `SUPABASE_SERVICE_ROLE_KEY`, `JWT_SECRET_KEY`, or `GEMINI_API_KEY` in frontend environment variables.
+
+## Production API Testing
+
+Import the production Postman collection and environment from `postman/` to test the Render backend. The collection uses variables for URLs, JWTs, tender IDs, and upload IDs; do not save real tokens or secrets into the JSON files.
