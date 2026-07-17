@@ -14,6 +14,11 @@ const PdfPreviewDrawer = dynamic(
 
 GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
+// React Strict Mode mounts, cleans up and remounts effects in development.
+// Serialize worker teardown so a remount never reuses PDF.js while its previous
+// loading task is still being destroyed.
+let pdfWorkerTeardown = Promise.resolve();
+
 export type PdfInspection = {
   status: "loading" | "ready" | "error";
   pageCount: number | null;
@@ -53,6 +58,21 @@ export function SelectedPdfExperience({ file, disabled, onInspectionChange, onRe
     let passwordRequired = false;
     let loadedDocument: PDFDocumentProxy | null = null;
     let loadingTask: PDFDocumentLoadingTask | null = null;
+    let teardownPromise: Promise<void> | null = null;
+
+    const scheduleTeardown = () => {
+      if (teardownPromise) return teardownPromise;
+      const taskToDestroy = loadingTask;
+      const documentToDestroy = loadedDocument;
+      teardownPromise = pdfWorkerTeardown = pdfWorkerTeardown
+        .catch(() => undefined)
+        .then(async () => {
+          if (taskToDestroy) await taskToDestroy.destroy();
+          else if (documentToDestroy) await documentToDestroy.cleanup();
+        })
+        .finally(() => URL.revokeObjectURL(objectUrl));
+      return teardownPromise;
+    };
 
     setPdfDocument(null);
     setDocumentError("");
@@ -62,13 +82,15 @@ export function SelectedPdfExperience({ file, disabled, onInspectionChange, onRe
 
     const loadPdf = async () => {
       try {
+        await pdfWorkerTeardown;
+        if (disposed) return;
         loadingTask = getDocument({ url: objectUrl });
         loadingTask.onPassword = () => {
           passwordRequired = true;
           const message = "This PDF is password-protected. Remove the password before uploading.";
           setDocumentError(message);
           onInspectionChange({ status: "error", pageCount: null, error: message });
-          void loadingTask?.destroy();
+          void scheduleTeardown();
         };
         loadedDocument = await loadingTask.promise;
         if (disposed) {
@@ -88,9 +110,7 @@ export function SelectedPdfExperience({ file, disabled, onInspectionChange, onRe
     void loadPdf();
     return () => {
       disposed = true;
-      void loadingTask?.destroy();
-      void loadedDocument?.cleanup();
-      URL.revokeObjectURL(objectUrl);
+      void scheduleTeardown();
     };
   }, [file, onInspectionChange]);
 
