@@ -43,10 +43,34 @@ class AIConfigurationTests(unittest.TestCase):
                 "AI_PROVIDER": "openai_compatible",
                 "TENDERMATE_MODEL_BASE_URL": "",
                 "TENDERMATE_MODEL_API_KEY": "",
+                "TENDERMATE_MODEL_AUTH_MODE": "bearer",
                 "TENDERMATE_ANALYSIS_MODEL": "",
                 "TENDERMATE_ASSISTANT_MODEL": "",
             },
         ):
+            get_settings.cache_clear()
+            with self.assertRaises(ValueError):
+                get_settings()
+
+    def test_modal_proxy_requires_key_and_secret(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "AI_PROVIDER": "openai_compatible",
+                "TENDERMATE_MODEL_BASE_URL": "https://model.example/v1",
+                "TENDERMATE_MODEL_AUTH_MODE": "modal_proxy",
+                "TENDERMATE_MODEL_MODAL_KEY": "",
+                "TENDERMATE_MODEL_MODAL_SECRET": "",
+                "TENDERMATE_ANALYSIS_MODEL": "analysis",
+                "TENDERMATE_ASSISTANT_MODEL": "assistant",
+            },
+        ):
+            get_settings.cache_clear()
+            with self.assertRaises(ValueError):
+                get_settings()
+
+    def test_shadow_allowlist_rejects_invalid_uuid(self) -> None:
+        with patch.dict(os.environ, {"AI_SHADOW_USER_ALLOWLIST": "not-a-uuid"}):
             get_settings.cache_clear()
             with self.assertRaises(ValueError):
                 get_settings()

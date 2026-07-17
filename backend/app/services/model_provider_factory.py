@@ -8,9 +8,15 @@ from app.services.model_providers import (
 )
 
 
-class ModelProviderRegistry:
-    def __init__(self, settings: Settings) -> None:
-        self._providers: dict[str, TenderModelProvider] = {
+class ModelProviderFactory:
+    """The single construction and lookup point for all model providers."""
+
+    def __init__(
+        self,
+        settings: Settings,
+        providers: dict[str, TenderModelProvider] | None = None,
+    ) -> None:
+        self._providers = providers or {
             "gemini": GeminiTenderProvider(settings=settings),
             "openai_compatible": OpenAICompatibleTenderProvider(settings=settings),
         }
@@ -20,5 +26,5 @@ class ModelProviderRegistry:
             return self._providers[provider_name]
         except KeyError as exc:
             raise ProviderNotConfigured(
-                "AI analysis is not configured on this server."
+                "The configured AI provider is unavailable on this server."
             ) from exc

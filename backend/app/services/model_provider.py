@@ -27,7 +27,31 @@ class ModelGenerationRequest:
     task: str
     require_json: bool = False
     temperature: float = 0.2
+    max_output_tokens: int | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TenderAnalysisGenerationRequest(ModelGenerationRequest):
+    """Typed analysis request retained as a prompt-based generation request."""
+
+
+@dataclass(frozen=True)
+class TenderQuestionContextChunk:
+    page: int
+    text: str
+    extraction_method: str | None = None
+
+
+@dataclass(frozen=True)
+class TenderQuestionGenerationRequest:
+    question: str
+    language: str
+    chunks: tuple[TenderQuestionContextChunk, ...]
+    structured_analysis: dict[str, Any]
+    conversation_history: tuple[dict[str, str], ...]
+    response_schema: dict[str, Any]
+    task_metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -55,11 +79,11 @@ class TenderModelProvider(Protocol):
     name: str
 
     def analyze_tender(
-        self, request: ModelGenerationRequest
+        self, request: TenderAnalysisGenerationRequest | ModelGenerationRequest
     ) -> ModelGenerationResult: ...
 
     def answer_question(
-        self, request: ModelGenerationRequest
+        self, request: TenderQuestionGenerationRequest
     ) -> ModelGenerationResult: ...
 
     def healthcheck(self) -> ProviderHealth: ...

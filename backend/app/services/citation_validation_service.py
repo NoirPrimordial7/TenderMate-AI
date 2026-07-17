@@ -1,15 +1,23 @@
 import re
 from difflib import SequenceMatcher
+from typing import Protocol
 
 from app.schemas.questions import QuestionCitation
-from app.services.tender_question_provider import ProviderCitation
 from app.services.tender_retriever import RetrievedTenderChunk
+
+
+class CitationCandidate(Protocol):
+    page: int
+    clause: str
+    title: str
+    quote: str
+    confidence: float | None
 
 
 class CitationValidationService:
     def validate(
         self,
-        citations: list[ProviderCitation],
+        citations: list[CitationCandidate],
         chunks: list[RetrievedTenderChunk],
     ) -> list[QuestionCitation]:
         by_page: dict[int, list[RetrievedTenderChunk]] = {}

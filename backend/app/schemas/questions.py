@@ -32,6 +32,21 @@ class QuestionCitation(BaseModel):
     extraction_method: str | None = None
 
 
+class TenderQuestionModelCitation(BaseModel):
+    page: int = Field(ge=1)
+    clause: str = "Not specified"
+    title: str = "Source evidence"
+    quote: str = Field(min_length=1)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class TenderQuestionModelOutput(BaseModel):
+    answer: str = ""
+    confidence: float | None = Field(default=None, ge=0, le=1)
+    not_found: bool = False
+    citations: list[TenderQuestionModelCitation] = Field(default_factory=list)
+
+
 class TenderQuestionResponse(BaseModel):
     answer: str
     language: LanguageCode

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from functools import lru_cache
 from os import getenv
+from uuid import UUID
 
 
 SUPPORTED_AI_PROVIDERS = {"gemini", "openai_compatible"}
@@ -52,6 +53,14 @@ def _split_csv_env(value: str) -> list[str]:
     ]
 
 
+def _get_uuid_set_env(name: str) -> frozenset[UUID]:
+    values = _split_csv_env(getenv(name, ""))
+    try:
+        return frozenset(UUID(value) for value in values)
+    except ValueError as exc:
+        raise ValueError(f"{name} must contain comma-separated UUIDs.") from exc
+
+
 @dataclass(frozen=True)
 class Settings:
     project_name: str
@@ -82,8 +91,12 @@ class Settings:
     ai_fallback_provider: str
     ai_shadow_provider: str
     ai_shadow_sample_rate: float
+    ai_shadow_user_allowlist: frozenset[UUID]
     tendermate_model_base_url: str
+    tendermate_model_auth_mode: str
     tendermate_model_api_key: str
+    tendermate_model_modal_key: str
+    tendermate_model_modal_secret: str
     tendermate_analysis_model: str
     tendermate_assistant_model: str
     tendermate_model_timeout_seconds: int
@@ -92,7 +105,6 @@ class Settings:
     max_tender_questions_per_day: int
     max_tender_question_context_chars: int
     max_tender_question_output_tokens: int
-    tender_question_timeout_seconds: int
 
     def __post_init__(self) -> None:
         selected = {
@@ -109,13 +121,25 @@ class Settings:
                 )
         if not 0 <= self.ai_shadow_sample_rate <= 1:
             raise ValueError("AI_SHADOW_SAMPLE_RATE must be between 0 and 1.")
+        if self.tendermate_model_auth_mode not in {"bearer", "modal_proxy"}:
+            raise ValueError(
+                "TENDERMATE_MODEL_AUTH_MODE must be bearer or modal_proxy."
+            )
         if "openai_compatible" in selected.values():
             required = {
                 "TENDERMATE_MODEL_BASE_URL": self.tendermate_model_base_url,
-                "TENDERMATE_MODEL_API_KEY": self.tendermate_model_api_key,
                 "TENDERMATE_ANALYSIS_MODEL": self.tendermate_analysis_model,
                 "TENDERMATE_ASSISTANT_MODEL": self.tendermate_assistant_model,
             }
+            if self.tendermate_model_auth_mode == "bearer":
+                required["TENDERMATE_MODEL_API_KEY"] = self.tendermate_model_api_key
+            else:
+                required["TENDERMATE_MODEL_MODAL_KEY"] = (
+                    self.tendermate_model_modal_key
+                )
+                required["TENDERMATE_MODEL_MODAL_SECRET"] = (
+                    self.tendermate_model_modal_secret
+                )
             missing = [name for name, value in required.items() if not value]
             if missing:
                 raise ValueError(
@@ -190,8 +214,16 @@ def get_settings() -> Settings:
         ai_fallback_provider=getenv("AI_FALLBACK_PROVIDER", "gemini").strip().lower(),
         ai_shadow_provider=getenv("AI_SHADOW_PROVIDER", "").strip().lower(),
         ai_shadow_sample_rate=_get_float_env("AI_SHADOW_SAMPLE_RATE", 0),
+        ai_shadow_user_allowlist=_get_uuid_set_env("AI_SHADOW_USER_ALLOWLIST"),
         tendermate_model_base_url=getenv("TENDERMATE_MODEL_BASE_URL", "").strip(),
+        tendermate_model_auth_mode=getenv(
+            "TENDERMATE_MODEL_AUTH_MODE", "bearer"
+        ).strip().lower(),
         tendermate_model_api_key=getenv("TENDERMATE_MODEL_API_KEY", "").strip(),
+        tendermate_model_modal_key=getenv("TENDERMATE_MODEL_MODAL_KEY", "").strip(),
+        tendermate_model_modal_secret=getenv(
+            "TENDERMATE_MODEL_MODAL_SECRET", ""
+        ).strip(),
         tendermate_analysis_model=getenv("TENDERMATE_ANALYSIS_MODEL", "").strip(),
         tendermate_assistant_model=getenv("TENDERMATE_ASSISTANT_MODEL", "").strip(),
         tendermate_model_timeout_seconds=_get_int_env(
@@ -203,5 +235,4 @@ def get_settings() -> Settings:
         max_tender_questions_per_day=_get_int_env("MAX_TENDER_QUESTIONS_PER_DAY", 100),
         max_tender_question_context_chars=_get_int_env("MAX_TENDER_QUESTION_CONTEXT_CHARS", 32000),
         max_tender_question_output_tokens=_get_int_env("MAX_TENDER_QUESTION_OUTPUT_TOKENS", 1200),
-        tender_question_timeout_seconds=_get_int_env("TENDER_QUESTION_TIMEOUT_SECONDS", 45),
     )

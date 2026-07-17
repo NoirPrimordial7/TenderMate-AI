@@ -17,7 +17,7 @@
 ## Implementation boundaries
 
 - Add user/tender-scoped `tender_chat_messages` storage with RLS and idempotent migration.
-- Reject obvious off-topic questions before model use; retrieve bounded chunks from only the selected tender; abstract the provider behind `TenderQuestionProvider`.
+- Reject obvious off-topic questions before model use; retrieve bounded chunks from only the selected tender; route generation through the shared `TenderModelProvider` architecture.
 - Validate every citation against retrieved pages. If no valid evidence remains, return `not_found` instead of an unsupported factual answer.
 - Store only questions/answers and validated citation metadata—not prompts, signed URLs, raw PDFs, or full page context. Assistant questions do not consume analysis credits.
 - Replace only the Ask tab and connect its citations to the existing source drawer. Add all interface copy in English, Hindi, and Marathi.

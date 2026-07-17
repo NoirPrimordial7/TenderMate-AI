@@ -12,7 +12,9 @@ from app.services.model_provider import (
     ProviderRateLimited,
     ProviderTimeout,
     ProviderUnavailable,
+    TenderQuestionGenerationRequest,
 )
+from app.services.tender_question_prompt_builder import build_tender_question_prompt
 
 
 class GeminiTenderProvider:
@@ -38,9 +40,14 @@ class GeminiTenderProvider:
         return self._generate(request, self.settings.gemini_model)
 
     def answer_question(
-        self, request: ModelGenerationRequest
+        self, request: TenderQuestionGenerationRequest
     ) -> ModelGenerationResult:
-        return self._generate(request, self.settings.gemini_model)
+        generation_request = build_tender_question_prompt(
+            request,
+            max_context_chars=self.settings.max_tender_question_context_chars,
+            max_output_tokens=self.settings.max_tender_question_output_tokens,
+        )
+        return self._generate(generation_request, self.settings.gemini_model)
 
     def healthcheck(self) -> ProviderHealth:
         configured = bool(self.settings.gemini_api_key)
@@ -51,24 +58,30 @@ class GeminiTenderProvider:
             detail=None if configured else "Gemini credentials are not configured.",
         )
 
+    def model_name_for(self, _task: str) -> str:
+        return self.settings.gemini_model
+
     def _generate(
         self, request: ModelGenerationRequest, model_name: str
     ) -> ModelGenerationResult:
         if not self.settings.gemini_api_key:
-            raise ProviderNotConfigured("AI analysis is not configured on this server.")
+            raise ProviderNotConfigured("The AI provider is not configured on this server.")
 
         started = monotonic()
         try:
             client, types = self._build_client()
+            config_values: dict[str, Any] = {
+                "response_mime_type": (
+                    "application/json" if request.require_json else "text/plain"
+                ),
+                "temperature": request.temperature,
+            }
+            if request.max_output_tokens is not None:
+                config_values["max_output_tokens"] = request.max_output_tokens
             response = client.models.generate_content(
                 model=model_name,
                 contents=request.prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type=(
-                        "application/json" if request.require_json else "text/plain"
-                    ),
-                    temperature=request.temperature,
-                ),
+                config=types.GenerateContentConfig(**config_values),
             )
         except (ProviderNotConfigured, ProviderTimeout, ProviderRateLimited):
             raise
