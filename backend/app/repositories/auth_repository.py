@@ -1,8 +1,11 @@
-from typing import Any
 from datetime import datetime
+import logging
+from typing import Any
 from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
+
+logger = logging.getLogger(__name__)
 
 USER_COLUMNS = (
     "id,"
@@ -23,6 +26,15 @@ USER_COLUMNS = (
     "updated_at"
 )
 
+LEGACY_USER_COLUMNS = USER_COLUMNS.replace(
+    "preferred_language,preferred_analysis_language,",
+    "",
+)
+
+
+class LanguagePreferencesSchemaUnavailableError(RuntimeError):
+    """Raised when the optional language-preference migration is not applied yet."""
+
 
 class AuthRepository:
     def __init__(self, supabase_client: Any | None = None) -> None:
@@ -31,24 +43,21 @@ class AuthRepository:
         )
         if self._supabase_client is None:
             raise RuntimeError("Authentication requires Supabase configuration.")
+        self._supports_language_preferences: bool | None = None
 
     def find_user_by_email(self, email: str) -> dict[str, Any] | None:
-        rows = self._query_users(
-            f"find user by email {email}",
-            self._supabase_client.table("app_users")
-            .select(USER_COLUMNS)
-            .eq("email", email)
-            .limit(1),
+        rows = self._find_users_with_schema_fallback(
+            action=f"find user by email {email}",
+            field="email",
+            value=email,
         )
         return rows[0] if rows else None
 
     def find_user_by_id(self, user_id: UUID) -> dict[str, Any] | None:
-        rows = self._query_users(
-            f"find user by id {user_id}",
-            self._supabase_client.table("app_users")
-            .select(USER_COLUMNS)
-            .eq("id", str(user_id))
-            .limit(1),
+        rows = self._find_users_with_schema_fallback(
+            action=f"find user by id {user_id}",
+            field="id",
+            value=str(user_id),
         )
         return rows[0] if rows else None
 
@@ -61,21 +70,34 @@ class AuthRepository:
         preferred_language: str = "en",
         preferred_analysis_language: str = "en",
     ) -> dict[str, Any]:
-        rows = self._query_users(
-            f"create user {email}",
-            self._supabase_client.table("app_users").insert(
+        values = {
+            "full_name": full_name,
+            "email": email,
+            "password_hash": password_hash,
+            "free_analysis_credits": free_analysis_credits,
+            "plan_name": "free",
+            "subscription_status": "trial",
+        }
+        if self._supports_language_preferences is not False:
+            values.update(
                 {
-                    "full_name": full_name,
-                    "email": email,
-                    "password_hash": password_hash,
-                    "free_analysis_credits": free_analysis_credits,
-                    "plan_name": "free",
-                    "subscription_status": "trial",
                     "preferred_language": preferred_language,
                     "preferred_analysis_language": preferred_analysis_language,
                 }
-            ),
-        )
+            )
+        try:
+            rows = self._query_users(
+                f"create user {email}",
+                self._supabase_client.table("app_users").insert(values),
+            )
+        except LanguagePreferencesSchemaUnavailableError:
+            self._use_legacy_language_schema()
+            values.pop("preferred_language", None)
+            values.pop("preferred_analysis_language", None)
+            rows = self._query_users(
+                f"create user {email} without language preferences",
+                self._supabase_client.table("app_users").insert(values),
+            )
         if not rows:
             raise RuntimeError("Supabase did not return the created app_users row.")
 
@@ -97,11 +119,51 @@ class AuthRepository:
             if user is None:
                 raise RuntimeError("Supabase did not return the app_users row.")
             return user
-        return self._update_user(
-            user_id=user_id,
-            values=values,
-            action="update language preferences",
-        )
+        if self._supports_language_preferences is False:
+            user = self.find_user_by_id(user_id)
+            if user is None:
+                raise RuntimeError("Supabase did not return the app_users row.")
+            return user
+        try:
+            return self._update_user(
+                user_id=user_id,
+                values=values,
+                action="update language preferences",
+            )
+        except LanguagePreferencesSchemaUnavailableError:
+            self._use_legacy_language_schema()
+            user = self.find_user_by_id(user_id)
+            if user is None:
+                raise RuntimeError("Supabase did not return the app_users row.")
+            return user
+
+    def _find_users_with_schema_fallback(
+        self,
+        action: str,
+        field: str,
+        value: str,
+    ) -> list[dict[str, Any]]:
+        columns = USER_COLUMNS if self._supports_language_preferences is not False else LEGACY_USER_COLUMNS
+        try:
+            rows = self._query_users(
+                action,
+                self._supabase_client.table("app_users")
+                .select(columns)
+                .eq(field, value)
+                .limit(1),
+            )
+            if columns == USER_COLUMNS:
+                self._supports_language_preferences = True
+            return rows
+        except LanguagePreferencesSchemaUnavailableError:
+            self._use_legacy_language_schema()
+            return self._query_users(
+                f"{action} without language preferences",
+                self._supabase_client.table("app_users")
+                .select(LEGACY_USER_COLUMNS)
+                .eq(field, value)
+                .limit(1),
+            )
 
     def record_failed_login(
         self,
@@ -168,11 +230,34 @@ class AuthRepository:
                     f"Supabase returned an unexpected response for {action}: expected a list."
                 )
 
-            return data
+            return [self._with_language_defaults(row) for row in data]
         except RuntimeError:
             raise
         except Exception as exc:
+            error_text = str(exc)
+            if "42703" in error_text and (
+                "preferred_language" in error_text
+                or "preferred_analysis_language" in error_text
+            ):
+                raise LanguagePreferencesSchemaUnavailableError(
+                    "Language preference columns are not available yet."
+                ) from exc
             raise RuntimeError(
                 f"Failed to {action} from Supabase public.app_users. "
                 "Verify Supabase credentials, table schema, and network access."
             ) from exc
+
+    @staticmethod
+    def _with_language_defaults(user: dict[str, Any]) -> dict[str, Any]:
+        normalized = dict(user)
+        normalized.setdefault("preferred_language", "en")
+        normalized.setdefault("preferred_analysis_language", "en")
+        return normalized
+
+    def _use_legacy_language_schema(self) -> None:
+        if self._supports_language_preferences is not False:
+            logger.warning(
+                "Supabase app_users language preference columns are missing; "
+                "using the legacy auth schema until the language migration is applied."
+            )
+        self._supports_language_preferences = False
