@@ -107,8 +107,14 @@ AI_ANALYSIS_RATE_LIMIT = RateLimitRule(
     max_requests=10,
     window_seconds=60 * 60,
 )
-# Compatibility alias for integrations importing the previous constant.
+
+# Compatibility alias for older imports.
 GEMINI_ANALYSIS_RATE_LIMIT = AI_ANALYSIS_RATE_LIMIT
+TENDER_QUESTION_RATE_LIMIT = RateLimitRule(
+    name="tender_question",
+    max_requests=10,
+    window_seconds=60,
+)
 BILLING_USAGE_RATE_LIMIT = RateLimitRule(
     name="billing_usage",
     max_requests=120,

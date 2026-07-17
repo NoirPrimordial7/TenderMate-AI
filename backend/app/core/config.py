@@ -89,6 +89,10 @@ class Settings:
     tendermate_model_timeout_seconds: int
     failed_login_lock_threshold: int
     failed_login_lock_minutes: int
+    max_tender_questions_per_day: int
+    max_tender_question_context_chars: int
+    max_tender_question_output_tokens: int
+    tender_question_timeout_seconds: int
 
     def __post_init__(self) -> None:
         selected = {
@@ -196,4 +200,8 @@ def get_settings() -> Settings:
         ),
         failed_login_lock_threshold=_get_int_env("FAILED_LOGIN_LOCK_THRESHOLD", 5),
         failed_login_lock_minutes=_get_int_env("FAILED_LOGIN_LOCK_MINUTES", 15),
+        max_tender_questions_per_day=_get_int_env("MAX_TENDER_QUESTIONS_PER_DAY", 100),
+        max_tender_question_context_chars=_get_int_env("MAX_TENDER_QUESTION_CONTEXT_CHARS", 32000),
+        max_tender_question_output_tokens=_get_int_env("MAX_TENDER_QUESTION_OUTPUT_TOKENS", 1200),
+        tender_question_timeout_seconds=_get_int_env("TENDER_QUESTION_TIMEOUT_SECONDS", 45),
     )
