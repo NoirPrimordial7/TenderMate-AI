@@ -56,6 +56,7 @@ export function ElectricEntryWorkspace({
         isLoading={isLoading}
         user={user}
         initialAuthMode={initialAuthMode}
+        openAuthOnLoad={defaultAuthRedirect !== null}
         onAuthenticated={onAuthenticated}
       />
     </div>

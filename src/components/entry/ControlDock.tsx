@@ -1,60 +1,109 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { AuthUser } from "@/domain/auth/types";
-import { AuthDock, AuthMode } from "@/components/entry/AuthDock";
-import { UploadDock } from "@/components/entry/UploadDock";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, X } from "lucide-react";
+import { AuthDock, type AuthMode } from "@/components/entry/AuthDock";
 
 type ControlDockProps = {
-  isAuthenticated: boolean;
+  isOpen: boolean;
   isLoading: boolean;
-  user: AuthUser | null;
   initialAuthMode?: AuthMode;
+  onClose: () => void;
   onAuthenticated?: () => void;
 };
 
-export function ControlDock({
-  isAuthenticated,
-  isLoading,
-  user,
-  initialAuthMode,
-  onAuthenticated
-}: ControlDockProps) {
+export function ControlDock({ isOpen, isLoading, initialAuthMode, onClose, onAuthenticated }: ControlDockProps) {
   const shouldReduceMotion = useReducedMotion();
-  const stateKey = isLoading ? "loading" : isAuthenticated && user ? "upload" : "auth";
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const returnFocusRef = useRef<HTMLElement | null>(null);
+  const [sceneMode, setSceneMode] = useState<AuthMode>(initialAuthMode ?? "signin");
+
+  useEffect(() => setSceneMode(initialAuthMode ?? "signin"), [initialAuthMode]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    returnFocusRef.current = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const focusTimer = window.setTimeout(() => {
+      sheetRef.current?.querySelector<HTMLElement>('input, button, a[href]')?.focus();
+    }, shouldReduceMotion ? 0 : 220);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !sheetRef.current) return;
+      const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.clearTimeout(focusTimer);
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      returnFocusRef.current?.focus();
+    };
+  }, [isOpen, onClose, shouldReduceMotion]);
 
   return (
-    <motion.aside
-      className={`te-control-dock ${stateKey === "upload" ? "te-control-dock-active" : ""}`}
-      initial={shouldReduceMotion ? false : { opacity: 0, x: 34, scale: 0.97 }}
-      animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.52, delay: shouldReduceMotion ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] }}
-    >
-      <div className="te-dock-chrome" aria-hidden="true">
-        <span>TM.OS / ENTRY</span>
-        <span>SECURE CHANNEL</span>
-      </div>
-      <AnimatePresence mode="wait" initial={false}>
+    <AnimatePresence>
+      {isOpen ? (
         <motion.div
-          key={stateKey}
-          initial={shouldReduceMotion ? false : { opacity: 0, y: 14, filter: "blur(5px)" }}
-          animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-          exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -10, filter: "blur(4px)" }}
-          transition={{ duration: shouldReduceMotion ? 0.01 : 0.4, ease: [0.22, 1, 0.36, 1] }}
+          className="te-auth-overlay"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.34 }}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) onClose();
+          }}
         >
-          {isLoading ? (
-            <section className="te-session-loading" role="status" aria-live="polite">
-              <p className="te-kicker">Secure channel</p>
-              <h2>Checking your session…</h2>
-              <div className="te-loading-lines" aria-hidden="true"><span /><span /><span /></div>
-            </section>
-          ) : isAuthenticated && user ? (
-            <UploadDock user={user} />
-          ) : (
-            <AuthDock initialMode={initialAuthMode} onAuthenticated={onAuthenticated} />
-          )}
+          <motion.div
+            ref={sheetRef}
+            className={`te-auth-sheet te-auth-sheet-${sceneMode}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label="TenderMate account access"
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ duration: shouldReduceMotion ? 0 : 0.52, ease: [0.76, 0, 0.24, 1] }}
+          >
+            <div className="te-auth-colour-field" aria-hidden="true"><span>Make the bid<br />with clarity.</span></div>
+            <div className="te-auth-sheet-content">
+              <header className="te-auth-sheet-head">
+                <button type="button" onClick={onClose} className="te-sheet-back"><ArrowLeft aria-hidden="true" /> Back to the tender</button>
+                <button type="button" onClick={onClose} className="te-sheet-close" aria-label="Close account panel"><X aria-hidden="true" /></button>
+              </header>
+
+              {isLoading ? (
+                <section className="te-sheet-loading" role="status" aria-live="polite">
+                  <span />
+                  <h2>Checking your session…</h2>
+                </section>
+              ) : (
+                <AuthDock initialMode={initialAuthMode} onAuthenticated={onAuthenticated} onModeChange={setSceneMode} />
+              )}
+            </div>
+          </motion.div>
         </motion.div>
-      </AnimatePresence>
-    </motion.aside>
+      ) : null}
+    </AnimatePresence>
   );
 }

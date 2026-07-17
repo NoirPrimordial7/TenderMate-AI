@@ -1,25 +1,23 @@
 "use client";
 
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from "motion/react";
-import { PointerEvent } from "react";
+import type { PointerEvent } from "react";
 
-const statuses = [
-  "READING DOCUMENT",
-  "DETECTING REQUIREMENTS",
-  "CHECKING ELIGIBILITY",
-  "SOURCE VERIFIED"
-];
+type TenderEngineVisualProps = {
+  isActive: boolean;
+  hasSelectedFile?: boolean;
+};
 
-export function TenderEngineVisual({ isActive }: { isActive: boolean }) {
+export function TenderEngineVisual({ isActive, hasSelectedFile = false }: TenderEngineVisualProps) {
   const shouldReduceMotion = useReducedMotion();
   const pointerX = useMotionValue(0);
   const pointerY = useMotionValue(0);
-  const smoothX = useSpring(pointerX, { stiffness: 90, damping: 22, mass: 0.6 });
-  const smoothY = useSpring(pointerY, { stiffness: 90, damping: 22, mass: 0.6 });
-  const translateX = useTransform(smoothX, [-0.5, 0.5], [-6, 6]);
+  const smoothX = useSpring(pointerX, { stiffness: 86, damping: 24, mass: 0.65 });
+  const smoothY = useSpring(pointerY, { stiffness: 86, damping: 24, mass: 0.65 });
+  const translateX = useTransform(smoothX, [-0.5, 0.5], [-7, 7]);
   const translateY = useTransform(smoothY, [-0.5, 0.5], [-5, 5]);
-  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-1.4, 1.4]);
-  const rotateX = useTransform(smoothY, [-0.5, 0.5], [1.2, -1.2]);
+  const rotateY = useTransform(smoothX, [-0.5, 0.5], [-1.2, 1.2]);
+  const rotateX = useTransform(smoothY, [-0.5, 0.5], [1, -1]);
 
   const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
     if (shouldReduceMotion || event.pointerType !== "mouse") return;
@@ -35,68 +33,71 @@ export function TenderEngineVisual({ isActive }: { isActive: boolean }) {
 
   return (
     <motion.div
-      className={`te-engine-scene ${isActive ? "te-engine-scene-active" : ""}`}
+      className={`te-document-scene ${isActive ? "te-document-scene-active" : ""} ${hasSelectedFile ? "te-document-scene-selected" : ""}`}
       aria-hidden="true"
       onPointerMove={handlePointerMove}
       onPointerLeave={resetPointer}
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 28, scale: 0.94, rotate: -1.5 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotate: 0 }}
-      transition={{ duration: shouldReduceMotion ? 0 : 0.82, delay: shouldReduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, y: 72, rotate: -4, scale: 0.88 }}
+      animate={{ opacity: 1, y: 0, rotate: 0, scale: 1 }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.9, delay: shouldReduceMotion ? 0 : 0.3, ease: [0.16, 1, 0.3, 1] }}
     >
-      <div className="te-engine-spotlight" />
-      <div className="te-engine-orbit te-engine-orbit-one" />
-      <div className="te-engine-orbit te-engine-orbit-two" />
-
       <motion.div
-        className="te-engine-object"
-        style={shouldReduceMotion ? undefined : {
-          x: translateX,
-          y: translateY,
-          rotateX,
-          rotateY,
-          transformPerspective: 1000
-        }}
+        className="te-document-stack"
+        style={{ x: translateX, y: translateY, rotateX, rotateY, transformPerspective: 1200 }}
       >
-        <div className="te-engine-paper te-engine-paper-back">
-          <span>FORM / NIT / 2026</span>
+        <div className="te-tender-page te-tender-page-back">
+          <div className="te-back-rule" />
+          <span>अनुसूची / ANNEXURE II</span>
         </div>
-        <div className="te-engine-paper te-engine-paper-mid">
-          <span className="te-paper-index">02 / TECHNICAL</span>
+
+        <div className="te-tender-page te-tender-page-mid">
+          <div className="te-mid-heading">Technical qualification schedule</div>
+          <div className="te-mid-table"><i /><i /><i /><i /></div>
+          <span className="te-page-number">Page 14 of 32</span>
         </div>
-        <div className="te-engine-paper te-engine-paper-front">
+
+        <article className="te-tender-page te-tender-page-front">
           <header className="te-paper-head">
-            <span className="te-paper-emblem">TM</span>
-            <div><strong>NOTICE INVITING TENDER</strong><small>PROCUREMENT INTELLIGENCE INPUT</small></div>
-            <span className="te-paper-code">NIT:26-0717</span>
+            <div className="te-paper-seal">TM</div>
+            <div className="te-paper-title">
+              <span>ई-निविदा सूचना · ई-निविदा सूचना</span>
+              <strong>NOTICE INVITING TENDER</strong>
+              <small>Procurement of network and office infrastructure</small>
+            </div>
+            <div className="te-paper-reference"><span>NIT / 26</span><strong>0717</strong></div>
           </header>
-          <div className="te-paper-grid" />
-          <div className="te-ocr-box te-ocr-one"><span>03.2</span><i>TURNOVER REQUIREMENT</i><b>ELIGIBILITY</b></div>
-          <div className="te-ocr-box te-ocr-two"><span>06.1</span><i>EMD / BID SECURITY</i><b>DOCUMENT</b></div>
-          <div className="te-ocr-box te-ocr-three"><span>08.4</span><i>SUBMISSION DEADLINE</i><b>RISK</b></div>
-          <span className="te-registration te-registration-tl">+</span>
-          <span className="te-registration te-registration-br">+</span>
-          <div className="te-scan-beam" />
-        </div>
+
+          <div className="te-paper-summary">
+            <div><span>Department</span><strong>Public Works Division</strong></div>
+            <div><span>Estimated value</span><strong>₹ 18,40,000</strong></div>
+            <div><span>Bid closes</span><strong>28 Aug · 17:00</strong></div>
+          </div>
+
+          <div className="te-paper-table" role="presentation">
+            <div className="te-paper-table-head"><span>Clause</span><span>Requirement</span><span>Finding</span></div>
+            <div className="te-clause-row te-clause-eligibility"><span>3.2</span><p>Average annual turnover · मागील ३ वर्षे</p><b>Eligible</b></div>
+            <div className="te-clause-row te-clause-document"><span>6.1</span><p>EMD / bid security instrument</p><b>Document</b></div>
+            <div className="te-clause-row te-clause-source"><span>7.4</span><p>OEM authorisation and GST certificate</p><b>Source 14</b></div>
+            <div className="te-clause-row te-clause-risk"><span>8.4</span><p>Submission deadline · अंतिम मुदत</p><b>2 days</b></div>
+          </div>
+
+          <footer className="te-paper-footer">
+            <span>GeM / CPPP source document</span>
+            <span>Page 08 / 32</span>
+          </footer>
+          <div className="te-paper-scan" />
+        </article>
+
+        <motion.div
+          className="te-document-callout te-callout-eligibility"
+          animate={hasSelectedFile && !shouldReduceMotion ? { y: [0, -4, 0] } : undefined}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span>Eligibility</span><strong>Confirmed</strong>
+        </motion.div>
+        <div className="te-document-callout te-callout-value"><span>Estimated value</span><strong>₹18.4 lakh</strong></div>
+        <div className="te-document-callout te-callout-deadline"><span>Deadline</span><strong>28 Aug</strong></div>
       </motion.div>
-
-      <div className="te-engine-label te-engine-label-left">
-        <span>ENGINE</span><strong>DOC-INTEL / V1</strong>
-      </div>
-      <div className="te-engine-label te-engine-label-right">
-        <span>SOURCE</span><strong>PDF / PRIVATE</strong>
-      </div>
-
-      <div className="te-engine-status">
-        <span className="te-live-pixel" />
-        <span className="te-status-window">
-          {statuses.map((status, index) => (
-            <span key={status} className="te-engine-status-item" style={{ animationDelay: `${index * 2.4}s` }}>
-              {status}
-            </span>
-          ))}
-        </span>
-        <span className="te-status-code">04/04</span>
-      </div>
     </motion.div>
   );
 }
