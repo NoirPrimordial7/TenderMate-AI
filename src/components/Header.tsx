@@ -110,7 +110,7 @@ export default function Header() {
 
   return (
     <motion.header className="te-header" initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.38, delay: shouldReduceMotion ? 0 : 0.72 }}>
-      <div className="te-header-inner">
+      <div className="te-header-inner te-page-container">
         <Link href="/" className="te-brand" aria-label="TenderMate AI home"><span>TenderMate</span><i>AI</i></Link>
 
         <nav className="te-desktop-nav" aria-label="Primary navigation">

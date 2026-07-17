@@ -1,17 +1,27 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowUpRight, Ban, Loader2, UploadCloud } from "lucide-react";
-import { FileSelection } from "@/components/entry/FileSelection";
 import { UploadDropzone } from "@/components/entry/UploadDropzone";
 import { DockStatus } from "@/components/entry/DockStatus";
+import type { PdfInspection } from "@/components/entry/SelectedPdfExperience";
 import type { AuthUser } from "@/domain/auth/types";
 import { tenderService } from "@/services/TenderService";
 import { ApiError, toFriendlyApiMessage } from "@/services/api";
 
+const SelectedPdfExperience = dynamic(
+  () => import("@/components/entry/SelectedPdfExperience").then((module) => module.SelectedPdfExperience),
+  {
+    ssr: false,
+    loading: () => <div className="te-file-selection-loading" role="status"><span />Preparing local PDF preview…</div>
+  }
+);
+
 const MAX_PDF_UPLOAD_BYTES = 20 * 1024 * 1024;
+const EMPTY_INSPECTION: PdfInspection = { status: "loading", pageCount: null, error: "" };
 
 function isPdfFile(file: File) {
   return file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
@@ -40,6 +50,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
   const abortControllerRef = useRef<AbortController | null>(null);
   const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [inspection, setInspection] = useState<PdfInspection>(EMPTY_INSPECTION);
   const [fileError, setFileError] = useState("");
   const [uploadError, setUploadError] = useState("");
   const [notice, setNotice] = useState("");
@@ -57,12 +68,17 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
     onFileStateChange?.(Boolean(selectedFile));
   }, [onFileStateChange, selectedFile]);
 
+  const handleInspectionChange = useCallback((nextInspection: PdfInspection) => {
+    setInspection(nextInspection);
+  }, []);
+
   const progressPercent = progress?.total ? Math.min(100, Math.round((progress.uploaded / progress.total) * 100)) : null;
   const credits = typeof user.free_analysis_credits === "number" ? Math.max(0, user.free_analysis_credits) : null;
   const planName = user.plan_name ? titleCase(user.plan_name) : null;
   const hasActiveSubscription = user.subscription_status?.toLowerCase() === "active";
   const isOutOfAnalysisCredits = credits === 0 && !hasActiveSubscription;
   const firstName = user.full_name?.trim().split(/\s+/)[0] || "there";
+  const hasValidPdf = Boolean(selectedFile) && !fileError && inspection.status === "ready";
 
   const selectFile = (file?: File) => {
     setFileError("");
@@ -70,6 +86,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
     setSuccessMessage("");
     setNotice("");
     setProgress(null);
+    setInspection(EMPTY_INSPECTION);
     if (!file) return;
     if (!isPdfFile(file)) {
       setSelectedFile(null);
@@ -91,6 +108,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
 
   const removeFile = () => {
     setSelectedFile(null);
+    setInspection(EMPTY_INSPECTION);
     setFileError("");
     setUploadError("");
     setNotice("");
@@ -98,7 +116,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
   };
 
   const uploadTender = async () => {
-    if (!selectedFile || fileError || isUploading || successMessage) return;
+    if (!selectedFile || !hasValidPdf || isUploading || successMessage) return;
     const controller = new AbortController();
     abortControllerRef.current = controller;
     setIsUploading(true);
@@ -107,7 +125,10 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
     setSuccessMessage("");
     setProgress(null);
     try {
-      const response = await tenderService.uploadTenderPdf(selectedFile, { signal: controller.signal, onProgress: (uploaded, total) => setProgress({ uploaded, total }) });
+      const response = await tenderService.uploadTenderPdf(selectedFile, {
+        signal: controller.signal,
+        onProgress: (uploaded, total) => setProgress({ uploaded, total })
+      });
       setProgress((current) => current ? { ...current, uploaded: current.total } : null);
       setSuccessMessage(response.message || "PDF uploaded successfully.");
       redirectTimerRef.current = setTimeout(() => router.push(`/tender/${response.tender_id}`), 700);
@@ -134,18 +155,28 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
           <div><dt>Credits</dt><dd>{credits ?? "Unavailable"}</dd></div>
         </dl>
       </div>
+
       <div className="te-upload-workarea">
         {!selectedFile ? (
           <UploadDropzone inputRef={inputRef} isDragging={isDragging} onDraggingChange={setIsDragging} onFile={selectFile} disabled={isUploading || Boolean(successMessage)} />
         ) : (
           <>
-            <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={(event) => { selectFile(event.target.files?.[0]); event.target.value = ""; }} />
-            <FileSelection file={selectedFile} disabled={isUploading || Boolean(successMessage)} onRemove={removeFile} onReplace={() => inputRef.current?.click()} />
+            <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="sr-only" tabIndex={-1} onChange={(event) => { selectFile(event.target.files?.[0]); event.target.value = ""; }} />
+            <SelectedPdfExperience
+              key={`${selectedFile.name}-${selectedFile.size}-${selectedFile.lastModified}`}
+              file={selectedFile}
+              disabled={isUploading || Boolean(successMessage)}
+              onInspectionChange={handleInspectionChange}
+              onRemove={removeFile}
+              onReplace={() => inputRef.current?.click()}
+            />
           </>
         )}
+
         <div className="te-upload-messages" aria-live="polite">
           {isOutOfAnalysisCredits ? <DockStatus tone="warning">Analysis needs an active plan or available credit.</DockStatus> : null}
           {fileError ? <DockStatus tone="danger" live="assertive">{fileError}</DockStatus> : null}
+          {inspection.status === "error" ? <DockStatus tone="danger" live="assertive">{inspection.error}</DockStatus> : null}
           {uploadError ? <DockStatus tone="danger" live="assertive">{uploadError}</DockStatus> : null}
           {notice ? <DockStatus>{notice}</DockStatus> : null}
           {successMessage ? <DockStatus tone="success" title="Upload complete">{successMessage} Opening the tender…</DockStatus> : null}
@@ -157,10 +188,13 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
           ) : null}
         </div>
       </div>
+
       <div className="te-upload-action-column">
         <p>PDF only · maximum 20 MB</p>
-        <button type="button" onClick={uploadTender} disabled={!selectedFile || Boolean(fileError) || Boolean(successMessage) || isUploading} className="te-primary-button te-upload-button">
-          <UploadCloud className="h-4 w-4" aria-hidden="true" /><span>{successMessage ? "Upload complete" : isUploading ? "Uploading…" : "Analyse tender"}</span>{!isUploading && !successMessage ? <ArrowUpRight className="h-4 w-4" aria-hidden="true" /> : null}
+        <button type="button" onClick={uploadTender} disabled={!hasValidPdf || Boolean(successMessage) || isUploading} className="te-primary-button te-upload-button">
+          <UploadCloud className="h-4 w-4" aria-hidden="true" />
+          <span>{successMessage ? "Upload complete" : isUploading ? "Uploading…" : inspection.status === "loading" && selectedFile ? "Checking PDF…" : "Upload & open workspace"}</span>
+          {!isUploading && !successMessage ? <ArrowUpRight className="h-4 w-4" aria-hidden="true" /> : null}
         </button>
         <div className="te-upload-links"><Link href="/history">History</Link><Link href="/dashboard">Dashboard <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" /></Link></div>
       </div>

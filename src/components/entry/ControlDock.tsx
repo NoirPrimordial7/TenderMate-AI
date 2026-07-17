@@ -87,19 +87,23 @@ export function ControlDock({ isOpen, isLoading, initialAuthMode, onClose, onAut
           >
             <div className="te-auth-colour-field" aria-hidden="true"><span>Make the bid<br />with clarity.</span></div>
             <div className="te-auth-sheet-content">
-              <header className="te-auth-sheet-head">
-                <button type="button" onClick={onClose} className="te-sheet-back"><ArrowLeft aria-hidden="true" /> Back to the tender</button>
-                <button type="button" onClick={onClose} className="te-sheet-close" aria-label="Close account panel"><X aria-hidden="true" /></button>
-              </header>
+              <div className="te-auth-content-container">
+                <header className="te-auth-sheet-head">
+                  <button type="button" onClick={onClose} className="te-sheet-back"><ArrowLeft aria-hidden="true" /> Back to the tender</button>
+                  <button type="button" onClick={onClose} className="te-sheet-close" aria-label="Close account panel"><X aria-hidden="true" /></button>
+                </header>
 
-              {isLoading ? (
-                <section className="te-sheet-loading" role="status" aria-live="polite">
-                  <span />
-                  <h2>Checking your session…</h2>
-                </section>
-              ) : (
-                <AuthDock initialMode={initialAuthMode} onAuthenticated={onAuthenticated} onModeChange={setSceneMode} />
-              )}
+                <div className="te-auth-content-body">
+                  {isLoading ? (
+                    <section className="te-sheet-loading" role="status" aria-live="polite">
+                      <span />
+                      <h2>Checking your session…</h2>
+                    </section>
+                  ) : (
+                    <AuthDock initialMode={initialAuthMode} onAuthenticated={onAuthenticated} onModeChange={setSceneMode} />
+                  )}
+                </div>
+              </div>
             </div>
           </motion.div>
         </motion.div>

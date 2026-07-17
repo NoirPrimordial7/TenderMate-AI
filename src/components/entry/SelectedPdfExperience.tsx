@@ -1,0 +1,121 @@
+"use client";
+
+import dynamic from "next/dynamic";
+import { useEffect, useState } from "react";
+import { getDocument, GlobalWorkerOptions, PasswordException, PasswordResponses } from "pdfjs-dist";
+import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist";
+import { FileSelection } from "@/components/entry/FileSelection";
+import { PdfPageCanvas } from "@/components/entry/PdfPageCanvas";
+
+const PdfPreviewDrawer = dynamic(
+  () => import("@/components/entry/PdfPreviewDrawer").then((module) => module.PdfPreviewDrawer),
+  { ssr: false }
+);
+
+GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
+
+export type PdfInspection = {
+  status: "loading" | "ready" | "error";
+  pageCount: number | null;
+  error: string;
+};
+
+type SelectedPdfExperienceProps = {
+  file: File;
+  disabled?: boolean;
+  onInspectionChange: (inspection: PdfInspection) => void;
+  onRemove: () => void;
+  onReplace: () => void;
+};
+
+function getDocumentError(error: unknown) {
+  const passwordCode = typeof error === "object" && error && "code" in error ? Number(error.code) : null;
+  if (
+    error instanceof PasswordException ||
+    (error instanceof Error && error.name === "PasswordException") ||
+    passwordCode === PasswordResponses.NEED_PASSWORD ||
+    passwordCode === PasswordResponses.INCORRECT_PASSWORD
+  ) {
+    return "This PDF is password-protected. Remove the password before uploading.";
+  }
+  return "This PDF could not be opened. It may be damaged or incomplete.";
+}
+
+export function SelectedPdfExperience({ file, disabled, onInspectionChange, onRemove, onReplace }: SelectedPdfExperienceProps) {
+  const [pdfDocument, setPdfDocument] = useState<PDFDocumentProxy | null>(null);
+  const [documentError, setDocumentError] = useState("");
+  const [thumbnailError, setThumbnailError] = useState("");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    const objectUrl = URL.createObjectURL(file);
+    let disposed = false;
+    let passwordRequired = false;
+    let loadedDocument: PDFDocumentProxy | null = null;
+    let loadingTask: PDFDocumentLoadingTask | null = null;
+
+    setPdfDocument(null);
+    setDocumentError("");
+    setThumbnailError("");
+    setIsPreviewOpen(false);
+    onInspectionChange({ status: "loading", pageCount: null, error: "" });
+
+    const loadPdf = async () => {
+      try {
+        loadingTask = getDocument({ url: objectUrl });
+        loadingTask.onPassword = () => {
+          passwordRequired = true;
+          const message = "This PDF is password-protected. Remove the password before uploading.";
+          setDocumentError(message);
+          onInspectionChange({ status: "error", pageCount: null, error: message });
+          void loadingTask?.destroy();
+        };
+        loadedDocument = await loadingTask.promise;
+        if (disposed) {
+          await loadedDocument.cleanup();
+          return;
+        }
+        setPdfDocument(loadedDocument);
+        onInspectionChange({ status: "ready", pageCount: loadedDocument.numPages, error: "" });
+      } catch (error) {
+        if (disposed || passwordRequired) return;
+        const message = getDocumentError(error);
+        setDocumentError(message);
+        onInspectionChange({ status: "error", pageCount: null, error: message });
+      }
+    };
+
+    void loadPdf();
+    return () => {
+      disposed = true;
+      void loadingTask?.destroy();
+      void loadedDocument?.cleanup();
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [file, onInspectionChange]);
+
+  return (
+    <>
+      <FileSelection
+        file={file}
+        disabled={disabled}
+        pageCount={pdfDocument?.numPages ?? null}
+        documentError={documentError || thumbnailError}
+        thumbnail={pdfDocument ? <PdfPageCanvas document={pdfDocument} pageNumber={1} variant="thumbnail" onRenderError={setThumbnailError} /> : <div className="te-file-thumbnail-loading"><span />Reading first page…</div>}
+        onPreview={() => setIsPreviewOpen(true)}
+        onReplace={onReplace}
+        onRemove={onRemove}
+      />
+      {pdfDocument ? (
+        <PdfPreviewDrawer
+          file={file}
+          pdfDocument={pdfDocument}
+          isOpen={isPreviewOpen}
+          isUploadActive={disabled}
+          onClose={() => setIsPreviewOpen(false)}
+          onReplace={onReplace}
+        />
+      ) : null}
+    </>
+  );
+}
