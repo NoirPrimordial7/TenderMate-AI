@@ -13,6 +13,8 @@ class SignupRequest(BaseModel):
     password: str
     preferred_language: LanguageCode = "en"
     preferred_analysis_language: LanguageCode = "en"
+    accepted_legal: bool
+    legal_locale: LanguageCode = "en"
 
 
 class LoginRequest(BaseModel):

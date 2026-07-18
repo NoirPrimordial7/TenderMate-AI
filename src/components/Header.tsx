@@ -8,6 +8,7 @@ import { ArrowUpRight, ChevronDown, CreditCard, History, LayoutDashboard, LogOut
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher";
+import { BRAND } from "@/config/brand";
 
 const primaryLinks = [
   { href: "/", labelKey: "upload", icon: Upload },
@@ -39,6 +40,7 @@ export default function Header() {
   const { isAuthenticated, isLoading, logout, user } = useAuth();
   const t = useTranslations("navigation");
   const common = useTranslations("common");
+  const launch = useTranslations("launch");
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const profileButtonRef = useRef<HTMLButtonElement>(null);
@@ -115,7 +117,7 @@ export default function Header() {
   return (
     <motion.header className="te-header" initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.38, delay: shouldReduceMotion ? 0 : 0.72 }}>
       <div className="te-header-inner te-page-container">
-        <Link href="/" className="te-brand" aria-label={common("brandHome")}><span>TenderMate</span><i>AI</i></Link>
+        <Link href="/" className="te-brand" aria-label={common("brandHome")}><span>{BRAND.name}</span><small>{launch("betaShort")}</small></Link>
 
         <nav className="te-desktop-nav" aria-label={t("primaryLabel")}>
           {primaryLinks.map((item) => {
