@@ -116,7 +116,9 @@ class AccountSecurityService:
 
     @staticmethod
     def mfa_required_for(user: dict[str, Any]) -> bool:
-        return bool(user.get("mfa_enabled")) or str(user.get("role", "")).lower() in {"staff", "admin", "super_admin"}
+        return bool(user.get("mfa_enabled")) or str(user.get("role", "")).lower() in {
+            "staff", "super_admin", "admin", "support", "finance", "reviewer"
+        }
 
     def create_session_token(
         self,
@@ -265,7 +267,7 @@ class AccountSecurityService:
 
     def disable_mfa(self, user: UserResponse, session_id: UUID, ip_address: str | None, user_agent: str | None) -> None:
         self.require_recent_login(user.id, session_id)
-        if str(user.role).lower() in {"staff", "admin", "super_admin"}:
+        if str(user.role).lower() in {"staff", "super_admin", "admin", "support", "finance", "reviewer"}:
             raise SecurityVerificationError("MFA is mandatory for this account role.")
         self.repository.disable_mfa(user.id, session_id)
         self.record_event(user.id, "mfa_disabled", True, ip_address, user_agent)

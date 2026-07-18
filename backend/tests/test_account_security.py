@@ -306,9 +306,10 @@ def test_mfa_challenge_and_recovery_code_are_single_use(account, monkeypatch):
     assert len(repository.list_unused_recovery_codes(user["id"])) == remaining_after_success
 
 
-def test_privileged_role_requires_mfa(account):
+@pytest.mark.parametrize("role", ["super_admin", "admin", "support", "finance", "reviewer"])
+def test_privileged_role_requires_mfa(account, role):
     service, _repository, _auth_repository, user = account
-    user["role"] = "admin"
+    user["role"] = role
     with pytest.raises(MfaEnrollmentRequiredError):
         service.create_session_token(user, None, None, mfa_verified=False)
 

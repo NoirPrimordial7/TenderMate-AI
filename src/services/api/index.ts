@@ -1,6 +1,7 @@
 import { clearStoredAuth, getAccessToken } from "@/services/authStorage";
 
 export const AUTH_INVALIDATED_EVENT = "tendermate:auth-invalidated";
+export const ADMIN_AUTHORIZATION_INVALIDATED_EVENT = "nividaiq:admin-authorization-invalidated";
 
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api/v1";
 
@@ -48,6 +49,11 @@ function buildUrl(path: string) {
 function dispatchAuthInvalidated() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(AUTH_INVALIDATED_EVENT));
+}
+
+function dispatchAdminAuthorizationInvalidated() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(ADMIN_AUTHORIZATION_INVALIDATED_EVENT));
 }
 
 async function readResponseBody(response: Response) {
@@ -166,6 +172,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       clearStoredAuth();
       dispatchAuthInvalidated();
     }
+    if (response.status === 403 && path.startsWith("/admin")) dispatchAdminAuthorizationInvalidated();
 
     throw new ApiError(response.status, getErrorMessage(response.status, responseBody), responseBody);
   }

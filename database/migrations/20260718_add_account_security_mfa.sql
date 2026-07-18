@@ -2,6 +2,7 @@ begin;
 
 alter table public.app_users
   add column if not exists mfa_enabled boolean not null default false,
+  add column if not exists email_verified_at timestamptz,
   add column if not exists password_changed_at timestamptz;
 
 create table if not exists public.user_mfa_factors (
@@ -281,9 +282,9 @@ security invoker
 set search_path = public
 as $$
 begin
-  if lower(coalesce(new.role, '')) in ('staff', 'admin', 'super_admin')
-     and new.mfa_enabled is not true then
-    raise exception 'MFA must be enabled before assigning a privileged role';
+  if lower(coalesce(new.role, '')) in ('staff', 'admin', 'super_admin', 'support', 'finance', 'reviewer')
+     and (new.mfa_enabled is not true or new.email_verified_at is null) then
+    raise exception 'Verified email and MFA are required before assigning a privileged role';
   end if;
   return new;
 end;

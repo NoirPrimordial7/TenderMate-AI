@@ -20,6 +20,7 @@ USER_COLUMNS = (
     "preferred_language,"
     "preferred_analysis_language,"
     "mfa_enabled,"
+    "email_verified_at,"
     "password_changed_at,"
     "failed_login_count,"
     "locked_until,"
@@ -31,7 +32,7 @@ USER_COLUMNS = (
 LEGACY_USER_COLUMNS = USER_COLUMNS.replace(
     "preferred_language,preferred_analysis_language,",
     "",
-).replace("mfa_enabled,password_changed_at,", "")
+).replace("mfa_enabled,email_verified_at,password_changed_at,", "")
 
 
 class LanguagePreferencesSchemaUnavailableError(RuntimeError):
@@ -261,6 +262,7 @@ class AuthRepository:
                 or "preferred_analysis_language" in error_text
                 or "mfa_enabled" in error_text
                 or "password_changed_at" in error_text
+                or "email_verified_at" in error_text
             ):
                 raise LanguagePreferencesSchemaUnavailableError(
                     "Language preference columns are not available yet."
@@ -276,6 +278,7 @@ class AuthRepository:
         normalized.setdefault("preferred_language", "en")
         normalized.setdefault("preferred_analysis_language", "en")
         normalized.setdefault("mfa_enabled", False)
+        normalized.setdefault("email_verified_at", None)
         normalized.setdefault("password_changed_at", None)
         return normalized
 

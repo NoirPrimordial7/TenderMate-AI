@@ -4,7 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useRouter } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { AuthSession, AuthUser, LoginInput, MfaChallengeInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
-import { AUTH_INVALIDATED_EVENT, clearConditionalApiCache, isApiError } from "@/services/api";
+import { ADMIN_AUTHORIZATION_INVALIDATED_EVENT, AUTH_INVALIDATED_EVENT, clearConditionalApiCache, isApiError } from "@/services/api";
 import { completeMfaLogin, fetchCurrentUser, loginUser, signupUser, updateUserPreferences } from "@/services/AuthService";
 import { accountSecurityService } from "@/services/AccountSecurityService";
 import {
@@ -15,7 +15,7 @@ import {
   saveCurrentUser
 } from "@/services/authStorage";
 import { useLocale } from "@/contexts/LocaleContext";
-import { cacheKeys } from "@/cache/keys";
+import { cacheKeys, isAdminKey } from "@/cache/keys";
 import { clearPersistentPrivateCache } from "@/cache/persistent";
 
 type AuthContextValue = {
@@ -60,9 +60,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.id) clearPersistentPrivateCache(user.id);
     if (user?.id) clearConditionalApiCache(`${user.id}:`);
     clearStoredAuth();
+    void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
     setToken(null);
     setUser(null);
-  }, [user?.id]);
+  }, [mutateCache, user?.id]);
 
   const applySession = useCallback((session: AuthSession) => {
     if (user?.id && user.id !== session.user.id) {
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveCurrentUser(session.user);
     setToken(session.access_token);
     setUser(session.user);
+    void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
   }, [mutateCache, user?.id]);
 
   const refreshUser = useCallback(async () => {
@@ -212,6 +214,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener(AUTH_INVALIDATED_EVENT, handleAuthInvalidated);
     return () => window.removeEventListener(AUTH_INVALIDATED_EVENT, handleAuthInvalidated);
   }, [clearSession, mutateCache]);
+
+  useEffect(() => {
+    const clearAdminAuthorization = () => {
+      void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
+      clearConditionalApiCache("admin:");
+    };
+    window.addEventListener(ADMIN_AUTHORIZATION_INVALIDATED_EVENT, clearAdminAuthorization);
+    return () => window.removeEventListener(ADMIN_AUTHORIZATION_INVALIDATED_EVENT, clearAdminAuthorization);
+  }, [mutateCache]);
 
   const value = useMemo<AuthContextValue>(
     () => ({

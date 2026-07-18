@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from app.api.v1.routes import auth, billing, health, launch, security, tender_questions, tenders, uploads
+from app.api.v1.routes import admin, auth, billing, health, launch, security, tender_questions, tenders, uploads
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -28,7 +28,7 @@ app.add_middleware(
 async def private_api_cache_headers(request: Request, call_next):
     response = await call_next(request)
     if request.url.path.startswith(settings.api_v1_prefix):
-        sensitive = any(part in request.url.path for part in ("/source", "/questions", "/auth", "/billing"))
+        sensitive = any(part in request.url.path for part in ("/source", "/questions", "/auth", "/billing", "/admin"))
         response.headers.setdefault("Cache-Control", "private, no-store" if sensitive else "private, max-age=0, must-revalidate")
         response.headers.setdefault("Vary", "Authorization")
     return response
@@ -60,3 +60,4 @@ app.include_router(uploads.router, prefix=settings.api_v1_prefix)
 app.include_router(tenders.router, prefix=settings.api_v1_prefix)
 app.include_router(tender_questions.router, prefix=settings.api_v1_prefix)
 app.include_router(launch.router, prefix=settings.api_v1_prefix)
+app.include_router(admin.router, prefix=settings.api_v1_prefix)

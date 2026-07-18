@@ -36,6 +36,7 @@ class UserResponse(BaseModel):
     preferred_language: LanguageCode = "en"
     preferred_analysis_language: LanguageCode = "en"
     mfa_enabled: bool = False
+    email_verified_at: datetime | None = None
     last_login_at: datetime | None = None
     created_at: datetime | None = None
 
