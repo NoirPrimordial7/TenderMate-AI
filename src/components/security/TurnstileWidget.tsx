@@ -25,7 +25,7 @@ function loadTurnstileScript() {
   document.head.appendChild(script);
 }
 
-export function TurnstileWidget({ onToken }: { onToken: (token: string | null) => void }) {
+export function TurnstileWidget({ action, onToken }: { action: "login" | "signup" | "password-reset"; onToken: (token: string | null) => void }) {
   const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
   const { activeLocale } = useLocale();
   const t = useTranslations("security");
@@ -42,6 +42,7 @@ export function TurnstileWidget({ onToken }: { onToken: (token: string | null) =
       window.clearInterval(timer);
       widgetRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey,
+        action,
         language: activeLocale,
         appearance: "interaction-only",
         callback: (token: string) => onToken(token),
@@ -56,7 +57,7 @@ export function TurnstileWidget({ onToken }: { onToken: (token: string | null) =
       widgetRef.current = null;
       onToken(null);
     };
-  }, [activeLocale, onToken, siteKey]);
+  }, [action, activeLocale, onToken, siteKey]);
 
   if (!siteKey) return null;
   return <div className="ni-turnstile" id={`turnstile-${reactId}`} ref={containerRef} aria-label={t("turnstileLabel")} />;

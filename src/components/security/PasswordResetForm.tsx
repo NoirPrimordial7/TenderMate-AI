@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { PasswordField } from "@/components/entry/AuthFields";
 import { useTranslations } from "@/contexts/LocaleContext";
 import { accountSecurityService } from "@/services/AccountSecurityService";
@@ -10,10 +10,15 @@ import { accountSecurityService } from "@/services/AccountSecurityService";
 export function PasswordResetForm() {
   const searchParams = useSearchParams();
   const t = useTranslations("security");
-  const token = searchParams.get("token") ?? "";
+  const [token] = useState(() => searchParams.get("token") ?? "");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [status, setStatus] = useState<"idle" | "busy" | "success" | "error">("idle");
+
+  useEffect(() => {
+    if (!token || typeof window === "undefined") return;
+    window.history.replaceState(window.history.state, "", window.location.pathname);
+  }, [token]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();

@@ -25,6 +25,9 @@ class SecurityRepository:
                     "user_id": str(user_id),
                     "secret_ciphertext": secret_ciphertext,
                     "verified_at": None,
+                    "last_used_timestep": None,
+                    "failed_attempts": 0,
+                    "locked_until": None,
                     "updated_at": datetime.now(timezone.utc).isoformat(),
                 },
                 on_conflict="user_id",
@@ -34,6 +37,14 @@ class SecurityRepository:
         if not rows:
             raise RuntimeError("MFA factor was not saved.")
         return rows[0]
+
+    def rotate_factor_secret(self, user_id: UUID, secret_ciphertext: str) -> None:
+        self._execute(
+            self._client.table("user_mfa_factors").update(
+                {"secret_ciphertext": secret_ciphertext, "updated_at": datetime.now(timezone.utc).isoformat()}
+            ).eq("user_id", str(user_id)),
+            "rotate MFA factor encryption",
+        )
 
     def confirm_factor(self, user_id: UUID) -> None:
         self._execute(
@@ -51,16 +62,43 @@ class SecurityRepository:
 
     def replace_recovery_codes(self, user_id: UUID, code_hashes: list[str]) -> None:
         self._execute(
-            self._client.table("user_mfa_recovery_codes").delete().eq("user_id", str(user_id)),
-            "delete recovery codes",
+            self._client.rpc(
+                "replace_mfa_recovery_codes",
+                {"target_user_id": str(user_id), "new_code_hashes": code_hashes},
+            ),
+            "replace recovery codes",
         )
-        if code_hashes:
-            self._execute(
-                self._client.table("user_mfa_recovery_codes").insert(
-                    [{"user_id": str(user_id), "code_hash": value} for value in code_hashes]
-                ),
-                "create recovery codes",
-            )
+
+    def disable_mfa(self, user_id: UUID, current_session_id: UUID) -> None:
+        self._execute(
+            self._client.rpc(
+                "disable_user_mfa",
+                {"target_user_id": str(user_id), "current_session_id": str(current_session_id)},
+            ),
+            "disable MFA",
+        )
+
+    def change_password(self, user_id: UUID, password_hash: str, current_session_id: UUID) -> None:
+        self._execute(
+            self._client.rpc(
+                "change_user_password",
+                {
+                    "target_user_id": str(user_id),
+                    "new_password_hash": password_hash,
+                    "current_session_id": str(current_session_id),
+                },
+            ),
+            "change password",
+        )
+
+    def complete_password_reset(self, user_id: UUID, password_hash: str) -> None:
+        self._execute(
+            self._client.rpc(
+                "complete_user_password_reset",
+                {"target_user_id": str(user_id), "new_password_hash": password_hash},
+            ),
+            "complete password reset",
+        )
 
     def list_unused_recovery_codes(self, user_id: UUID) -> list[dict[str, Any]]:
         rows = self._execute(
@@ -69,13 +107,72 @@ class SecurityRepository:
         )
         return [row for row in rows if not row.get("used_at")]
 
-    def consume_recovery_code(self, code_id: UUID) -> None:
-        self._execute(
+    def claim_totp_timestep(self, user_id: UUID, timestep: int) -> bool:
+        rows = self._execute(
+            self._client.table("user_mfa_factors").update(
+                {
+                    "last_used_timestep": timestep,
+                    "failed_attempts": 0,
+                    "locked_until": None,
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
+                }
+            ).eq("user_id", str(user_id)).or_(
+                f"last_used_timestep.is.null,last_used_timestep.lt.{timestep}"
+            ),
+            "claim MFA timestep",
+        )
+        return bool(rows)
+
+    def record_mfa_failure(self, user_id: UUID, threshold: int, lock_minutes: int) -> dict[str, Any] | None:
+        rows = self._execute(
+            self._client.rpc(
+                "record_mfa_failure",
+                {"target_user_id": str(user_id), "failure_threshold": threshold, "lock_minutes": lock_minutes},
+            ),
+            "record MFA failure",
+        )
+        return rows[0] if rows else None
+
+    def consume_recovery_code(self, code_id: UUID, user_id: UUID) -> bool:
+        rows = self._execute(
             self._client.table("user_mfa_recovery_codes").update(
                 {"used_at": datetime.now(timezone.utc).isoformat()}
-            ).eq("id", str(code_id)),
+            ).eq("id", str(code_id)).eq("user_id", str(user_id)).is_("used_at", "null"),
             "consume recovery code",
         )
+        return bool(rows)
+
+    def create_mfa_challenge(self, user_id: UUID, token_id_hash: str, expires_at: datetime) -> None:
+        self._execute(
+            self._client.table("mfa_login_challenges").insert(
+                {"user_id": str(user_id), "token_id_hash": token_id_hash, "expires_at": expires_at.isoformat()}
+            ),
+            "create MFA login challenge",
+        )
+
+    def consume_mfa_challenge(self, user_id: UUID, token_id_hash: str) -> bool:
+        now = datetime.now(timezone.utc)
+        rows = self._execute(
+            self._client.table("mfa_login_challenges").update(
+                {"used_at": now.isoformat()}
+            ).eq("user_id", str(user_id)).eq("token_id_hash", token_id_hash).is_(
+                "used_at", "null"
+            ).gt("expires_at", now.isoformat()),
+            "consume MFA login challenge",
+        )
+        return bool(rows)
+
+    def get_active_mfa_challenge(self, user_id: UUID, token_id_hash: str) -> dict[str, Any] | None:
+        now = datetime.now(timezone.utc)
+        rows = self._execute(
+            self._client.table("mfa_login_challenges").select("id,user_id,expires_at,used_at").eq(
+                "user_id", str(user_id)
+            ).eq("token_id_hash", token_id_hash).is_("used_at", "null").gt(
+                "expires_at", now.isoformat()
+            ).limit(1),
+            "read MFA login challenge",
+        )
+        return rows[0] if rows else None
 
     def create_session(self, values: dict[str, Any]) -> dict[str, Any]:
         rows = self._execute(self._client.table("user_sessions").insert(values), "create session")
@@ -106,6 +203,14 @@ class SecurityRepository:
         self._execute(
             self._client.table("user_sessions").update({"recent_auth_at": datetime.now(timezone.utc).isoformat()}).eq("id", str(session_id)).eq("user_id", str(user_id)),
             "mark recent authentication",
+        )
+
+    def mark_session_mfa_verified(self, session_id: UUID, user_id: UUID) -> None:
+        self._execute(
+            self._client.table("user_sessions").update(
+                {"mfa_verified": True, "recent_auth_at": datetime.now(timezone.utc).isoformat()}
+            ).eq("id", str(session_id)).eq("user_id", str(user_id)).is_("revoked_at", "null"),
+            "mark session MFA verified",
         )
 
     def revoke_session(self, session_id: UUID, user_id: UUID) -> None:
@@ -140,18 +245,15 @@ class SecurityRepository:
             "invalidate password reset tokens",
         )
 
-    def find_reset_token(self, token_hash: str) -> dict[str, Any] | None:
+    def consume_valid_reset_token(self, token_hash: str) -> dict[str, Any] | None:
+        now = datetime.now(timezone.utc)
         rows = self._execute(
-            self._client.table("password_reset_tokens").select("*").eq("token_hash", token_hash).limit(1),
-            "read password reset token",
-        )
-        return rows[0] if rows else None
-
-    def consume_reset_token(self, token_id: UUID) -> None:
-        self._execute(
-            self._client.table("password_reset_tokens").update({"used_at": datetime.now(timezone.utc).isoformat()}).eq("id", str(token_id)),
+            self._client.table("password_reset_tokens").update(
+                {"used_at": now.isoformat()}
+            ).eq("token_hash", token_hash).is_("used_at", "null").gt("expires_at", now.isoformat()),
             "consume password reset token",
         )
+        return rows[0] if rows else None
 
     def queue_notification(self, values: dict[str, Any]) -> None:
         self._execute(self._client.table("security_notification_outbox").insert(values), "queue security notification")

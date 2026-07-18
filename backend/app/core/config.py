@@ -114,14 +114,21 @@ class Settings:
     legal_effective_date: str = ""
     legal_version: str = "1.0"
     mfa_encryption_key: str = ""
+    mfa_previous_encryption_keys: tuple[str, ...] = ()
     mfa_challenge_expire_minutes: int = 5
+    mfa_failure_lock_threshold: int = 5
+    mfa_failure_lock_minutes: int = 15
     session_expire_days: int = 7
     recent_auth_expire_minutes: int = 10
     password_reset_expire_minutes: int = 30
     turnstile_secret_key: str = ""
     turnstile_required: bool = False
+    turnstile_allowed_hostnames: tuple[str, ...] = ()
+    trusted_proxy_cidrs: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
+        if self.jwt_secret_key and len(self.jwt_secret_key.encode("utf-8")) < 32:
+            raise ValueError("JWT_SECRET_KEY must contain at least 32 bytes of secret material.")
         selected = {
             "AI_PROVIDER": self.ai_provider,
             "AI_FALLBACK_PROVIDER": self.ai_fallback_provider,
@@ -259,10 +266,15 @@ def get_settings() -> Settings:
         legal_effective_date=getenv("LEGAL_EFFECTIVE_DATE", "").strip(),
         legal_version=getenv("LEGAL_VERSION", "1.0").strip(),
         mfa_encryption_key=getenv("MFA_ENCRYPTION_KEY", "").strip(),
+        mfa_previous_encryption_keys=tuple(_split_csv_env(getenv("MFA_PREVIOUS_ENCRYPTION_KEYS", ""))),
         mfa_challenge_expire_minutes=_get_int_env("MFA_CHALLENGE_EXPIRE_MINUTES", 5),
+        mfa_failure_lock_threshold=_get_int_env("MFA_FAILURE_LOCK_THRESHOLD", 5),
+        mfa_failure_lock_minutes=_get_int_env("MFA_FAILURE_LOCK_MINUTES", 15),
         session_expire_days=_get_int_env("SESSION_EXPIRE_DAYS", 7),
         recent_auth_expire_minutes=_get_int_env("RECENT_AUTH_EXPIRE_MINUTES", 10),
         password_reset_expire_minutes=_get_int_env("PASSWORD_RESET_EXPIRE_MINUTES", 30),
         turnstile_secret_key=getenv("TURNSTILE_SECRET_KEY", "").strip(),
         turnstile_required=_get_bool_env("TURNSTILE_REQUIRED", False),
+        turnstile_allowed_hostnames=tuple(_split_csv_env(getenv("TURNSTILE_ALLOWED_HOSTNAMES", ""))),
+        trusted_proxy_cidrs=tuple(_split_csv_env(getenv("TRUSTED_PROXY_CIDRS", ""))),
     )

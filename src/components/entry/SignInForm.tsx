@@ -114,7 +114,7 @@ export function SignInForm({ onAuthenticated }: { onAuthenticated?: () => void }
         <button type="button" className="ni-auth-back" onClick={() => { setShowReset(false); setResetSent(false); setError(""); }}><ArrowLeft aria-hidden="true" />{security("backToLogin")}</button>
         <div className="te-form-heading"><h2>{security("resetTitle")}</h2><p className="te-form-subtitle">{security("resetSupport")}</p></div>
         <TextField label={t("workEmail")} type="email" autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-        <TurnstileWidget onToken={onTurnstileToken} />
+        <TurnstileWidget action="password-reset" onToken={onTurnstileToken} />
         {resetSent ? <DockStatus tone="success" live="polite">{security("resetAccepted")}</DockStatus> : null}
         {error ? <DockStatus tone="danger" live="assertive">{error}</DockStatus> : null}
         <button type="submit" disabled={isSubmitting || !email.trim()} className="te-primary-button"><span>{security("sendReset")}</span><ArrowUpRight aria-hidden="true" /></button>
@@ -128,7 +128,7 @@ export function SignInForm({ onAuthenticated }: { onAuthenticated?: () => void }
       <TextField label={t("workEmail")} type="email" autoComplete="email" inputMode="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
       <PasswordField label={t("password")} autoComplete="current-password" value={password} onChange={(event) => setPassword(event.target.value)} required />
       <button type="button" className="ni-text-action" onClick={() => setShowReset(true)}>{security("forgotPassword")}</button>
-      <TurnstileWidget onToken={onTurnstileToken} />
+      <TurnstileWidget action="login" onToken={onTurnstileToken} />
       {error ? <DockStatus tone="danger" live="assertive">{error}</DockStatus> : null}
       <button type="submit" disabled={isSubmitting} className="te-primary-button">{isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : null}<span>{isSubmitting ? t("signingIn") : t("signIn")}</span>{!isSubmitting ? <ArrowUpRight className="h-4 w-4" aria-hidden="true" /> : null}</button>
     </form>

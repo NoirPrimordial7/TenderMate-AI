@@ -1,4 +1,5 @@
 from collections.abc import Callable
+import ipaddress
 
 from fastapi import Depends, HTTPException, Request, status
 
@@ -15,15 +16,33 @@ RATE_LIMIT_MESSAGE = "Too many requests. Please try again later."
 
 
 def get_client_ip(request: Request) -> str:
-    forwarded_for = request.headers.get("x-forwarded-for")
-    if forwarded_for:
-        return forwarded_for.split(",", 1)[0].strip()
+    peer_ip = request.client.host if request.client else "unknown"
+    settings = get_settings()
+    try:
+        peer_address = ipaddress.ip_address(peer_ip)
+        trusted_proxy = any(
+            peer_address in ipaddress.ip_network(cidr, strict=False)
+            for cidr in settings.trusted_proxy_cidrs
+        )
+    except ValueError:
+        trusted_proxy = False
 
-    real_ip = request.headers.get("x-real-ip")
-    if real_ip:
-        return real_ip.strip()
+    if trusted_proxy:
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            candidate = forwarded_for.split(",", 1)[0].strip()
+            try:
+                return str(ipaddress.ip_address(candidate))
+            except ValueError:
+                pass
+        real_ip = request.headers.get("x-real-ip")
+        if real_ip:
+            try:
+                return str(ipaddress.ip_address(real_ip.strip()))
+            except ValueError:
+                pass
 
-    return request.client.host if request.client else "unknown"
+    return peer_ip
 
 
 def get_user_agent(request: Request) -> str | None:

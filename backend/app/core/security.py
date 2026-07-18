@@ -34,7 +34,6 @@ def create_access_token(
     role: str,
     session_id: UUID,
     *,
-    mfa_verified: bool,
     authenticated_at: datetime,
 ) -> str:
     settings = get_settings()
@@ -50,7 +49,6 @@ def create_access_token(
         "role": role,
         "sid": str(session_id),
         "purpose": "access",
-        "mfa": mfa_verified,
         "auth_time": int(authenticated_at.timestamp()),
         "jti": str(uuid4()),
         "exp": expires_at,
@@ -77,7 +75,13 @@ def decode_access_token(token: str) -> dict[str, Any]:
         raise ValueError("Invalid or expired access token.") from exc
 
 
-def create_purpose_token(user_id: UUID, purpose: str, expires_minutes: int) -> str:
+def create_purpose_token(
+    user_id: UUID,
+    purpose: str,
+    expires_minutes: int,
+    *,
+    token_id: UUID | None = None,
+) -> str:
     settings = get_settings()
     if not settings.jwt_secret_key:
         raise RuntimeError("JWT_SECRET_KEY is required for authentication.")
@@ -85,7 +89,7 @@ def create_purpose_token(user_id: UUID, purpose: str, expires_minutes: int) -> s
     payload = {
         "sub": str(user_id),
         "purpose": purpose,
-        "jti": str(uuid4()),
+        "jti": str(token_id or uuid4()),
         "iat": now,
         "exp": now + timedelta(minutes=expires_minutes),
     }
@@ -119,13 +123,23 @@ def totp_code(secret: str, timestamp: float | None = None, period: int = 30) -> 
 
 
 def verify_totp(secret: str, code: str, timestamp: float | None = None, window: int = 1) -> bool:
+    return matching_totp_timestep(secret, code, timestamp=timestamp, window=window) is not None
+
+
+def matching_totp_timestep(
+    secret: str,
+    code: str,
+    timestamp: float | None = None,
+    window: int = 1,
+) -> int | None:
     if not code.isdigit() or len(code) != 6:
-        return False
+        return None
     moment = datetime.now(timezone.utc).timestamp() if timestamp is None else timestamp
-    return any(
-        hmac.compare_digest(totp_code(secret, moment + offset * 30), code)
-        for offset in range(-window, window + 1)
-    )
+    for offset in range(-window, window + 1):
+        candidate_moment = moment + offset * 30
+        if hmac.compare_digest(totp_code(secret, candidate_moment), code):
+            return int(candidate_moment // 30)
+    return None
 
 
 def build_totp_uri(secret: str, email: str, issuer: str = "NividaIQ") -> str:

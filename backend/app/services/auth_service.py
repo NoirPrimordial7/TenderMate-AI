@@ -4,7 +4,6 @@ from uuid import UUID
 
 from app.core.config import Settings, get_settings
 from app.core.security import (
-    create_purpose_token,
     decode_access_token,
     hash_password,
     verify_password,
@@ -161,11 +160,7 @@ class AuthService:
                 raise MfaEnrollmentRequiredError(
                     "Authenticator MFA must be enabled before this staff account can sign in."
                 )
-            challenge = create_purpose_token(
-                UUID(str(user["id"])),
-                "mfa_challenge",
-                self.settings.mfa_challenge_expire_minutes,
-            )
+            challenge = self.security_service.create_mfa_challenge(UUID(str(user["id"])))
             record_audit_log(
                 action="login_mfa_required",
                 user_id=user["id"],
@@ -213,7 +208,7 @@ class AuthService:
             raise InvalidCredentialsError("Invalid or expired access token.") from None
 
         try:
-            self.security_service.validate_session(user_id, session_id)
+            session = self.security_service.validate_session(user_id, session_id)
         except SecurityVerificationError:
             raise InvalidCredentialsError("Invalid or expired access token.") from None
 
@@ -228,6 +223,9 @@ class AuthService:
             raise AccountLockedError(
                 "Account temporarily locked due to multiple failed login attempts."
             )
+
+        if self.security_service.mfa_required_for(user) and not session.get("mfa_verified"):
+            raise InvalidCredentialsError("MFA verification is required for this session.")
 
         return self._user_response(user)
 

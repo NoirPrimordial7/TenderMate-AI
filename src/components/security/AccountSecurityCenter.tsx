@@ -108,6 +108,20 @@ export function AccountSecurityCenter() {
     }
   }
 
+  async function cancelMfaSetup() {
+    setBusy("cancel-setup");
+    setError("");
+    try {
+      await accountSecurityService.cancelMfaSetup();
+      setSetup(null);
+      setSetupCode("");
+    } catch (nextError) {
+      setError(translatedError(nextError, t));
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function changePassword(event: FormEvent) {
     event.preventDefault();
     setBusy("password");
@@ -180,7 +194,7 @@ export function AccountSecurityCenter() {
 
       {sensitiveAction ? <form className="ni-security-verify" onSubmit={verifyRecent}><h3>{t("verifyRecentTitle")}</h3><p>{t("verifyRecentSupport")}</p><label>{t("currentPassword")}<input type="password" autoComplete="current-password" value={verifyPassword} onChange={(event) => setVerifyPassword(event.target.value)} required /></label>{securityStatus?.mfa_enabled ? <label>{t("authenticatorCode")}<input inputMode="numeric" maxLength={6} autoComplete="one-time-code" value={verifyCode} onChange={(event) => setVerifyCode(event.target.value)} required /></label> : null}<div><button type="button" onClick={() => setSensitiveAction(null)}>{t("cancel")}</button><button type="submit" disabled={busy === "verify"}>{t("verify")}</button></div></form> : null}
 
-      {setup ? <form className="ni-mfa-setup" onSubmit={confirmMfa}><div><p className="tm-eyebrow">{t("stepOne")}</p><h3>{t("scanTitle")}</h3><p>{t("scanSupport")}</p><QRCodeSVG value={setup.otpauth_uri} size={176} level="M" marginSize={2} /><code>{setup.secret}</code></div><label>{t("stepTwo")}<input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={setupCode} onChange={(event) => setSetupCode(event.target.value)} required /></label><button type="submit" disabled={busy === "confirm" || setupCode.length !== 6}>{t("confirmMfa")}</button></form> : null}
+      {setup ? <form className="ni-mfa-setup" onSubmit={confirmMfa}><div><p className="tm-eyebrow">{t("stepOne")}</p><h3>{t("scanTitle")}</h3><p>{t("scanSupport")}</p><QRCodeSVG value={setup.otpauth_uri} size={176} level="M" marginSize={2} /><code>{setup.secret}</code></div><label>{t("stepTwo")}<input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={setupCode} onChange={(event) => setSetupCode(event.target.value)} required /></label><div><button type="button" disabled={busy === "cancel-setup"} onClick={() => void cancelMfaSetup()}>{t("cancel")}</button><button type="submit" disabled={busy === "confirm" || setupCode.length !== 6}>{t("confirmMfa")}</button></div></form> : null}
 
       {recoveryCodes.length ? <div className="ni-recovery-codes" role="status"><div><h3>{t("saveRecoveryTitle")}</h3><p>{t("saveRecoverySupport")}</p></div><ul>{recoveryCodes.map((code) => <li key={code}><code>{code}</code></li>)}</ul><button type="button" onClick={() => void copyRecoveryCodes()}><Copy aria-hidden="true" />{t("copyCodes")}</button><button type="button" onClick={() => setRecoveryCodes([])}><Check aria-hidden="true" />{t("savedCodes")}</button></div> : null}
 

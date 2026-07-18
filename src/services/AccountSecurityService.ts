@@ -7,6 +7,7 @@ export const accountSecurityService = {
   getActivity: () => apiRequest<SecurityEvent[]>("/auth/security/activity"),
   verifyRecent: (password: string, code?: string) => apiRequest<void>("/auth/security/verify-recent", { method: "POST", body: { password, code: code || null } }),
   startMfa: () => apiRequest<MfaSetup>("/auth/security/mfa/setup", { method: "POST" }),
+  cancelMfaSetup: () => apiRequest<void>("/auth/security/mfa/setup", { method: "DELETE" }),
   confirmMfa: (code: string) => apiRequest<RecoveryCodes>("/auth/security/mfa/confirm", { method: "POST", body: { code } }),
   disableMfa: () => apiRequest<void>("/auth/security/mfa", { method: "DELETE" }),
   regenerateRecoveryCodes: () => apiRequest<RecoveryCodes>("/auth/security/mfa/recovery-codes", { method: "POST" }),

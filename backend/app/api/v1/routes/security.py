@@ -1,3 +1,4 @@
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -36,6 +37,7 @@ from app.services.account_security_service import (
 )
 
 router = APIRouter(prefix="/auth", tags=["account-security"])
+logger = logging.getLogger(__name__)
 
 
 def _security_error(exc: Exception) -> HTTPException:
@@ -125,10 +127,27 @@ def confirm_mfa(
 ) -> RecoveryCodesResponse:
     try:
         service.require_recent_login(current.user.id, current.session_id)
-        codes = service.confirm_mfa(current.user, payload.code, get_client_ip(request), get_user_agent(request))
+        codes = service.confirm_mfa(current.user, current.session_id, payload.code, get_client_ip(request), get_user_agent(request))
         return RecoveryCodesResponse(recovery_codes=codes)
     except (RecentLoginRequiredError, SecurityVerificationError) as exc:
         raise _security_error(exc) from exc
+
+
+@router.delete(
+    "/security/mfa/setup",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(rate_limit_by_ip(SECURITY_MUTATION_RATE_LIMIT))],
+)
+def cancel_mfa_setup(
+    current: AuthenticatedSession = Depends(get_current_session),
+    service: AccountSecurityService = Depends(get_account_security_service),
+) -> Response:
+    try:
+        service.require_recent_login(current.user.id, current.session_id)
+        service.cancel_mfa_setup(current.user)
+    except (RecentLoginRequiredError, SecurityVerificationError) as exc:
+        raise _security_error(exc) from exc
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete(
@@ -271,10 +290,15 @@ def request_password_reset(
     service: AccountSecurityService = Depends(get_account_security_service),
 ) -> PasswordResetAcceptedResponse:
     try:
-        service.verify_turnstile(payload.turnstile_token, get_client_ip(request))
-        service.request_password_reset(payload.email, get_client_ip(request), get_user_agent(request))
+        service.verify_turnstile(payload.turnstile_token, get_client_ip(request), "password-reset")
     except TurnstileVerificationError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
+    try:
+        service.request_password_reset(payload.email, get_client_ip(request), get_user_agent(request))
+    except RuntimeError:
+        # Preserve the same public response for known and unknown accounts. The
+        # operational failure is logged without including the email or token.
+        logger.error("Password reset request could not be queued.")
     return PasswordResetAcceptedResponse()
 
 

@@ -44,7 +44,7 @@ def signup(
     if not payload.accepted_legal:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Terms, Privacy Policy and AI Analysis Disclaimer acceptance is required.")
     try:
-        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request))
+        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request), "signup")
         response = service.signup(
             payload,
             ip_address=get_client_ip(request),
@@ -77,7 +77,7 @@ def login(
     service: AuthService = Depends(get_auth_service),
 ) -> LoginResponse:
     try:
-        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request))
+        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request), "login")
         return service.login(
             payload,
             ip_address=get_client_ip(request),
