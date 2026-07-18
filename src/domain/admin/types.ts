@@ -1,0 +1,3 @@
+export type AdminOverview = { metrics: Record<string, number | string | null>; system_health: string; deferred: string[] };
+export type AdminUser = { id: string; full_name: string; email: string; account_status: string; email_verified: boolean; mfa_enabled: boolean; role: string; plan_name: string; subscription_status: string; analysis_credits: number; question_credits: number; tender_count: number; last_active_at?: string | null; created_at: string; security_flags: string[] };
+export type AdminUserPage = { items: AdminUser[]; next_cursor?: string | null };

@@ -14,7 +14,7 @@ import {
   saveCurrentUser
 } from "@/services/authStorage";
 import { useLocale } from "@/contexts/LocaleContext";
-import { cacheKeys } from "@/cache/keys";
+import { cacheKeys, isAdminKey } from "@/cache/keys";
 import { clearPersistentPrivateCache } from "@/cache/persistent";
 
 type AuthContextValue = {
@@ -58,9 +58,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user?.id) clearPersistentPrivateCache(user.id);
     if (user?.id) clearConditionalApiCache(`${user.id}:`);
     clearStoredAuth();
+    void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
     setToken(null);
     setUser(null);
-  }, [user?.id]);
+  }, [mutateCache, user?.id]);
 
   const applySession = useCallback((session: AuthSession) => {
     if (user?.id && user.id !== session.user.id) {
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     saveCurrentUser(session.user);
     setToken(session.access_token);
     setUser(session.user);
+    void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
   }, [mutateCache, user?.id]);
 
   const refreshUser = useCallback(async () => {

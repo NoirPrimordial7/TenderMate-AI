@@ -1,6 +1,7 @@
 import type { AppLocale } from "@/i18n/config";
 
 export type CacheKey = readonly ["private" | "public", ...Array<string | number>];
+export type AdminCacheKey = readonly ["admin", string, string, string, string, string, string];
 
 export const cacheKeys = {
   auth: (userId: string): CacheKey => ["private", userId, "auth", "me"],
@@ -13,6 +14,12 @@ export const cacheKeys = {
   signedPdf: (userId: string, tenderId: string): CacheKey => ["private", userId, "signed-pdf", tenderId],
   publicPlans: (): CacheKey => ["public", "billing-plans"]
 } as const;
+
+export function adminCacheKey(staffUserId: string, staffRole: string, resource: string, filter: string, cursor: string | null, locale: AppLocale): AdminCacheKey {
+  return ["admin", staffUserId, staffRole, resource, filter || "none", cursor ?? "first", locale];
+}
+
+export function isAdminKey(key: unknown) { return Array.isArray(key) && key[0] === "admin"; }
 
 export function isPrivateKeyForUser(key: unknown, userId: string) {
   return Array.isArray(key) && key[0] === "private" && key[1] === userId;
