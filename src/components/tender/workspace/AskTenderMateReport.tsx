@@ -7,9 +7,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
 import type { TenderAssistantMessage, TenderQuestionResponse } from "@/domain/tender/assistant";
 import type { SourceReference, TenderRecordView } from "@/domain/tender/types";
+import { BRAND } from "@/config/brand";
 import type { AppLocale } from "@/i18n/config";
 import { ApiError } from "@/services/api";
 import { askTenderQuestion, clearTenderQuestionHistory, fetchTenderQuestionHistory } from "@/services/TenderAssistantService";
+import { VerificationWarning } from "@/components/launch/VerificationWarning";
 
 const LANGUAGE_LABELS: Record<AppLocale, string> = { en: "English", hi: "हिंदी", mr: "मराठी" };
 
@@ -139,6 +141,7 @@ export function AskTenderMateReport({ tender, onSource }: { tender: TenderRecord
       </header>
 
       <div className="tm-assistant-scope"><FileSearch aria-hidden="true"/><div><strong>{t("scopeTitle")}</strong><span>{t("scopeNotice")}</span></div></div>
+      <VerificationWarning compact />
       {confirmClear ? <div className="tm-assistant-confirm" role="alert"><p>{t("clearConfirm")}</p><div><button type="button" onClick={() => setConfirmClear(false)}>{t("cancel")}</button><button type="button" onClick={() => void clearHistory()}>{t("confirmClear")}</button></div></div> : null}
       {error || historyError ? <div className="tm-assistant-error" role="alert"><strong>{t("errorTitle")}</strong><span>{error ?? t("errorHistory")}</span></div> : null}
 
@@ -146,7 +149,7 @@ export function AskTenderMateReport({ tender, onSource }: { tender: TenderRecord
         {isLoading ? <div className="tm-assistant-loading"><LoaderCircle aria-hidden="true"/><span>{t("loadingHistory")}</span></div> : null}
         {!isLoading && !messages.length ? <div className="tm-assistant-empty"><span>?</span><div><h3>{t("emptyTitle")}</h3><p>{t("emptySupport")}</p></div></div> : null}
         {messages.map((message) => <article className="tm-assistant-message" data-role={message.role} key={message.id}>
-          <div className="tm-assistant-message-meta"><span>{message.role === "user" ? t("you") : "TenderMate AI"}</span>{message.role === "assistant" && message.confidence != null ? <span>{Math.round(message.confidence * 100)}% {t("confidence")}</span> : null}</div>
+          <div className="tm-assistant-message-meta"><span>{message.role === "user" ? t("you") : BRAND.name}</span>{message.role === "assistant" && message.confidence != null ? <span>{Math.round(message.confidence * 100)}% {t("confidence")}</span> : null}</div>
           <p>{message.content}</p>
           {message.role === "assistant" && !message.not_found && message.citations.length ? <div className="tm-assistant-citations"><strong><Check aria-hidden="true"/>{t("verifiedSources")}</strong>{message.citations.map((citation, index) => <button type="button" key={`${message.id}-${citation.page}-${index}`} onClick={() => openCitation(message, index)}><span>{t("pageClause", { page: citation.page, clause: citation.clause })}</span><q>{citation.quote}</q><ArrowUpRight aria-hidden="true"/></button>)}</div> : null}
         </article>)}

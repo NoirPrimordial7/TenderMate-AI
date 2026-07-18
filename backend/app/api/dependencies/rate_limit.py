@@ -125,3 +125,18 @@ CHECKOUT_RATE_LIMIT = RateLimitRule(
     max_requests=5,
     window_seconds=60 * 60,
 )
+ANONYMOUS_FEEDBACK_RATE_LIMIT = RateLimitRule(
+    name="anonymous_feedback",
+    max_requests=3,
+    window_seconds=60 * 60,
+)
+AUTHENTICATED_FEEDBACK_RATE_LIMIT = RateLimitRule(
+    name="authenticated_feedback",
+    max_requests=10,
+    window_seconds=60 * 60,
+)
+LEGAL_ACCEPTANCE_RATE_LIMIT = RateLimitRule(
+    name="legal_acceptance",
+    max_requests=20,
+    window_seconds=60 * 60,
+)
