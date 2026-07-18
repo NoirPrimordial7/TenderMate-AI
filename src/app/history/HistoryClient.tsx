@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import useSWR from "swr";
 import { ArrowRight, Library, Search, SlidersHorizontal, Upload } from "lucide-react";
 import EmptyState from "@/components/EmptyState";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusBadge } from "@/components/workspace/StatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
-import { useTranslations } from "@/contexts/LocaleContext";
+import { useLocale, useTranslations } from "@/contexts/LocaleContext";
 import type { HistoryTender } from "@/domain/tender/types";
-import { tenderService } from "@/services/TenderService";
 import { toFriendlyApiMessage } from "@/services/api";
+import { useTenderHistory } from "@/hooks/useTenderHistory";
 
 type StatusFilter = "all" | HistoryTender["status"];
 type RiskFilter = "all" | HistoryTender["riskLevel"];
@@ -29,19 +28,17 @@ function statusTone(status: HistoryTender["status"]) {
 
 export default function HistoryClient() {
   const { isAuthenticated, user } = useAuth();
+  const { activeLocale } = useLocale();
   const t = useTranslations("history");
   const dashboard = useTranslations("dashboard");
   const common = useTranslations("common");
+  const cache = useTranslations("cache");
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [risk, setRisk] = useState<RiskFilter>("all");
   const [deadline, setDeadline] = useState<DeadlineFilter>("all");
   const [sort, setSort] = useState<SortOption>("updated");
-  const { data: history = [], error: loadError, isLoading } = useSWR<HistoryTender[]>(
-    isAuthenticated && user ? ["private", user.id, "tender-history"] : null,
-    () => tenderService.getBackendTenderHistory(),
-    { revalidateOnFocus: true }
-  );
+  const { items: history, error: loadError, isInitialLoading: isLoading, isRefreshing, hasCachedData, hasMore, loadMore, isValidating, latestUpdatedAt } = useTenderHistory(isAuthenticated && user ? user.id : null, activeLocale);
   const error = loadError ? toFriendlyApiMessage(loadError, t("loadFailedDescription")) : "";
   const items = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -75,10 +72,13 @@ export default function HistoryClient() {
     <ProtectedRoute>
       <PageHeader eyebrow={t("eyebrow")} title={t("libraryTitle")} description={t("support")} accent="blue" meta={<div className="tm-library-count"><Library aria-hidden="true"/><strong>{history.length}</strong><span>{t("total")}</span></div>} action={<Link href="/" className="tm-button tm-button-dark"><Upload aria-hidden="true" />{dashboard("uploadTender")}</Link>} />
       {isLoading ? <div className="tm-library-skeleton" role="status" aria-live="polite"><span />{t("loading")}</div> : null}
-      {error ? <EmptyState title={t("loadFailed")} description={error} actionHref="/" actionLabel={dashboard("uploadTender")} /> : null}
+      {isRefreshing ? <p className="tm-cache-status" role="status">{cache("checking")}</p> : null}
+      {!isRefreshing && latestUpdatedAt ? <p className="tm-cache-status">{cache("updated", { time: new Intl.DateTimeFormat(activeLocale === "en" ? "en-IN" : activeLocale === "hi" ? "hi-IN" : "mr-IN", { timeStyle: "short", dateStyle: "medium" }).format(new Date(latestUpdatedAt)) })}</p> : null}
+      {error && history.length ? <p className="tm-alert tm-alert-warning" role="status">{hasCachedData ? cache("showingSaved") : cache("refreshFailed")}</p> : null}
+      {error && !history.length ? <EmptyState title={t("loadFailed")} description={error} actionHref="/" actionLabel={dashboard("uploadTender")} /> : null}
       {!isLoading && !error && history.length === 0 ? <EmptyState title={t("empty")} description={t("emptyDescription")} actionHref="/" actionLabel={dashboard("uploadTender")} /> : null}
 
-      {!isLoading && !error && history.length > 0 ? (
+      {!isLoading && history.length > 0 ? (
         <section className="tm-library" aria-labelledby="library-results">
           <div className="tm-library-controls">
             <label className="tm-search-field"><Search aria-hidden="true"/><span className="sr-only">{t("searchLabel")}</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchPlaceholder")} /></label>
@@ -106,6 +106,7 @@ export default function HistoryClient() {
               ))}
             </div>
           )}
+          {hasMore ? <button className="tm-button tm-button-outline tm-history-more" type="button" disabled={isValidating} onClick={() => void loadMore()}>{isValidating ? cache("checking") : cache("loadMore")}</button> : null}
         </section>
       ) : null}
     </ProtectedRoute>

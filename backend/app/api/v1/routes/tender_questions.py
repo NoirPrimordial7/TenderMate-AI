@@ -1,4 +1,5 @@
 import hashlib
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -29,9 +30,9 @@ def ask_tender_question(id: UUID, payload: TenderQuestionRequest, request: Reque
 
 
 @router.get("/{id}/questions/history", response_model=TenderQuestionHistoryResponse)
-def get_tender_question_history(id: UUID, current_user: UserResponse = Depends(get_current_user), service: TenderQuestionService = Depends(get_tender_question_service)) -> TenderQuestionHistoryResponse:
+def get_tender_question_history(id: UUID, after: datetime | None = None, current_user: UserResponse = Depends(get_current_user), service: TenderQuestionService = Depends(get_tender_question_service)) -> TenderQuestionHistoryResponse:
     try:
-        return service.history(id, current_user.id)
+        return service.history(id, current_user.id, after=after)
     except TenderQuestionError as exc:
         raise HTTPException(status_code=exc.status_code, detail=str(exc)) from exc
 

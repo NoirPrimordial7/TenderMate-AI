@@ -2,8 +2,9 @@ import type { AppLocale } from "@/i18n/config";
 import type { TenderQuestionHistory, TenderQuestionResponse } from "@/domain/tender/assistant";
 import { apiRequest } from "@/services/api";
 
-export function fetchTenderQuestionHistory(tenderId: string, signal?: AbortSignal) {
-  return apiRequest<TenderQuestionHistory>(`/tenders/${tenderId}/questions/history`, { signal });
+export function fetchTenderQuestionHistory(tenderId: string, signal?: AbortSignal, after?: string | null) {
+  const query = after ? `?after=${encodeURIComponent(after)}` : "";
+  return apiRequest<TenderQuestionHistory>(`/tenders/${tenderId}/questions/history${query}`, { signal });
 }
 
 export function askTenderQuestion(tenderId: string, question: string, language: AppLocale, conversationId: string | null, signal?: AbortSignal) {

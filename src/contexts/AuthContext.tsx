@@ -4,7 +4,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import { useRouter } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
 import { AuthSession, AuthUser, LoginInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
-import { AUTH_INVALIDATED_EVENT, isApiError } from "@/services/api";
+import { AUTH_INVALIDATED_EVENT, clearConditionalApiCache, isApiError } from "@/services/api";
 import { fetchCurrentUser, loginUser, signupUser, updateUserPreferences } from "@/services/AuthService";
 import {
   clearStoredAuth,
@@ -14,6 +14,8 @@ import {
   saveCurrentUser
 } from "@/services/authStorage";
 import { useLocale } from "@/contexts/LocaleContext";
+import { cacheKeys } from "@/cache/keys";
+import { clearPersistentPrivateCache } from "@/cache/persistent";
 
 type AuthContextValue = {
   user: AuthUser | null;
@@ -41,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [hasInitialized, setHasInitialized] = useState(false);
 
-  const sessionKey = hasInitialized && token ? ["private", "auth", "me"] : null;
+  const sessionKey = hasInitialized && token ? (user ? cacheKeys.auth(user.id) : ["private", "pending-session", "me"] as const) : null;
   const { data: revalidatedUser, error: revalidationError, isLoading: isRevalidating } = useSWR(
     sessionKey,
     fetchCurrentUser,
@@ -53,17 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const clearSession = useCallback(() => {
+    if (user?.id) clearPersistentPrivateCache(user.id);
+    if (user?.id) clearConditionalApiCache(`${user.id}:`);
     clearStoredAuth();
     setToken(null);
     setUser(null);
-  }, []);
+  }, [user?.id]);
 
   const applySession = useCallback((session: AuthSession) => {
+    if (user?.id && user.id !== session.user.id) {
+      clearPersistentPrivateCache(user.id);
+      clearConditionalApiCache(`${user.id}:`);
+      void mutateCache((key) => Array.isArray(key) && key[0] === "private" && key[1] === user.id, undefined, { revalidate: false });
+    }
     saveAccessToken(session.access_token);
     saveCurrentUser(session.user);
     setToken(session.access_token);
     setUser(session.user);
-  }, []);
+  }, [mutateCache, user?.id]);
 
   const refreshUser = useCallback(async () => {
     const storedToken = getAccessToken();

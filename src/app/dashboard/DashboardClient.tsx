@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import useSWR from "swr";
 import { ArrowRight, CalendarClock, FileWarning, Gauge, Upload } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import EmptyState from "@/components/EmptyState";
@@ -9,12 +8,11 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusBadge } from "@/components/workspace/StatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
-import type { BillingUsage } from "@/domain/billing/types";
 import type { HistoryTender } from "@/domain/tender/types";
-import { billingService } from "@/services/BillingService";
-import { tenderService } from "@/services/TenderService";
 import { toFriendlyApiMessage } from "@/services/api";
 import { daysUntil, getInvalidDocuments, getPriorityTender } from "@/services/tenderWorkspace";
+import { useTenderHistory } from "@/hooks/useTenderHistory";
+import { useBillingUsage } from "@/hooks/useBillingUsage";
 
 const localeMap = { en: "en-IN", hi: "hi-IN", mr: "mr-IN" } as const;
 
@@ -33,15 +31,9 @@ export default function DashboardClient() {
   const t = useTranslations("dashboard");
   const common = useTranslations("common");
   const historyCopy = useTranslations("history");
-  const { data: tenders = [], error: tendersError, isLoading } = useSWR<HistoryTender[]>(
-    isAuthenticated && user ? ["private", user.id, "tender-history"] : null,
-    () => tenderService.getBackendTenderHistory(),
-    { revalidateOnFocus: true }
-  );
-  const { data: usage } = useSWR<BillingUsage>(
-    isAuthenticated && user ? ["private", user.id, "billing-usage"] : null,
-    billingService.getUsage
-  );
+  const cache = useTranslations("cache");
+  const { items: tenders, error: tendersError, isInitialLoading: isLoading, isRefreshing, hasCachedData, latestUpdatedAt } = useTenderHistory(isAuthenticated && user ? user.id : null, activeLocale);
+  const { data: usage, isValidating: usageRefreshing } = useBillingUsage(isAuthenticated && user ? user.id : null);
   const priority = getPriorityTender(tenders);
   const invalidDocuments = getInvalidDocuments(tenders);
   const credits = usage?.free_analysis_credits ?? user?.free_analysis_credits;
@@ -75,10 +67,13 @@ export default function DashboardClient() {
       />
 
       {isLoading ? <div className="tm-dashboard-skeleton" role="status" aria-live="polite"><span />{t("loading")}</div> : null}
-      {error ? <EmptyState title={t("loadFailed")} description={error} actionHref="/" actionLabel={t("uploadTender")} /> : null}
+      {isRefreshing || usageRefreshing ? <p className="tm-cache-status" role="status">{cache("checking")}</p> : null}
+      {!isRefreshing && latestUpdatedAt ? <p className="tm-cache-status">{cache("updated", { time: new Intl.DateTimeFormat(localeMap[activeLocale], { timeStyle: "short", dateStyle: "medium" }).format(new Date(latestUpdatedAt)) })}</p> : null}
+      {error && tenders.length ? <p className="tm-alert tm-alert-warning" role="status">{hasCachedData ? cache("showingSaved") : cache("refreshFailed")}</p> : null}
+      {error && !tenders.length ? <EmptyState title={t("loadFailed")} description={error} actionHref="/" actionLabel={t("uploadTender")} /> : null}
       {!isLoading && !error && tenders.length === 0 ? <EmptyState title={t("empty")} description={t("emptyDescription")} actionHref="/" actionLabel={t("uploadTender")} secondaryActionHref="/pricing" secondaryActionLabel={t("viewPricing")} /> : null}
 
-      {!isLoading && !error && tenders.length > 0 ? (
+      {!isLoading && tenders.length > 0 ? (
         <div className="tm-dashboard-grid">
           <section className="tm-priority-tender" aria-labelledby="priority-tender-title">
             <div className="tm-section-kicker"><span>{t("priority")}</span><CalendarClock aria-hidden="true" /></div>

@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import type { SourceReference } from "@/domain/tender/types";
 import { tenderService } from "@/services/TenderService";
+import { cacheKeys } from "@/cache/keys";
+import { CACHE_POLICY } from "@/cache/policy";
 import { toFriendlyApiMessage } from "@/services/api";
 
 type StoredPdfViewerProps = { tenderId: string; source: SourceReference | null; pageCount?: number | null };
@@ -17,7 +19,11 @@ export function StoredPdfViewer({ tenderId, source, pageCount }: StoredPdfViewer
   const common = useTranslations("common");
   const [page, setPage] = useState(source?.page ?? 1);
   const [zoom, setZoom] = useState(100);
-  const { data, error, isLoading, mutate } = useSWR(user ? ["private", user.id, "tender-source", tenderId] : null, () => tenderService.getTenderSource(tenderId), { revalidateOnFocus: false, dedupingInterval: 240_000 });
+  const { data, error, isLoading, mutate } = useSWR(user ? cacheKeys.signedPdf(user.id, tenderId) : null, async () => ({ ...(await tenderService.getTenderSource(tenderId)), fetchedAt: Date.now() }), {
+    revalidateOnFocus: true,
+    dedupingInterval: 5_000,
+    refreshInterval: (source) => source ? Math.max(5_000, source.fetchedAt + source.expires_in * 1_000 - CACHE_POLICY.signedUrlSafetyWindowMs - Date.now()) : 0
+  });
   useEffect(() => { if (source?.page) setPage(source.page); }, [source?.page]);
   const viewerUrl = useMemo(() => data?.signed_url ? `${data.signed_url}#page=${page}&zoom=${zoom}` : "", [data?.signed_url, page, zoom]);
   return (

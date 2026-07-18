@@ -358,10 +358,10 @@ class TenderQuestionService:
         return self._model_router
 
     def history(
-        self, tender_id: UUID, user_id: UUID
+        self, tender_id: UUID, user_id: UUID, after: datetime | None = None
     ) -> TenderQuestionHistoryResponse:
         self._ready_tender(tender_id, user_id)
-        rows = self.questions.list_history(tender_id, user_id)
+        rows = self.questions.list_history(tender_id, user_id) if after is None else self.questions.list_history(tender_id, user_id, after=after)
         return TenderQuestionHistoryResponse(
             tender_id=tender_id,
             messages=[TenderChatMessage.model_validate(row) for row in rows],

@@ -10,6 +10,7 @@ import type { TenderRecordView } from "@/domain/tender/types";
 import { tenderService } from "@/services/TenderService";
 import { ApiError, toFriendlyApiMessage } from "@/services/api";
 import { getProcessingStages } from "@/services/tenderWorkspace";
+import { publishCacheEvent } from "@/cache/events";
 
 type TenderProcessorProps = { tender: TenderRecordView; onRefresh: () => Promise<TenderRecordView | null | undefined> };
 
@@ -48,6 +49,7 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
       }
       if (!extractionComplete || !hasExtractedText) {
         setActive("extracting");
+        if (user) publishCacheEvent({ type: "tender-status", userId: user.id, tenderId: tender.id });
         const extraction = await tenderService.extractTenderText(tender.id);
         current = (await onRefresh()) ?? current;
         if (extraction.pages_with_text === 0) {
@@ -71,8 +73,13 @@ export function TenderProcessor({ tender, onRefresh }: TenderProcessorProps) {
         setActive("analyzing");
         await tenderService.analyzeTender(tender.id);
         await Promise.all([onRefresh(), refreshUser()]);
+        if (user) {
+          publishCacheEvent({ type: "report-completed", userId: user.id, tenderId: tender.id });
+          publishCacheEvent({ type: "credits-changed", userId: user.id, tenderId: tender.id });
+        }
       }
     } catch (cause) {
+      if (user) publishCacheEvent({ type: "report-failed", userId: user.id, tenderId: tender.id });
       if (cause instanceof ApiError) {
         if (cause.status === 401) setError(t("errors.unauthorized"));
         else if (cause.status === 402) setError(t("errors.payment"));

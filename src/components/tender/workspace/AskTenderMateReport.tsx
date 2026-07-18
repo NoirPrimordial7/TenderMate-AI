@@ -5,19 +5,23 @@ import { ArrowUpRight, Check, FileSearch, LoaderCircle, Send, Trash2 } from "luc
 import useSWR from "swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
-import type { TenderAssistantMessage, TenderQuestionResponse } from "@/domain/tender/assistant";
+import type { TenderAssistantMessage, TenderQuestionHistory, TenderQuestionResponse } from "@/domain/tender/assistant";
 import type { SourceReference, TenderRecordView } from "@/domain/tender/types";
 import { BRAND } from "@/config/brand";
 import type { AppLocale } from "@/i18n/config";
 import { ApiError } from "@/services/api";
 import { askTenderQuestion, clearTenderQuestionHistory, fetchTenderQuestionHistory } from "@/services/TenderAssistantService";
+import { cacheKeys } from "@/cache/keys";
+import { mergeChatMessages } from "@/cache/chat";
+import { PRIVATE_SWR_POLICY } from "@/cache/policy";
+import { publishCacheEvent, subscribeCacheEvents } from "@/cache/events";
 import { VerificationWarning } from "@/components/launch/VerificationWarning";
 
 const LANGUAGE_LABELS: Record<AppLocale, string> = { en: "English", hi: "हिंदी", mr: "मराठी" };
 
 function createLocalMessage(content: string, role: "user" | "assistant", language: AppLocale, response?: TenderQuestionResponse): TenderAssistantMessage {
   return {
-    id: response?.message_id ?? `local-${Date.now()}`,
+    id: response?.message_id ?? `local-${crypto.randomUUID()}`,
     conversation_id: response?.conversation_id ?? "",
     tender_id: "",
     role,
@@ -64,13 +68,23 @@ export function AskTenderMateReport({ tender, onSource }: { tender: TenderRecord
   const [error, setError] = useState<string | null>(null);
   const [confirmClear, setConfirmClear] = useState(false);
   const requestRef = useRef<AbortController | null>(null);
+  const storedMessagesRef = useRef<TenderAssistantMessage[]>([]);
   const endRef = useRef<HTMLDivElement>(null);
-  const historyKey = user ? ["private", user.id, "tender-assistant", tender.id] : null;
-  const { data, error: historyError, isLoading, mutate } = useSWR(historyKey, () => fetchTenderQuestionHistory(tender.id), { revalidateOnFocus: false });
-  const messages = useMemo(() => [...(data?.messages ?? []), ...pendingMessages], [data?.messages, pendingMessages]);
+  const historyKey = user ? cacheKeys.chat(user.id, tender.id, analysisLocale) : null;
+  const { data, error: historyError, isLoading, mutate } = useSWR<TenderQuestionHistory>(historyKey, async () => {
+    const existing = storedMessagesRef.current;
+    const after = existing.at(-1)?.created_at ?? null;
+    const next = await fetchTenderQuestionHistory(tender.id, undefined, after);
+    return { ...next, messages: mergeChatMessages(existing, next.messages) };
+  }, PRIVATE_SWR_POLICY);
+  const messages = useMemo(() => mergeChatMessages(data?.messages ?? [], pendingMessages), [data?.messages, pendingMessages]);
   const suggestions = useMemo(() => suggestionsFor(tender, t), [t, tender]);
 
   useEffect(() => () => requestRef.current?.abort(), []);
+  useEffect(() => { storedMessagesRef.current = data?.messages ?? []; }, [data?.messages]);
+  useEffect(() => subscribeCacheEvents((event) => {
+    if (event.type === "chat-answer" && event.userId === user?.id && event.tenderId === tender.id) void mutate();
+  }), [mutate, tender.id, user?.id]);
   useEffect(() => { if (messages.length) endRef.current?.scrollIntoView({ block: "nearest" }); }, [messages.length]);
   useEffect(() => {
     const latest = [...messages].reverse().find((message) => message.conversation_id);
@@ -94,10 +108,11 @@ export function AskTenderMateReport({ tender, onSource }: { tender: TenderRecord
       setConversationId(response.conversation_id);
       const assistantMessage = createLocalMessage(response.answer, "assistant", analysisLocale, response);
       await mutate(
-        { tender_id: tender.id, messages: [...(data?.messages ?? []), { ...localUser, conversation_id: response.conversation_id }, assistantMessage] },
+        { tender_id: tender.id, messages: mergeChatMessages(data?.messages ?? [], [{ ...localUser, conversation_id: response.conversation_id }], [assistantMessage]) },
         { revalidate: false }
       );
       setPendingMessages([]);
+      if (user) publishCacheEvent({ type: "chat-answer", userId: user.id, tenderId: tender.id });
     } catch (nextError) {
       if (nextError instanceof DOMException && nextError.name === "AbortError") return;
       setPendingMessages((current) => current.filter((message) => message !== localUser));

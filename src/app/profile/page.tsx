@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import useSWR from "swr";
 import { ArrowRight, LockKeyhole, LogOut, UserRound } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ApplicationShell } from "@/components/shell/ApplicationShell";
@@ -9,10 +8,9 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusBadge } from "@/components/workspace/StatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
-import type { BillingUsage } from "@/domain/billing/types";
 import { SUPPORTED_LOCALES, type AppLocale } from "@/i18n/config";
-import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
+import { useBillingUsage } from "@/hooks/useBillingUsage";
 import { PerformanceModeControl } from "@/components/launch/PerformanceModeControl";
 import { TrainingConsentSetting } from "@/components/launch/TrainingConsentSetting";
 
@@ -23,7 +21,7 @@ export default function ProfilePage() {
   const language = useTranslations("language");
   const common = useTranslations("common");
   const launch = useTranslations("launch");
-  const { data: usage, error } = useSWR<BillingUsage>(isAuthenticated && user ? ["private", user.id, "billing-usage"] : null, billingService.getUsage);
+  const { data: usage, error } = useBillingUsage(isAuthenticated && user ? user.id : null);
   const credits = usage?.free_analysis_credits ?? user?.free_analysis_credits;
   const plan = usage?.plan_name ?? user?.plan_name;
   const subscription = usage?.subscription_status ?? user?.subscription_status;

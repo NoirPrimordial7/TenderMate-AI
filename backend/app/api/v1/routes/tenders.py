@@ -1,6 +1,8 @@
+import hashlib
+from datetime import datetime
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 
 from app.api.dependencies.auth import get_current_user
 from app.api.dependencies.rate_limit import (
@@ -76,12 +78,32 @@ def get_analysis_usage_service() -> UsageService:
         ) from exc
 
 
+def _private_cache_headers(response: Response, etag: str) -> None:
+    response.headers["Cache-Control"] = "private, max-age=0, must-revalidate"
+    response.headers["ETag"] = etag
+    response.headers["Vary"] = "Authorization"
+
+
+def _etag(parts: list[str]) -> str:
+    return f'"{hashlib.sha256("|".join(parts).encode()).hexdigest()[:24]}"'
+
+
 @router.get("", response_model=list[TenderResponse])
 def list_tenders(
+    request: Request,
+    response: Response,
+    limit: int = Query(default=40, ge=1, le=100),
+    cursor: datetime | None = Query(default=None),
+    updated_since: datetime | None = Query(default=None),
     current_user: UserResponse = Depends(get_current_user),
     service: TenderService = Depends(get_tender_service),
-) -> list[TenderResponse]:
-    return service.list_tenders(user_id=current_user.id)
+) -> list[TenderResponse] | Response:
+    items = service.list_tenders(user_id=current_user.id, limit=limit, cursor=cursor, updated_since=updated_since)
+    etag = _etag([f"{item.id}:{item.updated_at.isoformat()}" for item in items])
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers={"ETag": etag, "Cache-Control": "private, max-age=0, must-revalidate", "Vary": "Authorization"})
+    _private_cache_headers(response, etag)
+    return items
 
 
 @router.get("/latest", response_model=TenderResponse)
@@ -103,9 +125,11 @@ def get_latest_tender(
 @router.get("/{id}", response_model=TenderResponse)
 def get_tender_by_id(
     id: UUID,
+    request: Request,
+    response: Response,
     current_user: UserResponse = Depends(get_current_user),
     service: TenderService = Depends(get_tender_service),
-) -> TenderResponse:
+) -> TenderResponse | Response:
     tender = service.get_tender_by_id(id, user_id=current_user.id)
 
     if tender is None:
@@ -114,6 +138,12 @@ def get_tender_by_id(
             detail=f"Tender {id} was not found or does not belong to the current user.",
         )
 
+    report_version = tender.analysis_json.schemaVersion if tender.analysis_json else "none"
+    etag = _etag([str(tender.id), tender.updated_at.isoformat(), report_version])
+    if request.headers.get("if-none-match") == etag:
+        return Response(status_code=status.HTTP_304_NOT_MODIFIED, headers={"ETag": etag, "Cache-Control": "private, max-age=0, must-revalidate", "Vary": "Authorization"})
+    _private_cache_headers(response, etag)
+    response.headers["X-Data-Version"] = report_version if tender.analysis_json else tender.updated_at.isoformat()
     return tender
 
 

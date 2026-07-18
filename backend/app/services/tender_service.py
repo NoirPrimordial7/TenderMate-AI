@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from app.repositories.tender_repository import TenderRepository
@@ -8,8 +9,8 @@ class TenderService:
     def __init__(self, repository: TenderRepository | None = None) -> None:
         self.repository = repository or TenderRepository()
 
-    def list_tenders(self, user_id: UUID | None = None) -> list[TenderResponse]:
-        return self.repository.list_tenders(user_id=user_id)
+    def list_tenders(self, user_id: UUID | None = None, *, limit: int | None = None, cursor: datetime | None = None, updated_since: datetime | None = None) -> list[TenderResponse]:
+        return self.repository.list_tenders(user_id=user_id, limit=limit, cursor=cursor, updated_since=updated_since)
 
     def get_latest_tender(self, user_id: UUID | None = None) -> TenderResponse | None:
         return self.repository.get_latest_tender(user_id=user_id)

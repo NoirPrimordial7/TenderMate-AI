@@ -14,15 +14,19 @@ class TenderQuestionRepository:
     def __init__(self, supabase_client: Any | None = None) -> None:
         self._supabase_client = supabase_client if supabase_client is not None else get_supabase_client()
 
-    def list_history(self, tender_id: UUID, user_id: UUID) -> list[dict[str, Any]]:
+    def list_history(self, tender_id: UUID, user_id: UUID, after: datetime | None = None) -> list[dict[str, Any]]:
         client = self._require_client()
-        return self._query_rows(
-            "load tender question history",
+        query = (
             client.table("tender_chat_messages")
             .select(CHAT_COLUMNS)
             .eq("tender_id", str(tender_id))
             .eq("user_id", str(user_id))
-            .order("created_at"),
+        )
+        if after is not None:
+            query = query.gt("created_at", after.isoformat())
+        return self._query_rows(
+            "load tender question history",
+            query.order("created_at"),
         )
 
     def list_conversation(self, tender_id: UUID, user_id: UUID, conversation_id: UUID) -> list[dict[str, Any]]:
