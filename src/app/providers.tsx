@@ -8,6 +8,10 @@ import { AppRuntime } from "@/components/shell/AppRuntime";
 import type { AppLocale } from "@/i18n/config";
 import { CACHE_POLICY } from "@/cache/policy";
 import { isApiError } from "@/services/api";
+import { PerformanceModeProvider } from "@/contexts/PerformanceModeContext";
+import { LaunchFooter } from "@/components/launch/LaunchFooter";
+import { ProductFeedback } from "@/components/launch/ProductFeedback";
+import { LegalAcceptanceGate } from "@/components/launch/LegalAcceptanceGate";
 
 const memoryCache = new Map();
 const swrConfig = {
@@ -28,12 +32,17 @@ const swrConfig = {
 export default function Providers({ children, initialLocale }: { children: ReactNode; initialLocale: AppLocale | null }) {
   return (
     <LocaleProvider initialLocale={initialLocale}>
-      <SWRConfig value={swrConfig}>
-        <AuthProvider>
-          <AppRuntime />
-          {children}
-        </AuthProvider>
-      </SWRConfig>
+      <PerformanceModeProvider>
+        <SWRConfig value={swrConfig}>
+          <AuthProvider>
+            <AppRuntime />
+            <LegalAcceptanceGate />
+            {children}
+            <LaunchFooter />
+            <ProductFeedback />
+          </AuthProvider>
+        </SWRConfig>
+      </PerformanceModeProvider>
     </LocaleProvider>
   );
 }

@@ -26,6 +26,8 @@ export type SignupInput = {
   password: string;
   preferred_language?: AppLocale;
   preferred_analysis_language?: AppLocale;
+  accepted_legal: boolean;
+  legal_locale: AppLocale;
 };
 
 export type LoginInput = {

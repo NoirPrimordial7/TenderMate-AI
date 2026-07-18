@@ -105,6 +105,14 @@ class Settings:
     max_tender_questions_per_day: int
     max_tender_question_context_chars: int
     max_tender_question_output_tokens: int
+    legal_entity_name: str = ""
+    legal_business_address: str = ""
+    legal_contact_email: str = ""
+    legal_grievance_officer_name: str = ""
+    legal_grievance_officer_email: str = ""
+    legal_governing_state: str = "Maharashtra"
+    legal_effective_date: str = ""
+    legal_version: str = "1.0"
 
     def __post_init__(self) -> None:
         selected = {
@@ -171,7 +179,7 @@ def get_settings() -> Settings:
     gemini_model = getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
     return Settings(
-        project_name=getenv("PROJECT_NAME", "TenderMate AI Backend"),
+        project_name=getenv("PROJECT_NAME", "NividaIQ Backend"),
         api_v1_prefix=getenv("API_V1_PREFIX", "/api/v1"),
         supabase_url=getenv("SUPABASE_URL", ""),
         supabase_service_role_key=getenv("SUPABASE_SERVICE_ROLE_KEY", ""),
@@ -235,4 +243,12 @@ def get_settings() -> Settings:
         max_tender_questions_per_day=_get_int_env("MAX_TENDER_QUESTIONS_PER_DAY", 100),
         max_tender_question_context_chars=_get_int_env("MAX_TENDER_QUESTION_CONTEXT_CHARS", 32000),
         max_tender_question_output_tokens=_get_int_env("MAX_TENDER_QUESTION_OUTPUT_TOKENS", 1200),
+        legal_entity_name=getenv("LEGAL_ENTITY_NAME", "").strip(),
+        legal_business_address=getenv("LEGAL_BUSINESS_ADDRESS", "").strip(),
+        legal_contact_email=getenv("LEGAL_CONTACT_EMAIL", "").strip(),
+        legal_grievance_officer_name=getenv("LEGAL_GRIEVANCE_OFFICER_NAME", "").strip(),
+        legal_grievance_officer_email=getenv("LEGAL_GRIEVANCE_OFFICER_EMAIL", "").strip(),
+        legal_governing_state=getenv("LEGAL_GOVERNING_STATE", "Maharashtra").strip(),
+        legal_effective_date=getenv("LEGAL_EFFECTIVE_DATE", "").strip(),
+        legal_version=getenv("LEGAL_VERSION", "1.0").strip(),
     )

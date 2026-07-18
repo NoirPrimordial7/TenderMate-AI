@@ -22,6 +22,7 @@ from app.services.auth_service import (
     get_auth_service,
 )
 from app.services.rate_limit_service import RateLimitService, get_rate_limit_service
+from app.services.launch_service import LaunchService, get_launch_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again in a moment."
@@ -37,13 +38,18 @@ def signup(
     request: Request,
     payload: SignupRequest,
     service: AuthService = Depends(get_auth_service),
+    launch_service: LaunchService = Depends(get_launch_service),
 ) -> TokenResponse:
+    if not payload.accepted_legal:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Terms, Privacy Policy and AI Analysis Disclaimer acceptance is required.")
     try:
-        return service.signup(
+        response = service.signup(
             payload,
             ip_address=get_client_ip(request),
             user_agent=get_user_agent(request),
         )
+        launch_service.accept_current_documents(response.user.id, payload.legal_locale, True)
+        return response
     except EmailAlreadyExistsError as exc:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

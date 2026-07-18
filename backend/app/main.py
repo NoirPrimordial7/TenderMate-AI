@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 
-from app.api.v1.routes import auth, billing, health, tender_questions, tenders, uploads
+from app.api.v1.routes import auth, billing, health, launch, tender_questions, tenders, uploads
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -12,7 +12,7 @@ SERVICE_UNAVAILABLE_MESSAGE = "Backend temporarily unavailable. Please try again
 app = FastAPI(
     title=settings.project_name,
     version="0.1.0",
-    description="Backend foundation for TenderMate AI."
+    description="Backend foundation for NividaIQ."
 )
 
 app.add_middleware(
@@ -45,7 +45,7 @@ def runtime_error_handler(_request, _exc: RuntimeError) -> JSONResponse:
 @app.get("/")
 def root() -> dict[str, str]:
     return {
-        "service": "TenderMate AI Backend",
+        "service": "NividaIQ Backend",
         "status": "running",
         "docs": "/docs",
         "health": "/health",
@@ -58,3 +58,4 @@ app.include_router(billing.router, prefix=settings.api_v1_prefix)
 app.include_router(uploads.router, prefix=settings.api_v1_prefix)
 app.include_router(tenders.router, prefix=settings.api_v1_prefix)
 app.include_router(tender_questions.router, prefix=settings.api_v1_prefix)
+app.include_router(launch.router, prefix=settings.api_v1_prefix)

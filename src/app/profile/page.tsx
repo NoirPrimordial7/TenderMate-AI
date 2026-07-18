@@ -11,6 +11,8 @@ import { useLocale, useTranslations } from "@/contexts/LocaleContext";
 import { SUPPORTED_LOCALES, type AppLocale } from "@/i18n/config";
 import { toFriendlyApiMessage } from "@/services/api";
 import { useBillingUsage } from "@/hooks/useBillingUsage";
+import { PerformanceModeControl } from "@/components/launch/PerformanceModeControl";
+import { TrainingConsentSetting } from "@/components/launch/TrainingConsentSetting";
 
 export default function ProfilePage() {
   const { isAuthenticated, logout, updateLanguagePreferences, user } = useAuth();
@@ -18,6 +20,7 @@ export default function ProfilePage() {
   const t = useTranslations("profile");
   const language = useTranslations("language");
   const common = useTranslations("common");
+  const launch = useTranslations("launch");
   const { data: usage, error } = useBillingUsage(isAuthenticated && user ? user.id : null);
   const credits = usage?.free_analysis_credits ?? user?.free_analysis_credits;
   const plan = usage?.plan_name ?? user?.plan_name;
@@ -66,6 +69,7 @@ export default function ProfilePage() {
             <ul><li>{t("jwtProtection")}</li><li>{t("passwordProtection")}</li><li>{t("privateDocuments")}</li></ul>
             <button type="button" onClick={() => logout("/login")}><LogOut aria-hidden="true"/>{t("logout")}</button>
           </section>
+          <section className="nl-profile-preferences" aria-labelledby="nl-preferences-title"><p className="tm-eyebrow">{t("languagePreferences")}</p><h2 id="nl-preferences-title">{launch("publicBeta")}</h2><PerformanceModeControl /><TrainingConsentSetting /></section>
         </div>
       </ProtectedRoute>
     </ApplicationShell>

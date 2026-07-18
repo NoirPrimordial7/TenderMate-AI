@@ -4,14 +4,14 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="theme-color" content="#f4f2ed" />
-    <title>TenderMate AI · Offline</title>
+    <title>NividaIQ · Offline</title>
     <style>
       *{box-sizing:border-box}body{margin:0;min-width:320px;background:#f4f2ed;color:#101010;font-family:"Helvetica Neue","Nirmala UI","Mangal","Kohinoor Devanagari",Arial,sans-serif}.shell{min-height:100svh;display:grid;grid-template-rows:auto 1fr;padding:clamp(20px,3.4vw,64px)}.brand{font-size:18px;font-weight:900;letter-spacing:-.055em}.brand i{color:#6c4dff;font-size:10px;font-style:normal;letter-spacing:0}.stage{display:grid;align-content:center;max-width:1100px}.eyebrow{font-size:12px;font-weight:800;color:#6c4dff}.shape{width:min(46vw,520px);height:18px;margin:22px 0;background:linear-gradient(90deg,#6c4dff 0 55%,#146cff 55% 82%,#ff5a36 82%)}h1{max-width:900px;margin:0;font-size:clamp(64px,min(11vw,15vh),168px);line-height:.82;letter-spacing:-.075em;text-transform:uppercase}p{max-width:620px;margin:28px 0 0;font-size:clamp(16px,2vw,22px);line-height:1.5}button{width:max-content;min-height:48px;margin-top:28px;padding:0 22px;border:1px solid #101010;border-radius:999px;color:#fff;background:#101010;font-weight:800;cursor:pointer}button:focus-visible{outline:3px solid #ff5a36;outline-offset:3px}@media(max-width:600px){h1{font-size:clamp(58px,20vw,96px)}.stage{align-content:start;padding-top:18vh}}
     </style>
   </head>
   <body>
     <main class="shell">
-      <div class="brand">TenderMate <i>AI</i></div>
+      <div class="brand">NividaIQ <i>AI</i></div>
       <section class="stage">
         <div class="eyebrow" id="eyebrow"></div>
         <div class="shape" aria-hidden="true"></div>
@@ -21,7 +21,7 @@
       </section>
     </main>
     <script>
-      const copy={en:{eyebrow:"TenderMate AI · secure workspace",title:"You’re offline.",message:"Reconnect to access your private tender workspace.",retry:"Try again"},hi:{eyebrow:"TenderMate AI · सुरक्षित वर्कस्पेस",title:"आप ऑफ़लाइन हैं।",message:"अपने निजी निविदा वर्कस्पेस के लिए दोबारा इंटरनेट से जुड़ें।",retry:"फिर कोशिश करें"},mr:{eyebrow:"TenderMate AI · सुरक्षित वर्कस्पेस",title:"तुम्ही ऑफलाइन आहात.",message:"खाजगी निविदा वर्कस्पेससाठी पुन्हा इंटरनेटशी जोडा.",retry:"पुन्हा प्रयत्न करा"}};
+      const copy={en:{eyebrow:"NividaIQ · secure workspace",title:"You’re offline.",message:"Reconnect to access your private tender workspace.",retry:"Try again"},hi:{eyebrow:"NividaIQ · सुरक्षित वर्कस्पेस",title:"आप ऑफ़लाइन हैं।",message:"अपने निजी निविदा वर्कस्पेस के लिए दोबारा इंटरनेट से जुड़ें।",retry:"फिर कोशिश करें"},mr:{eyebrow:"NividaIQ · सुरक्षित वर्कस्पेस",title:"तुम्ही ऑफलाइन आहात.",message:"खाजगी निविदा वर्कस्पेससाठी पुन्हा इंटरनेटशी जोडा.",retry:"पुन्हा प्रयत्न करा"}};
       const saved=localStorage.getItem("tendermate.locale");const locale=copy[saved]?saved:"en";document.documentElement.lang=locale;document.getElementById("eyebrow").textContent=copy[locale].eyebrow;document.getElementById("title").textContent=copy[locale].title;document.getElementById("message").textContent=copy[locale].message;document.getElementById("retry").textContent=copy[locale].retry;document.getElementById("retry").addEventListener("click",()=>location.reload());
     </script>
   </body>

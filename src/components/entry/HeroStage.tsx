@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
+import Link from "next/link";
 import type { AuthUser } from "@/domain/auth/types";
 import type { AuthMode } from "@/components/entry/AuthDock";
 import { ControlDock } from "@/components/entry/ControlDock";
@@ -30,6 +31,7 @@ export function HeroStage({
 }: HeroStageProps) {
   const shouldReduceMotion = useReducedMotion();
   const t = useTranslations("hero");
+  const launch = useTranslations("launch");
   const [isAuthOpen, setIsAuthOpen] = useState(openAuthOnLoad);
   const [hasSelectedFile, setHasSelectedFile] = useState(false);
   const isActive = isAuthenticated && Boolean(user);
@@ -88,6 +90,7 @@ export function HeroStage({
                   <button type="button" className="te-enter-button" onClick={() => setIsAuthOpen(true)}>
                     <span>{t("enter")}</span><ArrowUpRight aria-hidden="true" />
                   </button>
+                  <div className="nl-entry-links"><Link href="/demo">{launch("seeDemo")}</Link><Link href="/signup">{launch("analyseFree")}</Link></div>
                   <p>{t("secureLine")}</p>
                 </motion.div>
               ) : null}
