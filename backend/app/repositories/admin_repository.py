@@ -1,18 +1,20 @@
 import base64
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
 from app.db.supabase_client import get_supabase_client
+from app.repositories.security_repository import SecurityRepository
 
-SAFE_USER_COLUMNS = "id,full_name,email,role,is_active,account_status,email_verified_at,mfa_enabled,plan_name,subscription_status,free_analysis_credits,question_credits,failed_login_count,locked_until,last_active_at,last_login_at,created_at,preferred_language,preferred_analysis_language,training_consent,password_reset_required"
+SAFE_USER_COLUMNS = "id,full_name,email,role,is_active,account_status,email_verified_at,mfa_enabled,plan_name,subscription_status,free_analysis_credits,question_credits,failed_login_count,locked_until,last_active_at,last_login_at,created_at,preferred_language,preferred_analysis_language,training_consent"
 
 
 class AdminRepository:
     def __init__(self, supabase_client: Any | None = None) -> None:
         self.client = supabase_client if supabase_client is not None else get_supabase_client()
         if self.client is None: raise RuntimeError("Admin persistence requires backend service credentials.")
+        self.security_repository = SecurityRepository(self.client)
 
     @staticmethod
     def rows(response: Any, action: str) -> list[dict[str, Any]]:
@@ -24,11 +26,6 @@ class AdminRepository:
 
     def get_staff_identity(self, user_id: UUID) -> dict[str, Any] | None:
         rows = self.rows(self.client.table("app_users").select("id,role,is_active,account_status,email_verified_at,mfa_enabled").eq("id", str(user_id)).limit(1).execute(), "read staff identity")
-        return rows[0] if rows else None
-
-    def get_active_session(self, token_hash: str) -> dict[str, Any] | None:
-        now = datetime.now(timezone.utc).isoformat()
-        rows = self.rows(self.client.table("app_sessions").select("id,user_id,authenticated_at,mfa_assured_at,expires_at").eq("token_hash", token_hash).is_("revoked_at", "null").gt("expires_at", now).limit(1).execute(), "read staff session")
         return rows[0] if rows else None
 
     def get_user(self, user_id: UUID) -> dict[str, Any] | None:
@@ -94,9 +91,12 @@ class AdminRepository:
         return rows[0]
 
     def revoke_sessions(self, user_id: UUID, reason: str, session_id: UUID | None = None) -> int:
-        query = self.client.table("app_sessions").update({"revoked_at": datetime.now(timezone.utc).isoformat(), "revoked_reason": reason}).eq("user_id", str(user_id)).is_("revoked_at", "null")
-        if session_id: query = query.eq("id", str(session_id))
-        return len(self.rows(query.execute(), "revoke sessions"))
+        active = [row for row in self.security_repository.list_sessions(user_id) if not row.get("revoked_at")]
+        if session_id:
+            self.security_repository.revoke_session(session_id, user_id)
+            return int(any(str(row.get("id")) == str(session_id) for row in active))
+        self.security_repository.revoke_sessions(user_id)
+        return len(active)
 
     def adjust_credit(self, user_id: UUID, actor_id: UUID, values: dict[str, Any]) -> dict[str, Any]:
         response = self.client.rpc("admin_adjust_credit", {"p_user_id": str(user_id), "p_credit_type": values["credit_type"], "p_amount": values["amount"], "p_reason_category": values["reason_category"], "p_internal_note": values["internal_note"], "p_actor_user_id": str(actor_id), "p_idempotency_key": str(values["idempotency_key"])}).execute()

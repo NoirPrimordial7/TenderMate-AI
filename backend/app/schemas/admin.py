@@ -34,6 +34,9 @@ class AdminUserPage(BaseModel):
 class AdminOverview(BaseModel):
     metrics: dict[str, int | float | str | None]
     system_health: str
+    staff_role: str
+    permissions: list[str]
+    assurance: Literal["aal2"] = "aal2"
     deferred: list[str] = ["paid_users", "payments", "refunds"]
 
 

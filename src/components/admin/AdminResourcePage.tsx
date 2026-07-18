@@ -3,12 +3,12 @@
 import useSWR from "swr";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocale, useTranslations } from "@/contexts/LocaleContext";
-import { adminCacheKey } from "@/cache/keys";
+import { adminCacheKey, staffPermissionSignature } from "@/cache/keys";
 import { adminService } from "@/services/AdminService";
 
 export function AdminResourcePage({ resource }: { resource: string }) {
   const { user } = useAuth(); const { activeLocale } = useLocale(); const t = useTranslations("admin");
-  const key = user ? adminCacheKey(user.id, user.role, resource, "none", null, activeLocale) : null;
+  const key = user ? adminCacheKey(user.id, user.role, staffPermissionSignature(user.role), resource, "none", null, activeLocale) : null;
   const { data, error, isLoading, isValidating } = useSWR<Record<string, unknown>[]>(key, () => adminService.rows(resource));
   const rows = Array.isArray(data) ? data : [];
   const columns = rows[0] ? Object.keys(rows[0]).filter((key) => !["metadata", "internal_notes", "message"].includes(key)).slice(0, 8) : [];

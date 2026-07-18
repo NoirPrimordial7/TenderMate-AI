@@ -1,6 +1,7 @@
 import { clearStoredAuth, getAccessToken } from "@/services/authStorage";
 
 export const AUTH_INVALIDATED_EVENT = "tendermate:auth-invalidated";
+export const ADMIN_AUTHORIZATION_INVALIDATED_EVENT = "nividaiq:admin-authorization-invalidated";
 
 const DEFAULT_API_BASE_URL = "http://127.0.0.1:8000/api/v1";
 
@@ -21,6 +22,7 @@ export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   auth?: boolean;
   body?: unknown;
   conditionalKey?: string;
+  invalidateAuthOn401?: boolean;
 };
 
 const conditionalMemory = new Map<string, { etag: string; data: unknown }>();
@@ -47,6 +49,11 @@ function buildUrl(path: string) {
 function dispatchAuthInvalidated() {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(AUTH_INVALIDATED_EVENT));
+}
+
+function dispatchAdminAuthorizationInvalidated() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(ADMIN_AUTHORIZATION_INVALIDATED_EVENT));
 }
 
 async function readResponseBody(response: Response) {
@@ -112,7 +119,7 @@ export function toFriendlyApiMessage(error: unknown, fallback: string) {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { auth = true, body, headers, conditionalKey, ...requestOptions } = options;
+  const { auth = true, body, headers, conditionalKey, invalidateAuthOn401 = true, ...requestOptions } = options;
   const requestHeaders = new Headers(headers);
 
   if (!requestHeaders.has("Accept")) {
@@ -161,10 +168,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const responseBody = await readResponseBody(response);
 
   if (!response.ok) {
-    if (response.status === 401 && auth) {
+    if (response.status === 401 && auth && invalidateAuthOn401) {
       clearStoredAuth();
       dispatchAuthInvalidated();
     }
+    if (response.status === 403 && path.startsWith("/admin")) dispatchAdminAuthorizationInvalidated();
 
     throw new ApiError(response.status, getErrorMessage(response.status, responseBody), responseBody);
   }

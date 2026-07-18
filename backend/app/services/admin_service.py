@@ -7,7 +7,7 @@ from app.api.dependencies.admin import StaffContext, StaffRole
 from app.repositories.admin_repository import AdminRepository
 from app.schemas.admin import AdminUserSummary
 
-SECRET_FIELD_NAMES = frozenset({"password_hash", "totp_secret", "encrypted_totp_secret", "recovery_code_hash", "reset_token_hash", "access_token", "refresh_token", "token_hash", "api_key", "service_role_key", "payment_credentials"})
+SECRET_FIELD_NAMES = frozenset({"password_hash", "totp_secret", "secret_ciphertext", "encrypted_totp_secret", "recovery_code_hash", "code_hash", "reset_token_hash", "access_token", "refresh_token", "token_hash", "api_key", "service_role_key", "payment_credentials"})
 
 
 def assert_secret_free(value: Any) -> None:

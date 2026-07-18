@@ -13,6 +13,7 @@ import { toFriendlyApiMessage } from "@/services/api";
 import { useBillingUsage } from "@/hooks/useBillingUsage";
 import { PerformanceModeControl } from "@/components/launch/PerformanceModeControl";
 import { TrainingConsentSetting } from "@/components/launch/TrainingConsentSetting";
+import { AccountSecurityCenter } from "@/components/security/AccountSecurityCenter";
 
 export default function ProfilePage() {
   const { isAuthenticated, logout, updateLanguagePreferences, user } = useAuth();
@@ -71,6 +72,7 @@ export default function ProfilePage() {
           </section>
           <section className="nl-profile-preferences" aria-labelledby="nl-preferences-title"><p className="tm-eyebrow">{t("languagePreferences")}</p><h2 id="nl-preferences-title">{launch("publicBeta")}</h2><PerformanceModeControl /><TrainingConsentSetting /></section>
         </div>
+        <AccountSecurityCenter />
       </ProtectedRoute>
     </ApplicationShell>
   );

@@ -3,9 +3,10 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import useSWR, { useSWRConfig } from "swr";
-import { AuthSession, AuthUser, LoginInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
-import { AUTH_INVALIDATED_EVENT, clearConditionalApiCache, isApiError } from "@/services/api";
-import { fetchCurrentUser, loginUser, signupUser, updateUserPreferences } from "@/services/AuthService";
+import { AuthSession, AuthUser, LoginInput, MfaChallengeInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
+import { ADMIN_AUTHORIZATION_INVALIDATED_EVENT, AUTH_INVALIDATED_EVENT, clearConditionalApiCache, isApiError } from "@/services/api";
+import { completeMfaLogin, fetchCurrentUser, loginUser, signupUser, updateUserPreferences } from "@/services/AuthService";
+import { accountSecurityService } from "@/services/AccountSecurityService";
 import {
   clearStoredAuth,
   getAccessToken,
@@ -23,7 +24,8 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   signup(input: SignupInput): Promise<void>;
-  login(input: LoginInput): Promise<void>;
+  login(input: LoginInput): Promise<{ mfaRequired: boolean; challengeToken?: string }>;
+  completeMfa(input: MfaChallengeInput): Promise<void>;
   logout(redirectTo?: string): void;
   refreshUser(): Promise<AuthUser | null>;
   updateLanguagePreferences(input: UserPreferencesInput): Promise<AuthUser | null>;
@@ -130,14 +132,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(
     async (input: LoginInput) => {
-      const session = await loginUser(input);
-      applySession(session);
+      const response = await loginUser(input);
+      if (response.mfa_required) {
+        if (!response.challenge_token) throw new Error("MFA challenge was not returned.");
+        return { mfaRequired: true, challengeToken: response.challenge_token };
+      }
+      if (!response.access_token || !response.user) throw new Error("Authentication session was not returned.");
+      applySession({ access_token: response.access_token, token_type: response.token_type ?? "bearer", user: response.user });
+      return { mfaRequired: false };
     },
     [applySession]
   );
 
+  const completeMfa = useCallback(async (input: MfaChallengeInput) => {
+    const session = await completeMfaLogin(input);
+    applySession(session);
+  }, [applySession]);
+
   const logout = useCallback(
     (redirectTo?: string) => {
+      // The request captures the current bearer token before local credentials
+      // are cleared. Logout stays responsive if the API is unavailable.
+      void accountSecurityService.revokeCurrentSession().catch(() => undefined);
       clearSession();
       void mutateCache(
         (key) => Array.isArray(key) && key[0] === "private",
@@ -199,6 +215,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener(AUTH_INVALIDATED_EVENT, handleAuthInvalidated);
   }, [clearSession, mutateCache]);
 
+  useEffect(() => {
+    const clearAdminAuthorization = () => {
+      void mutateCache((key) => isAdminKey(key), undefined, { revalidate: false });
+      clearConditionalApiCache("admin:");
+    };
+    window.addEventListener(ADMIN_AUTHORIZATION_INVALIDATED_EVENT, clearAdminAuthorization);
+    return () => window.removeEventListener(ADMIN_AUTHORIZATION_INVALIDATED_EVENT, clearAdminAuthorization);
+  }, [mutateCache]);
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user,
@@ -207,11 +232,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading: !hasInitialized || Boolean(token && !user && isRevalidating),
       signup,
       login,
+      completeMfa,
       logout,
       refreshUser,
       updateLanguagePreferences
     }),
-    [hasInitialized, isRevalidating, login, logout, refreshUser, signup, token, updateLanguagePreferences, user]
+    [completeMfa, hasInitialized, isRevalidating, login, logout, refreshUser, signup, token, updateLanguagePreferences, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

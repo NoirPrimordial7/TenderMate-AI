@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from typing import Any
 from uuid import UUID
@@ -19,6 +19,9 @@ USER_COLUMNS = (
     "subscription_status,"
     "preferred_language,"
     "preferred_analysis_language,"
+    "mfa_enabled,"
+    "email_verified_at,"
+    "password_changed_at,"
     "failed_login_count,"
     "locked_until,"
     "last_login_at,"
@@ -29,7 +32,7 @@ USER_COLUMNS = (
 LEGACY_USER_COLUMNS = USER_COLUMNS.replace(
     "preferred_language,preferred_analysis_language,",
     "",
-)
+).replace("mfa_enabled,email_verified_at,password_changed_at,", "")
 
 
 class LanguagePreferencesSchemaUnavailableError(RuntimeError):
@@ -191,6 +194,25 @@ class AuthRepository:
             action="record successful login",
         )
 
+    def update_password(self, user_id: UUID, password_hash: str) -> dict[str, Any]:
+        return self._update_user(
+            user_id=user_id,
+            values={
+                "password_hash": password_hash,
+                "password_changed_at": datetime.now(timezone.utc).isoformat(),
+                "failed_login_count": 0,
+                "locked_until": None,
+            },
+            action="update password",
+        )
+
+    def set_mfa_enabled(self, user_id: UUID, enabled: bool) -> dict[str, Any]:
+        return self._update_user(
+            user_id=user_id,
+            values={"mfa_enabled": enabled},
+            action="update MFA status",
+        )
+
     def _update_user(
         self,
         user_id: UUID,
@@ -238,6 +260,9 @@ class AuthRepository:
             if "42703" in error_text and (
                 "preferred_language" in error_text
                 or "preferred_analysis_language" in error_text
+                or "mfa_enabled" in error_text
+                or "password_changed_at" in error_text
+                or "email_verified_at" in error_text
             ):
                 raise LanguagePreferencesSchemaUnavailableError(
                     "Language preference columns are not available yet."
@@ -252,6 +277,9 @@ class AuthRepository:
         normalized = dict(user)
         normalized.setdefault("preferred_language", "en")
         normalized.setdefault("preferred_analysis_language", "en")
+        normalized.setdefault("mfa_enabled", False)
+        normalized.setdefault("email_verified_at", None)
+        normalized.setdefault("password_changed_at", None)
         return normalized
 
     def _use_legacy_language_schema(self) -> None:

@@ -114,7 +114,8 @@
     "fullName": "Full name",
     "workEmail": "Work email",
     "password": "Password",
-    "passwordHint": "Minimum 6 characters.",
+    "passwordHint": "Use at least 12 characters.",
+    "rateLimited": "Too many sign-in attempts. Wait a moment and try again.",
     "showPassword": "Show password",
     "hidePassword": "Hide password",
     "signingIn": "Signing in…",
@@ -541,6 +542,19 @@
     "errorRateLimit": "The question limit was reached. Wait a moment and try again.",
     "errorUnavailable": "The grounded answer service is temporarily unavailable.",
     "errorGeneric": "This question could not be answered safely. Try again."
+  },
+  "security": {
+    "eyebrow": "Account security", "title": "Protect every decision.", "support": "Manage authenticator MFA, passwords, active devices and recent security activity.",
+    "mfaOn": "MFA enabled", "mfaOff": "MFA not enabled", "mfaTitle": "Authenticator app", "mfaSupport": "Require a time-based code after your password. MFA is mandatory for staff and admin roles.", "enableMfa": "Enable MFA", "disableMfa": "Disable MFA", "newRecoveryCodes": "Generate new recovery codes", "recoveryRemaining": "{count} unused recovery codes",
+    "verifyRecentTitle": "Verify it is you", "verifyRecentSupport": "Re-enter your password before changing a sensitive security setting.", "recentLoginRequired": "Please verify your password again before continuing.", "verify": "Verify", "cancel": "Cancel", "verificationFailed": "The password or authenticator code could not be verified.",
+    "stepOne": "Step 1", "stepTwo": "Step 2 · Enter the six-digit code", "scanTitle": "Scan with your authenticator app", "scanSupport": "Scan this QR code or enter the setup key manually. NividaIQ never stores this secret in your browser.", "confirmMfa": "Confirm and enable MFA", "saveRecoveryTitle": "Save these recovery codes now", "saveRecoverySupport": "Each code works once. Store them somewhere private; they will not be shown again.", "copyCodes": "Copy codes", "copyFailed": "Copying was unavailable. Save the codes manually.", "savedCodes": "I saved them",
+    "passwordTitle": "Password", "passwordSupport": "Changing your password signs out every other device.", "currentPassword": "Current password", "newPassword": "New password", "confirmPassword": "Confirm new password", "changePassword": "Change password", "updatePassword": "Update password",
+    "devicesEyebrow": "Sessions", "sessionsTitle": "Active devices", "currentSession": "This device", "networkUnavailable": "Network unavailable", "lastActive": "Last active {date}", "signOutCurrent": "Sign out", "signOutSession": "Remove device", "signOutOthers": "Sign out other devices", "signOutAll": "Sign out everywhere",
+    "activityEyebrow": "Audit trail", "activityTitle": "Security activity", "activityEmpty": "No security activity has been recorded yet.", "unknownDevice": "Unknown device", "working": "Updating account security…",
+    "authenticatorCode": "Authenticator code", "recoveryCode": "Recovery code", "useRecoveryCode": "Use a recovery code", "useAuthenticator": "Use the authenticator app", "mfaChallengeTitle": "Confirm your sign-in", "mfaChallengeSupport": "Enter the six-digit code from your authenticator app, or use one recovery code.", "verifyAndContinue": "Verify and continue", "backToLogin": "Back to sign in",
+    "forgotPassword": "Forgot password?", "resetTitle": "Reset your password", "resetSupport": "If this account exists, NividaIQ will queue a secure, short-lived reset link.", "sendReset": "Send reset link", "resetAccepted": "If the account exists, reset instructions have been queued.", "chooseNewPassword": "Choose a new password", "chooseNewPasswordSupport": "The reset link works once and expires quickly.", "resetComplete": "Password updated. All previous sessions have been signed out.", "returnToLogin": "Return to sign in", "resetInvalid": "The link is invalid, expired, or the passwords do not match.",
+    "turnstileLabel": "Security verification", "rateLimited": "Too many security attempts. Wait and try again.", "unavailable": "Account security is temporarily unavailable.", "errorGeneric": "The security change could not be completed safely.",
+    "events": { "session_created": "New sign-in", "mfa_challenge_failed": "MFA challenge failed", "mfa_challenge_completed": "MFA challenge completed", "mfa_enrollment_failed": "MFA setup failed", "mfa_enabled": "MFA enabled", "mfa_disabled": "MFA disabled", "recovery_codes_regenerated": "Recovery codes regenerated", "password_changed": "Password changed", "password_reset_requested": "Password reset requested", "password_reset_completed": "Password reset completed" }
   },
   "launch": {
     "metaDescription": "India-first AI-assisted tender analysis, bidder decision support and grounded tender questions.",

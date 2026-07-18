@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 
 LanguageCode = Literal["en", "hi", "mr"]
 
@@ -10,16 +10,18 @@ LanguageCode = Literal["en", "hi", "mr"]
 class SignupRequest(BaseModel):
     full_name: str
     email: str
-    password: str
+    password: str = Field(min_length=12, max_length=256)
     preferred_language: LanguageCode = "en"
     preferred_analysis_language: LanguageCode = "en"
     accepted_legal: bool
     legal_locale: LanguageCode = "en"
+    turnstile_token: str | None = None
 
 
 class LoginRequest(BaseModel):
     email: str
-    password: str
+    password: str = Field(min_length=1, max_length=256)
+    turnstile_token: str | None = None
 
 
 class UserResponse(BaseModel):
@@ -33,6 +35,9 @@ class UserResponse(BaseModel):
     subscription_status: str
     preferred_language: LanguageCode = "en"
     preferred_analysis_language: LanguageCode = "en"
+    mfa_enabled: bool = False
+    email_verified_at: datetime | None = None
+    last_login_at: datetime | None = None
     created_at: datetime | None = None
 
 
@@ -51,3 +56,11 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+
+class LoginResponse(BaseModel):
+    access_token: str | None = None
+    token_type: str = "bearer"
+    user: UserResponse | None = None
+    mfa_required: bool = False
+    challenge_token: str | None = None

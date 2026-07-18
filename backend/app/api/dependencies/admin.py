@@ -1,16 +1,18 @@
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 from enum import StrEnum
-from hashlib import sha256
 from typing import Annotated, Callable
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials
 
-from app.api.dependencies.auth import bearer_scheme
-from app.core.security import decode_access_token
+from app.api.dependencies.auth import AuthenticatedSession, get_current_session
 from app.repositories.admin_repository import AdminRepository
+from app.services.account_security_service import (
+    AccountSecurityService,
+    RecentLoginRequiredError,
+    get_account_security_service,
+)
 
 
 class StaffRole(StrEnum):
@@ -55,47 +57,38 @@ ROLE_PERMISSIONS: dict[StaffRole, frozenset[Permission]] = {
 class StaffContext:
     user_id: UUID
     role: StaffRole
+    permissions: frozenset[Permission]
     session_id: UUID
-    authenticated_at: datetime
-    mfa_assured_at: datetime
-
-
-def _parse_time(value: object) -> datetime | None:
-    if isinstance(value, datetime):
-        parsed = value
-    elif isinstance(value, str):
-        try: parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError: return None
-    else: return None
-    return parsed.replace(tzinfo=timezone.utc) if parsed.tzinfo is None else parsed.astimezone(timezone.utc)
+    recent_auth_at: datetime | str | None
 
 
 def require_authenticated_user(
-    credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-    repository: AdminRepository = Depends(AdminRepository),
+    current: Annotated[AuthenticatedSession, Depends(get_current_session)],
+    security: Annotated[AccountSecurityService, Depends(get_account_security_service)],
+    repository: Annotated[AdminRepository, Depends(AdminRepository)],
 ) -> StaffContext:
-    if credentials is None:
-        raise HTTPException(status_code=401, detail="Missing bearer token.")
-    try:
-        payload = decode_access_token(credentials.credentials)
-        user_id = UUID(str(payload.get("sub")))
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=401, detail="Invalid or expired access token.") from None
-    user = repository.get_staff_identity(user_id)
-    if not user or user.get("account_status", "active") != "active" or not user.get("is_active"):
+    identity = repository.get_staff_identity(current.user.id)
+    if not identity or identity.get("account_status", "active") != "active" or not identity.get("is_active"):
         raise HTTPException(status_code=403, detail="Staff account is unavailable.")
-    try: role = StaffRole(str(user.get("role")))
-    except ValueError: raise HTTPException(status_code=403, detail="Staff access required.") from None
-    if not user.get("email_verified_at"):
+    try:
+        role = StaffRole(str(identity.get("role")))
+    except ValueError:
+        raise HTTPException(status_code=403, detail="Staff access required.") from None
+    if not identity.get("email_verified_at"):
         raise HTTPException(status_code=403, detail="Verified email required.")
-    if not user.get("mfa_enabled"):
-        raise HTTPException(status_code=403, detail="MFA enrollment required.")
-    session = repository.get_active_session(sha256(credentials.credentials.encode()).hexdigest())
-    authenticated_at = _parse_time(session.get("authenticated_at")) if session else None
-    mfa_assured_at = _parse_time(session.get("mfa_assured_at")) if session else None
-    if not session or str(session.get("user_id")) != str(user_id) or not authenticated_at or not mfa_assured_at:
-        raise HTTPException(status_code=403, detail="Current MFA-assured server session required.")
-    return StaffContext(user_id, role, UUID(str(session["id"])), authenticated_at, mfa_assured_at)
+    factor = security.repository.get_factor(current.user.id)
+    session = security.validate_session(current.user.id, current.session_id)
+    if not identity.get("mfa_enabled") or not factor or not factor.get("verified_at"):
+        raise HTTPException(status_code=403, detail="Enrolled and verified MFA required.")
+    if not session.get("mfa_verified"):
+        raise HTTPException(status_code=403, detail="Current MFA-assured AAL2 session required.")
+    return StaffContext(
+        user_id=current.user.id,
+        role=role,
+        permissions=ROLE_PERMISSIONS[role],
+        session_id=current.session_id,
+        recent_auth_at=session.get("recent_auth_at"),
+    )
 
 
 def require_staff_role(context: Annotated[StaffContext, Depends(require_authenticated_user)]) -> StaffContext:
@@ -104,13 +97,18 @@ def require_staff_role(context: Annotated[StaffContext, Depends(require_authenti
 
 def require_permission(permission: Permission) -> Callable[[StaffContext], StaffContext]:
     def guard(context: Annotated[StaffContext, Depends(require_staff_role)]) -> StaffContext:
-        if permission not in ROLE_PERMISSIONS[context.role]:
+        if permission not in context.permissions:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Permission denied.")
         return context
     return guard
 
 
-def require_recent_authentication(context: Annotated[StaffContext, Depends(require_staff_role)]) -> StaffContext:
-    if datetime.now(timezone.utc) - context.authenticated_at > timedelta(minutes=15):
-        raise HTTPException(status_code=403, detail="Recent authentication required.")
+def require_recent_authentication(
+    context: Annotated[StaffContext, Depends(require_staff_role)],
+    security: Annotated[AccountSecurityService, Depends(get_account_security_service)],
+) -> StaffContext:
+    try:
+        security.require_recent_login(context.user_id, context.session_id)
+    except RecentLoginRequiredError as exc:
+        raise HTTPException(status_code=403, detail=str(exc)) from exc
     return context

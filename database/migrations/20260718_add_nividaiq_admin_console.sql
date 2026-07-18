@@ -2,11 +2,8 @@ begin;
 
 create extension if not exists "pgcrypto";
 
-alter table public.app_users add column if not exists email_verified_at timestamptz;
-alter table public.app_users add column if not exists mfa_enabled boolean not null default false;
 alter table public.app_users add column if not exists account_status text not null default 'active';
 alter table public.app_users add column if not exists question_credits integer not null default 0;
-alter table public.app_users add column if not exists password_reset_required boolean not null default false;
 alter table public.app_users add column if not exists last_active_at timestamptz;
 
 do $$ begin
@@ -20,21 +17,6 @@ do $$ begin
   alter table public.app_users add constraint app_users_role_check
     check (role in ('msme_user','super_admin','admin','support','finance','reviewer'));
 exception when duplicate_object then null; end $$;
-
-create table if not exists public.app_sessions (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.app_users(id) on delete cascade,
-  token_hash text not null unique,
-  mfa_assured_at timestamptz,
-  authenticated_at timestamptz not null default now(),
-  last_seen_at timestamptz not null default now(),
-  expires_at timestamptz not null,
-  revoked_at timestamptz,
-  revoked_reason text,
-  created_at timestamptz not null default now(),
-  constraint app_sessions_token_hash_length check (char_length(token_hash) between 32 and 256),
-  constraint app_sessions_expiry_check check (expires_at > created_at)
-);
 
 create table if not exists public.admin_audit_events (
   id uuid primary key default gen_random_uuid(),
@@ -101,7 +83,6 @@ alter table public.product_feedback add column if not exists internal_notes text
 
 create index if not exists idx_app_users_admin_directory on public.app_users (role, account_status, created_at desc, id desc);
 create index if not exists idx_app_users_last_active on public.app_users (last_active_at desc);
-create index if not exists idx_app_sessions_user_active on public.app_sessions (user_id, revoked_at, expires_at desc);
 create index if not exists idx_admin_audit_actor_time on public.admin_audit_events (actor_user_id, created_at desc);
 create index if not exists idx_admin_audit_target_time on public.admin_audit_events (target_type, target_id, created_at desc);
 create index if not exists idx_admin_audit_action_time on public.admin_audit_events (action, created_at desc);
@@ -165,27 +146,32 @@ returns jsonb language sql stable security invoker set search_path = '' as $$
     'feedback_planned', (select count(*) from public.product_feedback where status = 'planned'),
     'feedback_implemented', (select count(*) from public.product_feedback where status = 'implemented'),
     'feedback_rejected', (select count(*) from public.product_feedback where status = 'rejected'),
-    'security_alerts', (select count(*) from public.audit_logs where action in ('login_failed','account_locked')),
+    'security_alerts', (select count(*) from public.account_security_events where not success or event_type in ('account_locked','mfa_temporarily_locked')),
     'ai_provider_success_rate', (select round(100.0 * count(*) filter (where status = 'success') / nullif(count(*), 0), 2) from public.ai_model_runs),
     'average_analysis_latency_ms', (select round(avg(latency_ms), 2) from public.ai_model_runs where task = 'tender_analysis' and latency_ms is not null),
     'model_validation_failure_rate', (select round(100.0 * count(*) filter (where not validation_passed) / nullif(count(*), 0), 2) from public.ai_model_runs),
-    'notification_outbox_backlog', null,
+    'notification_outbox_backlog', (select count(*) from public.security_notification_outbox where sent_at is null and failed_at is null),
     'payments', null,
     'refunds', null
   );
 $$;
 
-alter table public.app_sessions enable row level security;
 alter table public.admin_audit_events enable row level security;
 alter table public.admin_notes enable row level security;
 alter table public.credit_ledger enable row level security;
 alter table public.tender_support_access_grants enable row level security;
 
-revoke all on table public.app_sessions, public.admin_audit_events, public.admin_notes,
+revoke all on table public.admin_audit_events, public.admin_notes,
   public.credit_ledger, public.tender_support_access_grants from anon, authenticated;
 revoke all on function public.admin_adjust_credit(uuid,text,integer,text,text,uuid,uuid) from public, anon, authenticated;
 revoke all on function public.admin_console_overview() from public, anon, authenticated;
 revoke all on function public.reject_append_only_mutation() from public, anon, authenticated;
+grant execute on function public.admin_adjust_credit(uuid,text,integer,text,text,uuid,uuid) to service_role;
+grant execute on function public.admin_console_overview() to service_role;
+grant select, insert on table public.admin_audit_events to service_role;
+grant select, insert on table public.admin_notes to service_role;
+grant select, insert on table public.credit_ledger to service_role;
+grant select, insert, update on table public.tender_support_access_grants to service_role;
 
 comment on table public.admin_audit_events is 'Append-only safe staff audit metadata; never store secrets or document bodies.';
 comment on table public.admin_notes is 'Private staff notes; service-role API access only.';

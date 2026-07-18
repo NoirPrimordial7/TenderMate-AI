@@ -15,8 +15,8 @@ def service() -> AdminService: return AdminService()
 
 
 @router.get("/overview", response_model=AdminOverview)
-def overview(_: Annotated[StaffContext, Depends(require_permission(Permission.OVERVIEW_READ))], repo: Annotated[AdminRepository, Depends(AdminRepository)]) -> AdminOverview:
-    return AdminOverview(metrics=repo.overview(), system_health="operational")
+def overview(actor: Annotated[StaffContext, Depends(require_permission(Permission.OVERVIEW_READ))], repo: Annotated[AdminRepository, Depends(AdminRepository)]) -> AdminOverview:
+    return AdminOverview(metrics=repo.overview(), system_health="operational", staff_role=actor.role.value, permissions=sorted(permission.value for permission in actor.permissions))
 
 
 @router.get("/users", response_model=AdminUserPage)
@@ -43,7 +43,7 @@ def user_detail(user_id: UUID, _: Annotated[StaffContext, Depends(require_permis
         "credit_history": repo.list_rows("credit_ledger", "id,credit_type,amount,reason_category,internal_note,actor_user_id,related_tender_id,related_payment_id,created_at", user_id=user_id),
         "legal_acceptances": repo.list_rows("user_legal_acceptances", "id,document_type,document_version,locale,accepted_at,created_at", user_id=user_id),
         "feedback": repo.list_rows("product_feedback", "id,tender_id,category,message,locale,page_path,performance_mode,status,assigned_staff_id,internal_notes,created_at", user_id=user_id),
-        "sessions": repo.list_rows("app_sessions", "id,mfa_assured_at,authenticated_at,last_seen_at,expires_at,revoked_at,revoked_reason,created_at", user_id=user_id),
+        "sessions": repo.list_rows("user_sessions", "id,device,ip_hint,mfa_verified,recent_auth_at,last_seen_at,expires_at,revoked_at,created_at", user_id=user_id),
         "notes": repo.list_rows("admin_notes", "id,category,note,author_staff_id,created_at", user_id=user_id),
         "payments": None,
     }
@@ -115,7 +115,7 @@ def update_feedback(feedback_id: UUID, payload: FeedbackUpdate, actor: Annotated
 
 @router.get("/security")
 def security_events(_: Annotated[StaffContext, Depends(require_permission(Permission.SECURITY_READ))], repo: Annotated[AdminRepository, Depends(AdminRepository)], limit: int = Query(50, ge=1, le=100)) -> list[dict[str, Any]]:
-    return repo.list_rows("audit_logs", "id,user_id,action,resource_type,resource_id,created_at,metadata", limit)
+    return repo.list_rows("account_security_events", "id,user_id,event_type,success,device,ip_hint,created_at", limit)
 
 
 @router.get("/system")
