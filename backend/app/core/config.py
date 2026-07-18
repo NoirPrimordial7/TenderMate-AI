@@ -113,6 +113,13 @@ class Settings:
     legal_governing_state: str = "Maharashtra"
     legal_effective_date: str = ""
     legal_version: str = "1.0"
+    mfa_encryption_key: str = ""
+    mfa_challenge_expire_minutes: int = 5
+    session_expire_days: int = 7
+    recent_auth_expire_minutes: int = 10
+    password_reset_expire_minutes: int = 30
+    turnstile_secret_key: str = ""
+    turnstile_required: bool = False
 
     def __post_init__(self) -> None:
         selected = {
@@ -251,4 +258,11 @@ def get_settings() -> Settings:
         legal_governing_state=getenv("LEGAL_GOVERNING_STATE", "Maharashtra").strip(),
         legal_effective_date=getenv("LEGAL_EFFECTIVE_DATE", "").strip(),
         legal_version=getenv("LEGAL_VERSION", "1.0").strip(),
+        mfa_encryption_key=getenv("MFA_ENCRYPTION_KEY", "").strip(),
+        mfa_challenge_expire_minutes=_get_int_env("MFA_CHALLENGE_EXPIRE_MINUTES", 5),
+        session_expire_days=_get_int_env("SESSION_EXPIRE_DAYS", 7),
+        recent_auth_expire_minutes=_get_int_env("RECENT_AUTH_EXPIRE_MINUTES", 10),
+        password_reset_expire_minutes=_get_int_env("PASSWORD_RESET_EXPIRE_MINUTES", 30),
+        turnstile_secret_key=getenv("TURNSTILE_SECRET_KEY", "").strip(),
+        turnstile_required=_get_bool_env("TURNSTILE_REQUIRED", False),
     )

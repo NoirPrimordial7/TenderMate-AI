@@ -4,13 +4,14 @@ from uuid import UUID
 
 from app.core.config import Settings, get_settings
 from app.core.security import (
-    create_access_token,
+    create_purpose_token,
     decode_access_token,
     hash_password,
     verify_password,
 )
 from app.repositories.auth_repository import AuthRepository
-from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
+from app.schemas.auth import LoginRequest, LoginResponse, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
+from app.services.account_security_service import AccountSecurityService, MfaEnrollmentRequiredError, SecurityVerificationError
 from app.services.audit_service import record_audit_log
 
 
@@ -35,9 +36,11 @@ class AuthService:
         self,
         repository: AuthRepository | None = None,
         settings: Settings | None = None,
+        security_service: AccountSecurityService | None = None,
     ) -> None:
         self._repository = repository
         self._settings = settings
+        self._security_service = security_service
 
     @property
     def repository(self) -> AuthRepository:
@@ -52,6 +55,15 @@ class AuthService:
             self._settings = get_settings()
 
         return self._settings
+
+    @property
+    def security_service(self) -> AccountSecurityService:
+        if self._security_service is None:
+            self._security_service = AccountSecurityService(
+                auth_repository=self.repository,
+                settings=self.settings,
+            )
+        return self._security_service
 
     def signup(
         self,
@@ -79,14 +91,19 @@ class AuthService:
             user_agent=user_agent,
             metadata={"email": email},
         )
-        return self._token_response(user)
+        return self.security_service.create_session_token(
+            user,
+            ip_address,
+            user_agent,
+            mfa_verified=False,
+        )
 
     def login(
         self,
         request: LoginRequest,
         ip_address: str | None = None,
         user_agent: str | None = None,
-    ) -> TokenResponse:
+    ) -> LoginResponse:
         email = self._normalize_email(request.email)
         user = self.repository.find_user_by_email(email)
         if user is None:
@@ -139,9 +156,26 @@ class AuthService:
         if not user["is_active"]:
             raise InactiveUserError("User account is inactive.")
 
+        if self.security_service.mfa_required_for(user):
+            if not user.get("mfa_enabled"):
+                raise MfaEnrollmentRequiredError(
+                    "Authenticator MFA must be enabled before this staff account can sign in."
+                )
+            challenge = create_purpose_token(
+                UUID(str(user["id"])),
+                "mfa_challenge",
+                self.settings.mfa_challenge_expire_minutes,
+            )
+            record_audit_log(
+                action="login_mfa_required",
+                user_id=user["id"],
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
+            return LoginResponse(mfa_required=True, challenge_token=challenge)
+
         logged_in_user = self.repository.record_successful_login(
-            user_id=UUID(str(user["id"])),
-            last_login_at=datetime.now(timezone.utc),
+            user_id=UUID(str(user["id"])), last_login_at=datetime.now(timezone.utc)
         )
         record_audit_log(
             action="login_success",
@@ -150,7 +184,13 @@ class AuthService:
             user_agent=user_agent,
         )
 
-        return self._token_response(logged_in_user)
+        session = self.security_service.create_session_token(
+            logged_in_user,
+            ip_address,
+            user_agent,
+            mfa_verified=False,
+        )
+        return LoginResponse(**session.model_dump())
 
     def update_preferences(
         self,
@@ -168,7 +208,13 @@ class AuthService:
         try:
             payload = decode_access_token(token)
             user_id = UUID(str(payload.get("sub")))
+            session_id = UUID(str(payload.get("sid")))
         except (TypeError, ValueError):
+            raise InvalidCredentialsError("Invalid or expired access token.") from None
+
+        try:
+            self.security_service.validate_session(user_id, session_id)
+        except SecurityVerificationError:
             raise InvalidCredentialsError("Invalid or expired access token.") from None
 
         user = self.repository.find_user_by_id(user_id)
@@ -205,16 +251,6 @@ class AuthService:
             return False
 
         return locked_until > datetime.now(timezone.utc)
-
-    def _token_response(self, user: dict) -> TokenResponse:
-        response_user = self._user_response(user)
-        access_token = create_access_token(
-            user_id=response_user.id,
-            email=response_user.email,
-            role=response_user.role,
-        )
-
-        return TokenResponse(access_token=access_token, user=response_user)
 
     @staticmethod
     def _normalize_email(email: str) -> str:

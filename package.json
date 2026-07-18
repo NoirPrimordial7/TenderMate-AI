@@ -19,6 +19,7 @@
     "next": "^16.2.9",
     "pdfjs-dist": "^6.1.200",
     "postcss": "^8.5.15",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "recharts": "^2.12.7",

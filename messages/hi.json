@@ -114,7 +114,8 @@
     "fullName": "पूरा नाम",
     "workEmail": "कार्य ईमेल",
     "password": "पासवर्ड",
-    "passwordHint": "कम से कम 6 अक्षर।",
+    "passwordHint": "कम से कम 12 अक्षर रखें।",
+    "rateLimited": "साइन इन के बहुत अधिक प्रयास हुए हैं। थोड़ी देर बाद फिर प्रयास करें।",
     "showPassword": "पासवर्ड दिखाएँ",
     "hidePassword": "पासवर्ड छिपाएँ",
     "signingIn": "साइन इन हो रहा है…",
@@ -506,6 +507,19 @@
     "errorRateLimit": "प्रश्न सीमा पूरी हो गई है। थोड़ी देर बाद फिर प्रयास करें।",
     "errorUnavailable": "स्रोत-आधारित उत्तर सेवा अभी उपलब्ध नहीं है।",
     "errorGeneric": "इस प्रश्न का सुरक्षित उत्तर नहीं दिया जा सका। फिर प्रयास करें।"
+  },
+  "security": {
+    "eyebrow": "खाता सुरक्षा", "title": "हर निर्णय को सुरक्षित रखें।", "support": "ऑथेंटिकेटर MFA, पासवर्ड, सक्रिय डिवाइस और हाल की सुरक्षा गतिविधि प्रबंधित करें।",
+    "mfaOn": "MFA चालू है", "mfaOff": "MFA चालू नहीं है", "mfaTitle": "ऑथेंटिकेटर ऐप", "mfaSupport": "पासवर्ड के बाद समय-आधारित कोड आवश्यक करें। स्टाफ और एडमिन भूमिकाओं के लिए MFA अनिवार्य है।", "enableMfa": "MFA चालू करें", "disableMfa": "MFA बंद करें", "newRecoveryCodes": "नए रिकवरी कोड बनाएँ", "recoveryRemaining": "{count} अप्रयुक्त रिकवरी कोड",
+    "verifyRecentTitle": "पहचान की पुष्टि करें", "verifyRecentSupport": "संवेदनशील सुरक्षा सेटिंग बदलने से पहले पासवर्ड दोबारा दर्ज करें।", "recentLoginRequired": "आगे बढ़ने से पहले पासवर्ड दोबारा सत्यापित करें।", "verify": "सत्यापित करें", "cancel": "रद्द करें", "verificationFailed": "पासवर्ड या ऑथेंटिकेटर कोड सत्यापित नहीं हुआ।",
+    "stepOne": "चरण 1", "stepTwo": "चरण 2 · छह अंकों का कोड दर्ज करें", "scanTitle": "ऑथेंटिकेटर ऐप से स्कैन करें", "scanSupport": "QR कोड स्कैन करें या सेटअप कुंजी स्वयं दर्ज करें। NividaIQ इस गोपनीय कुंजी को ब्राउज़र में नहीं रखता।", "confirmMfa": "पुष्टि करके MFA चालू करें", "saveRecoveryTitle": "इन रिकवरी कोड को अभी सुरक्षित रखें", "saveRecoverySupport": "हर कोड केवल एक बार चलेगा। इन्हें निजी स्थान पर रखें; ये फिर नहीं दिखेंगे।", "copyCodes": "कोड कॉपी करें", "copyFailed": "कोड कॉपी नहीं हो सके। उन्हें हाथ से सुरक्षित करें।", "savedCodes": "मैंने सुरक्षित कर लिए",
+    "passwordTitle": "पासवर्ड", "passwordSupport": "पासवर्ड बदलने पर अन्य सभी डिवाइस साइन आउट हो जाएँगे।", "currentPassword": "वर्तमान पासवर्ड", "newPassword": "नया पासवर्ड", "confirmPassword": "नए पासवर्ड की पुष्टि", "changePassword": "पासवर्ड बदलें", "updatePassword": "पासवर्ड अपडेट करें",
+    "devicesEyebrow": "सत्र", "sessionsTitle": "सक्रिय डिवाइस", "currentSession": "यह डिवाइस", "networkUnavailable": "नेटवर्क उपलब्ध नहीं", "lastActive": "अंतिम गतिविधि {date}", "signOutCurrent": "साइन आउट", "signOutSession": "डिवाइस हटाएँ", "signOutOthers": "अन्य डिवाइस साइन आउट करें", "signOutAll": "हर जगह से साइन आउट करें",
+    "activityEyebrow": "ऑडिट विवरण", "activityTitle": "सुरक्षा गतिविधि", "activityEmpty": "अभी कोई सुरक्षा गतिविधि दर्ज नहीं है।", "unknownDevice": "अज्ञात डिवाइस", "working": "खाता सुरक्षा अपडेट हो रही है…",
+    "authenticatorCode": "ऑथेंटिकेटर कोड", "recoveryCode": "रिकवरी कोड", "useRecoveryCode": "रिकवरी कोड का उपयोग करें", "useAuthenticator": "ऑथेंटिकेटर ऐप का उपयोग करें", "mfaChallengeTitle": "साइन इन की पुष्टि करें", "mfaChallengeSupport": "ऑथेंटिकेटर ऐप का छह अंकों का कोड दर्ज करें या एक रिकवरी कोड इस्तेमाल करें।", "verifyAndContinue": "सत्यापित करके आगे बढ़ें", "backToLogin": "साइन इन पर लौटें",
+    "forgotPassword": "पासवर्ड भूल गए?", "resetTitle": "पासवर्ड रीसेट करें", "resetSupport": "यदि खाता मौजूद है, तो NividaIQ कम समय के लिए मान्य सुरक्षित रीसेट लिंक भेजने की प्रक्रिया शुरू करेगा।", "sendReset": "रीसेट लिंक भेजें", "resetAccepted": "यदि खाता मौजूद है, तो रीसेट निर्देश भेजने की प्रक्रिया शुरू हो गई है।", "chooseNewPassword": "नया पासवर्ड चुनें", "chooseNewPasswordSupport": "रीसेट लिंक केवल एक बार चलता है और जल्दी समाप्त हो जाता है।", "resetComplete": "पासवर्ड अपडेट हो गया। पुराने सभी सत्र बंद कर दिए गए हैं।", "returnToLogin": "साइन इन पर लौटें", "resetInvalid": "लिंक अमान्य या समाप्त है, या दोनों पासवर्ड मेल नहीं खाते।",
+    "turnstileLabel": "सुरक्षा सत्यापन", "rateLimited": "सुरक्षा के बहुत अधिक प्रयास हुए हैं। प्रतीक्षा करके फिर प्रयास करें।", "unavailable": "खाता सुरक्षा अभी उपलब्ध नहीं है।", "errorGeneric": "सुरक्षा बदलाव सुरक्षित रूप से पूरा नहीं हो सका।",
+    "events": { "session_created": "नया साइन इन", "mfa_challenge_failed": "MFA सत्यापन विफल", "mfa_challenge_completed": "MFA सत्यापन पूरा", "mfa_enrollment_failed": "MFA सेटअप विफल", "mfa_enabled": "MFA चालू किया गया", "mfa_disabled": "MFA बंद किया गया", "recovery_codes_regenerated": "रिकवरी कोड फिर बनाए गए", "password_changed": "पासवर्ड बदला गया", "password_reset_requested": "पासवर्ड रीसेट माँगा गया", "password_reset_completed": "पासवर्ड रीसेट पूरा" }
   },
   "launch": {
     "metaDescription": "भारत-केंद्रित AI-सहायित निविदा विश्लेषण, बोली निर्णय सहायता और स्रोत-आधारित निविदा प्रश्न।",

@@ -11,7 +11,8 @@ from app.api.dependencies.rate_limit import (
     rate_limit_by_ip,
 )
 from app.core.config import Settings, get_settings
-from app.schemas.auth import LoginRequest, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
+from app.schemas.auth import LoginRequest, LoginResponse, SignupRequest, TokenResponse, UserPreferencesUpdate, UserResponse
+from app.services.account_security_service import MfaEnrollmentRequiredError, TurnstileVerificationError
 from app.services.audit_service import record_audit_log
 from app.services.auth_service import (
     AccountLockedError,
@@ -43,6 +44,7 @@ def signup(
     if not payload.accepted_legal:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Terms, Privacy Policy and AI Analysis Disclaimer acceptance is required.")
     try:
+        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request))
         response = service.signup(
             payload,
             ip_address=get_client_ip(request),
@@ -55,6 +57,8 @@ def signup(
             status_code=status.HTTP_409_CONFLICT,
             detail=str(exc),
         ) from exc
+    except TurnstileVerificationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -64,15 +68,16 @@ def signup(
 
 @router.post(
     "/login",
-    response_model=TokenResponse,
+    response_model=LoginResponse,
     dependencies=[Depends(rate_limit_by_ip(LOGIN_RATE_LIMIT))],
 )
 def login(
     request: Request,
     payload: LoginRequest,
     service: AuthService = Depends(get_auth_service),
-) -> TokenResponse:
+) -> LoginResponse:
     try:
+        service.security_service.verify_turnstile(payload.turnstile_token, get_client_ip(request))
         return service.login(
             payload,
             ip_address=get_client_ip(request),
@@ -93,6 +98,10 @@ def login(
             status_code=status.HTTP_423_LOCKED,
             detail=str(exc),
         ) from exc
+    except MfaEnrollmentRequiredError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc)) from exc
+    except TurnstileVerificationError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
     except RuntimeError as exc:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

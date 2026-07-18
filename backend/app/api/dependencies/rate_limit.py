@@ -140,3 +140,23 @@ LEGAL_ACCEPTANCE_RATE_LIMIT = RateLimitRule(
     max_requests=20,
     window_seconds=60 * 60,
 )
+MFA_CHALLENGE_RATE_LIMIT = RateLimitRule(
+    name="auth_mfa_challenge",
+    max_requests=10,
+    window_seconds=10 * 60,
+)
+SECURITY_MUTATION_RATE_LIMIT = RateLimitRule(
+    name="account_security_mutation",
+    max_requests=20,
+    window_seconds=60 * 60,
+)
+SECURITY_READ_RATE_LIMIT = RateLimitRule(
+    name="account_security_read",
+    max_requests=120,
+    window_seconds=60,
+)
+PASSWORD_RESET_RATE_LIMIT = RateLimitRule(
+    name="password_reset",
+    max_requests=5,
+    window_seconds=60 * 60,
+)
