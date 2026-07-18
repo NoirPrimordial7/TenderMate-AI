@@ -1,4 +1,4 @@
-import { AuthSession, AuthUser, LoginInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
+import { AuthSession, AuthUser, LoginInput, LoginResponse, MfaChallengeInput, SignupInput, UserPreferencesInput } from "@/domain/auth/types";
 import { apiRequest } from "@/services/api";
 
 export function signupUser(input: SignupInput) {
@@ -10,7 +10,15 @@ export function signupUser(input: SignupInput) {
 }
 
 export function loginUser(input: LoginInput) {
-  return apiRequest<AuthSession>("/auth/login", {
+  return apiRequest<LoginResponse>("/auth/login", {
+    method: "POST",
+    auth: false,
+    body: input
+  });
+}
+
+export function completeMfaLogin(input: MfaChallengeInput) {
+  return apiRequest<AuthSession>("/auth/mfa/challenge", {
     method: "POST",
     auth: false,
     body: input

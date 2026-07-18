@@ -21,6 +21,7 @@ export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   auth?: boolean;
   body?: unknown;
   conditionalKey?: string;
+  invalidateAuthOn401?: boolean;
 };
 
 const conditionalMemory = new Map<string, { etag: string; data: unknown }>();
@@ -112,7 +113,7 @@ export function toFriendlyApiMessage(error: unknown, fallback: string) {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { auth = true, body, headers, conditionalKey, ...requestOptions } = options;
+  const { auth = true, body, headers, conditionalKey, invalidateAuthOn401 = true, ...requestOptions } = options;
   const requestHeaders = new Headers(headers);
 
   if (!requestHeaders.has("Accept")) {
@@ -161,7 +162,7 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
   const responseBody = await readResponseBody(response);
 
   if (!response.ok) {
-    if (response.status === 401 && auth) {
+    if (response.status === 401 && auth && invalidateAuthOn401) {
       clearStoredAuth();
       dispatchAuthInvalidated();
     }

@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
 import { LanguageSwitcher } from "@/components/language/LanguageSwitcher";
 import { BRAND } from "@/config/brand";
+import { NividaIQMark } from "@/components/brand/NividaIQMark";
 
 const primaryLinks = [
   { href: "/", labelKey: "upload", icon: Upload },
@@ -117,7 +118,7 @@ export default function Header() {
   return (
     <motion.header className="te-header" initial={{ opacity: 0, y: -14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: shouldReduceMotion ? 0 : 0.38, delay: shouldReduceMotion ? 0 : 0.72 }}>
       <div className="te-header-inner te-page-container">
-        <Link href="/" className="te-brand" aria-label={common("brandHome")}><span>{BRAND.name}</span><small>{launch("betaShort")}</small></Link>
+        <Link href="/" className="te-brand" aria-label={common("brandHome")}><NividaIQMark className="te-brand-mark" /><span>{BRAND.name}</span><small>{launch("betaShort")}</small></Link>
 
         <nav className="te-desktop-nav" aria-label={t("primaryLabel")}>
           {primaryLinks.map((item) => {
