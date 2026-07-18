@@ -39,6 +39,8 @@ export type BackendTenderRecord = {
   updated_at: string;
 };
 
+export type TenderHistoryPage = { items: HistoryTender[]; nextCursor: string | null };
+
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Not available";
@@ -116,9 +118,17 @@ function toTenderRecordView(record: BackendTenderRecord): TenderRecordView {
 }
 
 export class BackendTenderRepository {
-  async getAllTenders() {
-    const records = await apiRequest<BackendTenderRecord[]>("/tenders");
+  async getAllTenders(options: { signal?: AbortSignal } = {}) {
+    const records = await apiRequest<BackendTenderRecord[]>("/tenders", { signal: options.signal });
     return records.map(toHistoryTender);
+  }
+
+  async getTenderPage(options: { userId: string; limit: number; cursor?: string | null; updatedSince?: string | null; signal?: AbortSignal }): Promise<TenderHistoryPage> {
+    const params = new URLSearchParams({ limit: String(options.limit) });
+    if (options.cursor) params.set("cursor", options.cursor);
+    if (options.updatedSince) params.set("updated_since", options.updatedSince);
+    const records = await apiRequest<BackendTenderRecord[]>(`/tenders?${params}`, { signal: options.signal, conditionalKey: `${options.userId}:tenders:${params}` });
+    return { items: records.map(toHistoryTender), nextCursor: records.length === options.limit ? records.at(-1)?.created_at ?? null : null };
   }
 
   async getLatestTender() {
@@ -134,9 +144,9 @@ export class BackendTenderRepository {
     }
   }
 
-  async getTenderById(id: string) {
+  async getTenderById(id: string, options: { signal?: AbortSignal; userId?: string } = {}) {
     try {
-      const record = await apiRequest<BackendTenderRecord>(`/tenders/${id}`);
+      const record = await apiRequest<BackendTenderRecord>(`/tenders/${id}`, { signal: options.signal, conditionalKey: options.userId ? `${options.userId}:tender:${id}` : undefined });
       return toTenderRecordView(record);
     } catch (error) {
       if (error instanceof ApiError && error.status === 404) {
@@ -168,8 +178,8 @@ export class BackendTenderRepository {
     });
   }
 
-  async getTenderSource(tenderId: string) {
-    return apiRequest<TenderSourceResponse>(`/tenders/${tenderId}/source`);
+  async getTenderSource(tenderId: string, options: { signal?: AbortSignal } = {}) {
+    return apiRequest<TenderSourceResponse>(`/tenders/${tenderId}/source`, { signal: options.signal });
   }
 }
 

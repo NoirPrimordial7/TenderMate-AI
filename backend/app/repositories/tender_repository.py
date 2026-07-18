@@ -99,17 +99,36 @@ class TenderRepository:
             )
         ]
 
-    def list_tenders(self, user_id: UUID | None = None) -> list[TenderResponse]:
+    def list_tenders(
+        self,
+        user_id: UUID | None = None,
+        *,
+        limit: int | None = None,
+        cursor: datetime | None = None,
+        updated_since: datetime | None = None,
+    ) -> list[TenderResponse]:
         if self._supabase_client is None:
-            return self._tenders
+            rows = self._tenders
+            if cursor is not None:
+                rows = [item for item in rows if item.created_at < cursor]
+            if updated_since is not None:
+                rows = [item for item in rows if item.updated_at >= updated_since]
+            return rows[:limit] if limit is not None else rows
 
         query = self._supabase_client.table("tenders").select(TENDER_COLUMNS)
         if user_id is not None:
             query = query.eq("user_id", str(user_id))
+        if cursor is not None:
+            query = query.lt("created_at", cursor.isoformat())
+        if updated_since is not None:
+            query = query.gte("updated_at", updated_since.isoformat())
+        query = query.order("created_at", desc=True)
+        if limit is not None:
+            query = query.limit(limit)
 
         rows = self._query_tenders(
             "list tenders",
-            query.order("created_at", desc=True),
+            query,
         )
 
         return [self._row_to_tender(row) for row in rows]

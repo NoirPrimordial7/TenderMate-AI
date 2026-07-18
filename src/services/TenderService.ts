@@ -58,9 +58,9 @@ export class TenderService {
     }
   }
 
-  async getBackendTenderHistory(options: { allowMockFallback?: boolean } = {}) {
+  async getBackendTenderHistory(options: { allowMockFallback?: boolean; signal?: AbortSignal } = {}) {
     try {
-      return await this.backendRepository.getAllTenders();
+      return await this.backendRepository.getAllTenders({ signal: options.signal });
     } catch (error) {
       // Development-only escape hatch. Keep disabled in normal auth flows to avoid mixing accounts.
       if (options.allowMockFallback) return this.getTenderHistory();
@@ -68,9 +68,13 @@ export class TenderService {
     }
   }
 
-  async getBackendTenderDetails(id: string, options: { allowMockFallback?: boolean } = {}) {
+  async getBackendTenderPage(options: { userId: string; limit: number; cursor?: string | null; updatedSince?: string | null; signal?: AbortSignal }) {
+    return this.backendRepository.getTenderPage(options);
+  }
+
+  async getBackendTenderDetails(id: string, options: { allowMockFallback?: boolean; signal?: AbortSignal; userId?: string } = {}) {
     try {
-      return await this.backendRepository.getTenderById(id);
+      return await this.backendRepository.getTenderById(id, { signal: options.signal, userId: options.userId });
     } catch (error) {
       // Development-only escape hatch for working on UI without the backend running.
       if (options.allowMockFallback) return toTenderRecordView(this.getTenderDetails(id) ?? null);
@@ -90,8 +94,8 @@ export class TenderService {
     return this.backendRepository.analyzeTender(tenderId);
   }
 
-  async getTenderSource(tenderId: string) {
-    return this.backendRepository.getTenderSource(tenderId);
+  async getTenderSource(tenderId: string, options: { signal?: AbortSignal } = {}) {
+    return this.backendRepository.getTenderSource(tenderId, options);
   }
 
   getTenderDetails(id: string) {

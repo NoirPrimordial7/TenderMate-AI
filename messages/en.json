@@ -482,6 +482,13 @@
     "financialChart": "Known financial commitments", "financialChartExplain": "This compares only numeric commitment items on the same rupee scale. Tender value is excluded.", "amount": "Amount", "noFinancials": "No financial requirements were identified.", "knownCommitments": "Known commitments", "financialLedger": "Financial requirement ledger", "financialLedgerExplain": "Amounts are normalized only when the tender value is unambiguous.", "explanationUnavailable": "No additional explanation was reported.", "type": "Type", "refundable": "Refundable", "plainLanguage": "In plain language", "knownUpfront": "At least {amount} in known commitments needs confirmation.", "financialUnknown": "The minimum upfront amount cannot be confirmed from this tender.", "confirmFinancials": "Confirm fees, deposits, security, and refund terms with the department.",
     "noTechnical": "No technical requirements were identified.", "acceptanceCriteria": "Acceptance criteria", "noDates": "No tender dates were identified.", "nextImportantDate": "Next important date", "noUpcomingDate": "No verified upcoming date", "dateUnverified": "The original date text could not be parsed and remains unverified.", "noRisks": "No explicit risks were identified.", "high": "High", "medium": "Medium", "low": "Low", "highestRisk": "Highest-priority risk", "riskMatrix": "Likelihood × impact", "riskMatrixExplain": "Shown only for risks where both values exist.", "riskRegister": "Risk register", "riskRegisterExplain": "Business consequences and actions remain tied to source evidence.", "likelihood": "Likelihood", "consequence": "Consequence", "mitigation": "Mitigation", "whyMatters": "Why this matters"
   },
+  "cache": {
+    "checking": "Checking for updates…",
+    "showingSaved": "Showing saved information while NividaIQ reconnects.",
+    "refreshFailed": "Updates could not be checked. The information already shown is still available.",
+    "updated": "Updated {time}",
+    "loadMore": "Load more tenders"
+  },
   "errors": {
     "loginRequired": "Login required",
     "loginRequiredDescription": "Sign in again to view your protected tender workspace. If your token expired, your local session has been cleared.",

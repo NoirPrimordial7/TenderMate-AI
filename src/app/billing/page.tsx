@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import useSWR from "swr";
 import { ArrowRight, CircleDollarSign, ReceiptText } from "lucide-react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ApplicationShell } from "@/components/shell/ApplicationShell";
@@ -9,15 +8,14 @@ import { PageHeader } from "@/components/shell/PageHeader";
 import { StatusBadge } from "@/components/workspace/StatusBadge";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslations } from "@/contexts/LocaleContext";
-import type { BillingUsage } from "@/domain/billing/types";
-import { billingService } from "@/services/BillingService";
 import { toFriendlyApiMessage } from "@/services/api";
+import { useBillingUsage } from "@/hooks/useBillingUsage";
 
 export default function BillingPage() {
   const { isAuthenticated, user } = useAuth();
   const t = useTranslations("billing");
   const common = useTranslations("common");
-  const { data: usage, error, isLoading } = useSWR<BillingUsage>(isAuthenticated && user ? ["private", user.id, "billing-usage"] : null, billingService.getUsage);
+  const { data: usage, error, isLoading, isValidating } = useBillingUsage(isAuthenticated && user ? user.id : null);
   const plan = usage?.plan_name ?? user?.plan_name;
   const subscription = usage?.subscription_status ?? user?.subscription_status;
   const credits = usage?.free_analysis_credits ?? user?.free_analysis_credits;
@@ -26,7 +24,7 @@ export default function BillingPage() {
     <ApplicationShell>
       <ProtectedRoute>
         <PageHeader eyebrow={t("eyebrow")} title={t("editorialTitle")} description={t("support")} accent="lime" meta={<StatusBadge tone={subscription?.toLowerCase() === "active" ? "lime" : "neutral"}>{subscription ?? common("unavailable")}</StatusBadge>} />
-        {isLoading ? <div className="tm-billing-loading" role="status">{t("refreshing")}</div> : null}
+        {isLoading || (isValidating && !usage) ? <div className="tm-billing-loading" role="status">{t("refreshing")}</div> : null}
         {error ? <p className="tm-alert tm-alert-warning">{toFriendlyApiMessage(error, t("loadFailed"))}</p> : null}
         <div className="tm-billing-layout">
           <section className="tm-credit-balance" aria-labelledby="credit-balance-title">

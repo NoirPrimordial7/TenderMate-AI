@@ -1,8 +1,8 @@
 import { BillingPlansResponse, BillingUsage, CheckoutResponse } from "@/domain/billing/types";
 import { apiRequest } from "@/services/api";
 
-export function getUsage() {
-  return apiRequest<BillingUsage>("/billing/usage");
+export function getUsage(options: { signal?: AbortSignal; userId?: string } = {}) {
+  return apiRequest<BillingUsage>("/billing/usage", { signal: options.signal, conditionalKey: options.userId ? `${options.userId}:billing-usage` : undefined });
 }
 
 export function getPlans() {

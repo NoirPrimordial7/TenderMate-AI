@@ -12,6 +12,7 @@ import type { AuthUser } from "@/domain/auth/types";
 import { tenderService } from "@/services/TenderService";
 import { ApiError } from "@/services/api";
 import { useTranslations } from "@/contexts/LocaleContext";
+import { publishCacheEvent } from "@/cache/events";
 
 function PreviewLoading() {
   const t = useTranslations("upload");
@@ -140,6 +141,7 @@ export function UploadDock({ user, onFileStateChange }: UploadDockProps) {
       });
       setProgress((current) => current ? { ...current, uploaded: current.total } : null);
       setSuccessMessage(t("success"));
+      publishCacheEvent({ type: "tender-created", userId: user.id, tenderId: response.tender_id });
       redirectTimerRef.current = setTimeout(() => router.push(`/tender/${response.tender_id}`), 700);
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") {

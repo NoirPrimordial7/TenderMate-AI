@@ -20,7 +20,14 @@ export class ApiError extends Error {
 export type ApiRequestOptions = Omit<RequestInit, "body"> & {
   auth?: boolean;
   body?: unknown;
+  conditionalKey?: string;
 };
+
+const conditionalMemory = new Map<string, { etag: string; data: unknown }>();
+
+export function clearConditionalApiCache(prefix?: string) {
+  for (const key of Array.from(conditionalMemory.keys())) if (!prefix || key.startsWith(prefix)) conditionalMemory.delete(key);
+}
 
 function isBodyInit(body: unknown): body is BodyInit {
   return (
@@ -105,7 +112,7 @@ export function toFriendlyApiMessage(error: unknown, fallback: string) {
 }
 
 export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
-  const { auth = true, body, headers, ...requestOptions } = options;
+  const { auth = true, body, headers, conditionalKey, ...requestOptions } = options;
   const requestHeaders = new Headers(headers);
 
   if (!requestHeaders.has("Accept")) {
@@ -118,6 +125,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       requestHeaders.set("Authorization", `Bearer ${token}`);
     }
   }
+  const conditional = conditionalKey ? conditionalMemory.get(conditionalKey) : undefined;
+  if (conditional && !requestHeaders.has("If-None-Match")) requestHeaders.set("If-None-Match", conditional.etag);
 
   let requestBody: BodyInit | null | undefined;
   if (body !== undefined) {
@@ -140,9 +149,11 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
       body: requestBody
     });
   } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
     throw new ApiError(0, getErrorMessage(0, null), error);
   }
 
+  if (response.status === 304 && conditional) return conditional.data as T;
   if (response.status === 204) {
     return undefined as T;
   }
@@ -158,6 +169,8 @@ export async function apiRequest<T>(path: string, options: ApiRequestOptions = {
     throw new ApiError(response.status, getErrorMessage(response.status, responseBody), responseBody);
   }
 
+  const etag = response.headers.get("etag");
+  if (conditionalKey && etag) conditionalMemory.set(conditionalKey, { etag, data: responseBody });
   return responseBody as T;
 }
 
