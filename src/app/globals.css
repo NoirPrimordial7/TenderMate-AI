@@ -111,6 +111,12 @@ button, a { -webkit-tap-highlight-color: transparent; }
   letter-spacing: -0.055em;
 }
 
+.te-brand-mark {
+  width: 1.85rem;
+  height: 1.85rem;
+  flex: none;
+}
+
 .te-brand i {
   color: var(--te-violet);
   font-size: 0.63rem;
@@ -418,7 +424,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .te-language-wipe.te-language-option-mr { background: var(--te-lime); }
 .te-language-gate-inner { position: relative; z-index: 2; width: var(--page-width); min-height: 100svh; display: grid; grid-template-columns: repeat(12,minmax(0,1fr)); grid-template-rows: auto minmax(0,1fr) auto; gap: clamp(1.25rem,3vh,2.5rem); margin-inline: auto; padding-block: clamp(1.25rem,3vh,2.5rem); }
 .te-language-gate-head { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
-.te-language-brand { display: inline-flex; align-items: baseline; gap: .35rem; color: var(--te-ink); text-decoration: none; font-size: 1.1rem; font-weight: 900; letter-spacing: -.055em; }
+.te-language-brand { display: inline-flex; align-items: center; gap: .55rem; color: var(--te-ink); text-decoration: none; font-size: 1.1rem; font-weight: 900; letter-spacing: -.055em; }
+.te-language-brand-mark { width: 1.9rem; height: 1.9rem; flex: none; }
 .te-language-brand i { color: var(--te-violet); font-size: .62rem; font-style: normal; letter-spacing: 0; }
 .te-language-gate-head p { color: rgba(16,16,16,.58); font-size: .72rem; font-weight: 700; }
 .te-language-copy { grid-column: 1 / 8; align-self: center; min-width: 0; }
@@ -659,7 +666,8 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .nl-footer { position: relative; z-index: 8; border-top: 1px solid rgba(16,16,16,.2); color: var(--te-ink); background: var(--te-canvas); }
 .nl-footer-grid { display: grid; grid-template-columns: minmax(16rem,1.15fr) minmax(20rem,1.5fr) minmax(12rem,.8fr); gap: clamp(2rem,5vw,6rem); padding-block: clamp(2.5rem,5vw,5rem); }
 .nl-footer section,.nl-footer nav { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: .8rem; }
-.nl-footer-brand { color: var(--te-ink); font-size: clamp(2rem,4vw,4.5rem); font-weight: 950; letter-spacing: -.07em; text-decoration: none; }
+.nl-footer-brand { display: inline-flex; align-items: center; gap: .8rem; color: var(--te-ink); font-size: clamp(2rem,4vw,4.5rem); font-weight: 950; letter-spacing: -.07em; text-decoration: none; }
+.nl-footer-brand-mark { width: clamp(2.4rem,4vw,4.25rem); height: clamp(2.4rem,4vw,4.25rem); flex: none; }
 .nl-footer h2 { font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; }
 .nl-footer nav div { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem 1.4rem; }
 .nl-footer a { color: inherit; font-size: .75rem; font-weight: 720; text-underline-offset: .2rem; }

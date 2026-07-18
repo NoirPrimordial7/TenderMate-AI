@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="NividaIQ logo">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="15" fill="#6C4DFF"/>
   <path d="M15 48V16h9l17 20V16h8v32h-9L23 28v20H15Z" fill="#F4F2ED"/>
   <path d="M41 16h8v9l-8-9Z" fill="#146CFF"/>

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { LOCALE_OPTIONS, type AppLocale } from "@/i18n/config";
 import { translateMessage } from "@/i18n/messages";
 import { BRAND } from "@/config/brand";
+import { NividaIQMark } from "@/components/brand/NividaIQMark";
 
 type LanguageGateProps = {
   onComplete: (locale: AppLocale) => void;
@@ -53,6 +54,7 @@ export function LanguageGate({ onComplete }: LanguageGateProps) {
       <section className="te-language-gate-inner" aria-labelledby="tm-language-title">
         <header className="te-language-gate-head">
           <a href="#tm-language-options" className="te-language-brand" aria-label={BRAND.name}>
+            <NividaIQMark className="te-language-brand-mark" />
             <span>{BRAND.name}</span>
           </a>
           <p>{translateMessage("en", "language.gateEyebrow")}</p>
